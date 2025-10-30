@@ -14,7 +14,7 @@ body.bg-body {
   top: 0;
   left: 0;
   height: 100vh;
-  width: 260px;
+  width: 220px;
   padding: 1.5rem;
   background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
   color: #f8fafc;
@@ -105,7 +105,7 @@ body.bg-body {
 }
 
 .dk-main {
-  margin-left: 260px;
+  margin-left: 220px;
   min-height: 100vh;
   background: #e2e8f0;
 }
@@ -245,7 +245,7 @@ body.bg-body {
 .dk-sidebar-fab {
   position: fixed;
   top: 88px;
-  left: 248px;
+  left: 208px;
   transform: translate(-50%, 0);
   width: 48px;
   height: 48px;
@@ -401,6 +401,61 @@ body.bg-body {
 
   .dk-filter-village .form-select {
     min-width: 100%;
+  }
+}
+
+/* Mobile styling tweaks: make mobile background and text match desktop content area
+   so the page feels consistent when the sidebar is hidden. Also hide the
+   floating sidebar FAB on small screens. */
+@media (max-width: 991.98px) {
+  body.bg-body {
+    background-color: #e2e8f0; /* same as .dk-main background */
+    color: #0f172a;
+  }
+
+  /* Ensure topbar blends with content and has adequate contrast */
+  .dk-topbar {
+    background: #f8fafc;
+    border-bottom: 1px solid rgba(15,23,42,0.04);
+  }
+
+  /* Show floating FAB on mobile (positioned top-left) so users can open the sidebar/offcanvas
+     — styled smaller and placed near the header to mimic desktop toggle behavior. */
+  .dk-sidebar-fab {
+    display: inline-flex;
+    top: 18px;
+    left: 12px;
+    transform: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 8px 18px rgba(15,23,42,0.12);
+    border: 1px solid rgba(15,23,42,0.06);
+  }
+  .dk-sidebar-fab__icon { font-size: 0.95rem; }
+
+  /* Make cards span full width with comfortable padding */
+  .dk-card, .dk-tab-content .dk-tab-pane {
+    border-radius: 12px;
+    padding: 1rem;
+  }
+
+  /* Improve table readability on mobile: reduce cell padding and allow horizontal scroll */
+  .dk-table td, .dk-table th {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .dk-table-scroll {
+    max-height: none;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 .dk-filter-village .form-select {
