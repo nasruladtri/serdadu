@@ -92,7 +92,16 @@
     {{-- Offcanvas sidebar for mobile --}}
     <div class="offcanvas offcanvas-start dk-offcanvas" tabindex="-1" id="sidebarOffcanvas">
         <div class="offcanvas-header">
-            <h6 class="offcanvas-title">Siduta Madiun</h6>
+            <div class="dk-offcanvas-brand">
+                <div class="dk-offcanvas-brand__logo">
+                    <img src="{{ asset('vendor/corporate-ui/img/kabupaten-madiun.png') }}" alt="Kabupaten Madiun"
+                        class="dk-offcanvas-brand__img">
+                </div>
+                <div class="dk-offcanvas-brand__text">
+                    <span class="dk-offcanvas-brand__title">MAGANG UMPO</span>
+                    <small class="dk-offcanvas-brand__subtitle">Statistik Dukcapil</small>
+                </div>
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
