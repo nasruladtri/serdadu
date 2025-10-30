@@ -87,4 +87,4 @@ Silakan laporkan secara langsung melalui email: **[email protected]** (ganti den
 
 Proyek ini dilisensikan di bawah **MIT License** — silakan gunakan, modifikasi, dan kembangkan dengan menyertakan atribusi yang sesuai.
 
----
+--
