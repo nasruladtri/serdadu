@@ -64,7 +64,7 @@ npm run dev
 
 Kemudian buka di browser: [http://localhost:8000](http://localhost:8000)
 
-🌟 Fitur Utama
+## 🌟 Fitur Utama
 
 * 📊 **Rekapitulasi Data Penduduk Terpadu**
   Menampilkan data penduduk dari berbagai sumber dalam satu sistem yang mudah diakses.
@@ -77,17 +77,18 @@ Kemudian buka di browser: [http://localhost:8000](http://localhost:8000)
 * 🗂️ **Ekspor & Cetak Laporan**
   Mendukung ekspor data ke format Excel dan PDF.
 
-🤝 Kontribusi
+## 🤝 Kontribusi
 
 Kontribusi sangat terbuka!
 Silakan buat *pull request* atau ajukan *issue* untuk pengembangan lebih lanjut. Pastikan kode mengikuti standar Laravel dan memiliki dokumentasi yang jelas.
 
-🛡️ Keamanan
+## 🛡️ Keamanan
 
 Jika menemukan masalah keamanan pada sistem SERDADU, jangan tulis di *issue tracker*.
 Silakan laporkan secara langsung melalui email: **[email protected]** (ganti dengan email kamu).
 
-📜 Lisensi
+## 📜 Lisensi
 
 Proyek ini dilisensikan di bawah **MIT License** — silakan gunakan, modifikasi, dan kembangkan dengan menyertakan atribusi yang sesuai.
 
+---
