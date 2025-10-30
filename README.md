@@ -1,7 +1,3 @@
-Berikut versi final README-nya, tinggal kamu salin saja 👇
-
----
-
 # 🧩 Serdadu Project
 
 **(Sistem Rekap Data Terpadu)**
