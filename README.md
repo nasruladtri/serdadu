@@ -1,7 +1,8 @@
 # Serdadu Project
+(Sistem Rekap Data Terpadu)
 
 ## About
-Serdadu is a web application built with Laravel framework. This project serves as [describe your project's main purpose and features].
+SERDADU (Sistem Rekap Data Terpadu) is a web application built with Laravel framework. This project serves as [describe your project's main purpose and features].
 
 ## Requirements
 - PHP >= 8.0
