@@ -74,7 +74,10 @@
                     </span>
                     <span class="dk-title-toggle__text">Menu</span>
                 </button>
-                <h1 class="dk-topbar__title mb-0">{{ $title ?? 'Ringkasan Kependudukan' }}</h1>
+                <div class="dk-topbar__tagline">
+                    <span class="dk-topbar__tagline-label">Statistik Dukcapil</span>
+                    <small class="dk-topbar__tagline-note">Kabupaten Madiun &bull; Data terkini</small>
+                </div>
             </div>
             <div class="ms-auto d-none d-lg-flex align-items-center">
                 <div class="text-end">
