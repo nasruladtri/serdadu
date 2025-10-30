@@ -66,11 +66,14 @@
 
     <div class="dk-main" data-main>
         <header class="dk-topbar shadow-sm">
-            <button class="dk-toggle d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas"
-                aria-controls="sidebarOffcanvas">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-            <div>
+            <div class="dk-title-group">
+                <button class="dk-title-toggle d-lg-none" type="button" aria-label="Tampilkan menu"
+                    data-offcanvas-toggle>
+                    <span class="dk-title-toggle__icon">
+                        <i class="fa-solid fa-bars-staggered"></i>
+                    </span>
+                    <span class="dk-title-toggle__text">Menu</span>
+                </button>
                 <h1 class="dk-topbar__title mb-0">{{ $title ?? 'Ringkasan Kependudukan' }}</h1>
             </div>
             <div class="ms-auto d-none d-lg-flex align-items-center">
@@ -151,6 +154,22 @@
                         if (offcanvasInstance) {
                             // Hide the drawer on the next frame so the navigation can proceed normally
                             requestAnimationFrame(() => offcanvasInstance.hide());
+                        }
+                    });
+                });
+            }
+
+            const offcanvasToggles = document.querySelectorAll('[data-offcanvas-toggle]');
+            if (offcanvasToggles.length && offcanvasEl) {
+                offcanvasToggles.forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        if (!offcanvasInstance) {
+                            return;
+                        }
+                        if (offcanvasEl.classList.contains('show')) {
+                            offcanvasInstance.hide();
+                        } else {
+                            offcanvasInstance.show();
                         }
                     });
                 });
