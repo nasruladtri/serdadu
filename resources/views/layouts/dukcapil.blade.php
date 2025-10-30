@@ -126,8 +126,33 @@
             const main = document.querySelector('[data-main]');
             const iconContainer = toggleBtn?.querySelector('[data-icon]');
 
+            // Hide floating FAB while offcanvas is open to prevent it blocking clicks
+            const fab = document.querySelector('.dk-sidebar-fab');
+            const offcanvasEl = document.getElementById('sidebarOffcanvas');
+            if (offcanvasEl && fab) {
+                offcanvasEl.addEventListener('show.bs.offcanvas', () => {
+                    fab.style.display = 'none';
+                });
+                offcanvasEl.addEventListener('hidden.bs.offcanvas', () => {
+                    // restore display for mobile; keep desktop visibility as earlier rules
+                    fab.style.display = '';
+                });
+            }
+
             if (toggleBtn && sidebar && main) {
                 toggleBtn.addEventListener('click', () => {
+                    const isMobile = window.matchMedia('(max-width: 991.98px)').matches;
+                    if (isMobile) {
+                        // On mobile/open small screens, open the offcanvas sidebar instead
+                        const offcanvasEl = document.getElementById('sidebarOffcanvas');
+                        if (offcanvasEl && typeof bootstrap !== 'undefined') {
+                            const off = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+                            off.show();
+                            return;
+                        }
+                    }
+
+                    // Desktop behaviour: collapse/expand sidebar
                     sidebar.classList.toggle('dk-sidebar--collapsed');
                     main.classList.toggle('dk-main--expanded');
                     const isCollapsed = sidebar.classList.contains('dk-sidebar--collapsed');
