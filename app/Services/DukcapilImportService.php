@@ -85,6 +85,9 @@ class DukcapilImportService
 
                     // alias & cleaning
                     $assoc = $this->applyAliases($assoc);
+                    // normalize bucket-style headers so age-group / single-age columns
+                    // are recognized even if the header order/format varies (e.g. "00_04_l" or "l_00_04" or "00-04-L").
+                    $assoc = $this->normalizeBucketKeys($assoc);
 
                     if ($this->shouldSkipRow($assoc)) {
                         continue;
@@ -1150,6 +1153,85 @@ class DukcapilImportService
         }
 
         return $result;
+    }
+
+    /**
+     * Normalize bucket-style column keys to a canonical form used by expansion helpers.
+     *
+     * Examples of accepted input keys (after header normalization / aliasing):
+     * - l_00_04, p_00_04, jml_00_04 (already canonical)
+     * - 00_04_l, 00_04_p, 00_04_jml (bucket first)
+     * - l00_04, p00_04, 00_04-l, 00-04-l
+     * - 75+_l or l_75+
+     *
+     * This will rewrite keys into l_{bucket}, p_{bucket}, jml_{bucket} form.
+     */
+    private function normalizeBucketKeys(array $row): array
+    {
+        $out = [];
+        foreach ($row as $key => $value) {
+            $k = (string)$key;
+
+            // already canonical
+            if (preg_match('/^(l|p|jml)_(.+)$/', $k, $m)) {
+                $out[$k] = $value;
+                continue;
+            }
+
+            // patterns like 00_04_l or 00_04_laki or 00_04_lk
+            if (preg_match('/^(.+?)_((?:lk|l|pr|p|male|female|jml|jumlah|total))$/', $k, $m)) {
+                $bucket = $m[1];
+                $tag = $m[2];
+                $bucket = trim($bucket, '_-');
+                $tag = strtolower($tag);
+                if (in_array($tag, ['l','lk','male'], true)) {
+                    $out['l_'.$bucket] = $value;
+                    continue;
+                }
+                if (in_array($tag, ['p','pr','female'], true)) {
+                    $out['p_'.$bucket] = $value;
+                    continue;
+                }
+                if (in_array($tag, ['jml','jumlah','total'], true)) {
+                    $out['jml_'.$bucket] = $value;
+                    continue;
+                }
+            }
+
+            // patterns like l00_04, p00_04, l00-04
+            if (preg_match('/^(l|p)([_\-]?)(.+)$/', $k, $m)) {
+                $side = $m[1];
+                $bucket = $m[3];
+                $bucket = trim($bucket, '_-');
+                $out[$side.'_'.$bucket] = $value;
+                continue;
+            }
+
+            // patterns like 00-04-l or 00-04-laki (with dashes)
+            if (preg_match('/^(.+?)[_\-](l|lk|p|pr|jml|jumlah|total)$/', $k, $m)) {
+                $bucket = $m[1];
+                $tag = $m[2];
+                $bucket = trim(str_replace('-', '_', $bucket), '_');
+                $tag = strtolower($tag);
+                if (in_array($tag, ['l','lk','male'], true)) {
+                    $out['l_'.$bucket] = $value;
+                    continue;
+                }
+                if (in_array($tag, ['p','pr','female'], true)) {
+                    $out['p_'.$bucket] = $value;
+                    continue;
+                }
+                if (in_array($tag, ['jml','jumlah','total'], true)) {
+                    $out['jml_'.$bucket] = $value;
+                    continue;
+                }
+            }
+
+            // default: keep as-is
+            $out[$k] = $value;
+        }
+
+        return $out;
     }
 
     private function expandSingleAgeRow(array $row): array
