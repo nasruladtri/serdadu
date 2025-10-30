@@ -96,19 +96,19 @@
             <nav class="dk-sidebar__nav">
                 <a href="{{ route('public.landing') }}"
                     class="dk-nav-link {{ request()->routeIs('public.landing') ? 'active' : '' }}"
-                    data-bs-dismiss="offcanvas">
+                    data-offcanvas-close>
                     <i class="fa-solid fa-house"></i>
                     <span>Beranda</span>
                 </a>
                 <a href="{{ route('public.data') }}"
                     class="dk-nav-link {{ request()->routeIs('public.data') ? 'active' : '' }}"
-                    data-bs-dismiss="offcanvas">
+                    data-offcanvas-close>
                     <i class="fa-solid fa-table-cells-large"></i>
                     <span>Data Agregat</span>
                 </a>
                 <a href="{{ route('public.charts') }}"
                     class="dk-nav-link {{ request()->routeIs('public.charts') ? 'active' : '' }}"
-                    data-bs-dismiss="offcanvas">
+                    data-offcanvas-close>
                     <i class="fa-solid fa-chart-column"></i>
                     <span>Grafik Data</span>
                 </a>
@@ -125,10 +125,14 @@
             const sidebar = document.querySelector('[data-sidebar]');
             const main = document.querySelector('[data-main]');
             const iconContainer = toggleBtn?.querySelector('[data-icon]');
+            const offcanvasEl = document.getElementById('sidebarOffcanvas');
+            const fab = document.querySelector('.dk-sidebar-fab');
+            const hasBootstrap = typeof bootstrap !== 'undefined';
+            const offcanvasInstance = (offcanvasEl && hasBootstrap)
+                ? bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl)
+                : null;
 
             // Hide floating FAB while offcanvas is open to prevent it blocking clicks
-            const fab = document.querySelector('.dk-sidebar-fab');
-            const offcanvasEl = document.getElementById('sidebarOffcanvas');
             if (offcanvasEl && fab) {
                 offcanvasEl.addEventListener('show.bs.offcanvas', () => {
                     fab.style.display = 'none';
@@ -139,15 +143,26 @@
                 });
             }
 
+            // Ensure offcanvas menu links close the drawer without blocking navigation
+            if (offcanvasEl) {
+                const offcanvasLinks = offcanvasEl.querySelectorAll('[data-offcanvas-close]');
+                offcanvasLinks.forEach((link) => {
+                    link.addEventListener('click', () => {
+                        if (offcanvasInstance) {
+                            // Hide the drawer on the next frame so the navigation can proceed normally
+                            requestAnimationFrame(() => offcanvasInstance.hide());
+                        }
+                    });
+                });
+            }
+
             if (toggleBtn && sidebar && main) {
                 toggleBtn.addEventListener('click', () => {
                     const isMobile = window.matchMedia('(max-width: 991.98px)').matches;
                     if (isMobile) {
                         // On mobile/open small screens, open the offcanvas sidebar instead
-                        const offcanvasEl = document.getElementById('sidebarOffcanvas');
-                        if (offcanvasEl && typeof bootstrap !== 'undefined') {
-                            const off = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
-                            off.show();
+                        if (offcanvasInstance) {
+                            offcanvasInstance.show();
                             return;
                         }
                     }
