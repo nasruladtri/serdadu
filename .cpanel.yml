@@ -3,6 +3,7 @@ deployment:
   tasks:
     - >
       /bin/bash -lc '
+      - export DEPLOYPATH=/home/magt2428/dukcapil-madiun/
       echo "DEPLOY START: $(date)" >> $HOME/deploy.log
   export APP_DIR="$HOME/dukcapil-madiun"
       /bin/cp -R resources $DEPLOYPATH
