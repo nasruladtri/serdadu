@@ -9,7 +9,6 @@ deployment:
       --exclude='.github'
       --exclude='node_modules'
       --exclude='vendor'
-      --exclude='.cpanel.yml'
       ./ "$APP_DIR"
     - cd "$APP_DIR"
     - composer install --no-dev --optimize-autoloader
