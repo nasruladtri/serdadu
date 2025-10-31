@@ -4,7 +4,8 @@ deployment:
     - >
       /bin/bash -lc '
       echo "DEPLOY START: $(date)" >> $HOME/deploy.log
-      export APP_DIR="$HOME/repositories/serdadu"
+  export APP_DIR="$HOME/dukcapil-madiun"
+      /bin/cp -R resources $DEPLOYPATH
       /bin/mkdir -p "$APP_DIR"
       /bin/rsync -a --delete --exclude=.git --exclude=.github --exclude=node_modules --exclude=vendor --exclude=.cpanel.yml ./ "$APP_DIR" 2>&1 | tee -a $HOME/deploy.log
       cd "$APP_DIR"
@@ -14,6 +15,6 @@ deployment:
       php artisan route:cache 2>&1 | tee -a $HOME/deploy.log || true
       php artisan view:cache 2>&1 | tee -a $HOME/deploy.log || true
       php artisan storage:link 2>&1 | tee -a $HOME/deploy.log || true
-      /bin/rsync -a --delete "$APP_DIR/public/" "$HOME/public_html/" 2>&1 | tee -a $HOME/deploy.log
+  /bin/rsync -a --delete "$APP_DIR/public/" "$APP_DIR/" 2>&1 | tee -a $HOME/deploy.log
       echo "DEPLOY END: $(date)" >> $HOME/deploy.log
       '
