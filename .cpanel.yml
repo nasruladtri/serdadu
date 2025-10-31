@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export APP_DIR="$HOME/repositories/serdadu"
+    - export APP_DIR="$HOME/dukcapil-madiun"
     - /bin/mkdir -p "$APP_DIR"
     - >
       /bin/rsync -a --delete
@@ -18,4 +18,4 @@ deployment:
     - php artisan route:cache
     - php artisan view:cache
     - php artisan storage:link || true
-    - /bin/rsync -a --delete "$APP_DIR/public/" "$HOME/public_html/"
+    - /bin/rsync -a --delete "$APP_DIR/public/" "$APP_DIR/"
