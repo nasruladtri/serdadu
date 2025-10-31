@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -29,27 +29,43 @@
                 <img src="{{ asset('vendor/corporate-ui/img/kabupaten-madiun.png') }}" alt="Kabupaten Madiun"
                     class="dk-logo-img">
             </div>
-            <div>
-                <span class="dk-brand-title">MAGANG UMPO</span>
-                <small class="dk-brand-subtitle">Statistik Dukcapil</small>
+            <div class="dk-sidebar__brand-text">
+                <span class="dk-brand-title">Serdadu</span>
+                <small class="dk-brand-subtitle">Sistem Rekap Data Terpadu</small>
             </div>
+        </div>
+
+        <div class="dk-sidebar__toggle d-lg-flex">
+            <button class="dk-sidebar-fab dk-nav-link" type="button" id="sidebarToggle" aria-label="Sembunyikan sidebar">
+                <span class="dk-sidebar-fab__icon" data-icon aria-hidden="true">
+                    <img src="{{ asset('img/menu.png') }}" alt="" class="dk-sidebar-fab__image" loading="lazy">
+                </span>
+                <span class="dk-nav-link__label">Menu</span>
+                <span class="visually-hidden" data-label>Sembunyikan</span>
+            </button>
         </div>
 
         <nav class="dk-sidebar__nav">
             <a href="{{ route('public.landing') }}"
                 class="dk-nav-link {{ request()->routeIs('public.landing') ? 'active' : '' }}">
-                <i class="fa-solid fa-house"></i>
-                <span>Beranda</span>
+                <span class="dk-nav-link__icon">
+                    <img src="{{ asset('img/home.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
+                </span>
+                <span class="dk-nav-link__label">Beranda</span>
             </a>
             <a href="{{ route('public.data') }}"
                 class="dk-nav-link {{ request()->routeIs('public.data') ? 'active' : '' }}">
-                <i class="fa-solid fa-table-cells-large"></i>
-                <span>Data Agregat</span>
+                <span class="dk-nav-link__icon">
+                    <img src="{{ asset('img/table.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
+                </span>
+                <span class="dk-nav-link__label">Data Agregat</span>
             </a>
             <a href="{{ route('public.charts') }}"
                 class="dk-nav-link {{ request()->routeIs('public.charts') ? 'active' : '' }}">
-                <i class="fa-solid fa-chart-column"></i>
-                <span>Grafik Data</span>
+                <span class="dk-nav-link__icon">
+                    <img src="{{ asset('img/bar-stats.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
+                </span>
+                <span class="dk-nav-link__label">Grafik Data</span>
             </a>
         </nav>
 
@@ -59,10 +75,6 @@
             <small class="dk-sidebar__meta text-xs">Versi awal</small>
         </div>
     </aside>
-
-    <button class="dk-sidebar-fab d-none d-lg-inline-flex" type="button" id="sidebarToggle" aria-label="Sembunyikan sidebar">
-        <span class="dk-sidebar-fab__icon" data-icon>&larr;</span>
-    </button>
 
     <div class="dk-main" data-main>
         <header class="dk-topbar shadow-sm">
@@ -75,14 +87,14 @@
                     <span class="dk-title-toggle__text">Menu</span>
                 </button>
                 <div class="dk-topbar__tagline">
-                    <span class="dk-topbar__tagline-label">Statistik Dukcapil</span>
-                    <small class="dk-topbar__tagline-note">Kabupaten Madiun &bull; Data terkini</small>
+                    <span class="dk-topbar__tagline-label">Statistik Data Penduduk</span>
+                    <small class="dk-topbar__tagline-note">Kabupaten Madiun</small>
                 </div>
             </div>
             <div class="ms-auto d-none d-lg-flex align-items-center">
                 <div class="text-end">
-                    <span class="fw-semibold d-block">Kabupaten Madiun</span>
-                    <small class="text-muted">Sumber: Dukcapil</small>
+                    <span class="fw-semibold d-block">Dinas Kependudukan dan Pencatatan Sipil</span>
+                    <small class="text-muted">Kab. Madiun</small>
                 </div>
             </div>
         </header>
@@ -101,8 +113,8 @@
                         class="dk-offcanvas-brand__img">
                 </div>
                 <div class="dk-offcanvas-brand__text">
-                    <span class="dk-offcanvas-brand__title">MAGANG UMPO</span>
-                    <small class="dk-offcanvas-brand__subtitle">Statistik Dukcapil</small>
+                    <span class="dk-offcanvas-brand__title">Serdadu</span>
+                    <small class="dk-offcanvas-brand__subtitle">Sistem Rekap Data Terpadu</small>
                 </div>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -112,20 +124,26 @@
                 <a href="{{ route('public.landing') }}"
                     class="dk-nav-link {{ request()->routeIs('public.landing') ? 'active' : '' }}"
                     data-offcanvas-close>
-                    <i class="fa-solid fa-house"></i>
-                    <span>Beranda</span>
+                    <span class="dk-nav-link__icon">
+                        <img src="{{ asset('img/home.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
+                    </span>
+                    <span class="dk-nav-link__label">Beranda</span>
                 </a>
                 <a href="{{ route('public.data') }}"
                     class="dk-nav-link {{ request()->routeIs('public.data') ? 'active' : '' }}"
                     data-offcanvas-close>
-                    <i class="fa-solid fa-table-cells-large"></i>
-                    <span>Data Agregat</span>
+                    <span class="dk-nav-link__icon">
+                        <img src="{{ asset('img/table.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
+                    </span>
+                    <span class="dk-nav-link__label">Data Agregat</span>
                 </a>
                 <a href="{{ route('public.charts') }}"
                     class="dk-nav-link {{ request()->routeIs('public.charts') ? 'active' : '' }}"
                     data-offcanvas-close>
-                    <i class="fa-solid fa-chart-column"></i>
-                    <span>Grafik Data</span>
+                    <span class="dk-nav-link__icon">
+                        <img src="{{ asset('img/bar-stats.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
+                    </span>
+                    <span class="dk-nav-link__label">Grafik Data</span>
                 </a>
             </nav>
         </div>
@@ -139,7 +157,7 @@
             const toggleBtn = document.getElementById('sidebarToggle');
             const sidebar = document.querySelector('[data-sidebar]');
             const main = document.querySelector('[data-main]');
-            const iconContainer = toggleBtn?.querySelector('[data-icon]');
+            const labelElement = toggleBtn?.querySelector('[data-label]');
             const offcanvasEl = document.getElementById('sidebarOffcanvas');
             const fab = document.querySelector('.dk-sidebar-fab');
             const hasBootstrap = typeof bootstrap !== 'undefined';
@@ -188,6 +206,18 @@
             }
 
             if (toggleBtn && sidebar && main) {
+                const syncFabState = () => {
+                    const isCollapsed = sidebar.classList.contains('dk-sidebar--collapsed');
+                    toggleBtn.classList.toggle('is-collapsed', isCollapsed);
+
+                    if (labelElement) {
+                        labelElement.textContent = isCollapsed ? 'Tampilkan' : 'Sembunyikan';
+                    }
+                    toggleBtn.setAttribute('aria-label', isCollapsed ? 'Tampilkan sidebar' : 'Sembunyikan sidebar');
+                };
+
+                syncFabState();
+
                 toggleBtn.addEventListener('click', () => {
                     const isMobile = window.matchMedia('(max-width: 991.98px)').matches;
                     if (isMobile) {
@@ -201,11 +231,7 @@
                     // Desktop behaviour: collapse/expand sidebar
                     sidebar.classList.toggle('dk-sidebar--collapsed');
                     main.classList.toggle('dk-main--expanded');
-                    const isCollapsed = sidebar.classList.contains('dk-sidebar--collapsed');
-                    toggleBtn.classList.toggle('is-collapsed', isCollapsed);
-                    if (iconContainer) {
-                        iconContainer.textContent = isCollapsed ? '→' : '←';
-                    }
+                    syncFabState();
                 });
             }
         });
@@ -214,3 +240,4 @@
 </body>
 
 </html>
+
