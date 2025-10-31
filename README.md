@@ -1,57 +1,90 @@
-# Serdadu Project
-(Sistem Rekap Data Terpadu)
+# 🧩 Serdadu Project
 
-## About
-SERDADU (Sistem Rekap Data Terpadu) is a web application built with Laravel framework. This project serves as [describe your project's main purpose and features].
+**(Sistem Rekap Data Terpadu)**
+Website: [https://magangtiumpo.my.id](https://magangtiumpo.my.id)
 
-## Requirements
-- PHP >= 8.0
-- Composer
-- MySQL/MariaDB
-- Node.js & NPM
+## 📖 Tentang Proyek
 
-## Installation
-1. Clone the repository
-```bash
-git clone https://github.com/yourusername/serdadu.git
-```
+**SERDADU (Sistem Rekap Data Terpadu)** merupakan aplikasi web yang dikembangkan menggunakan **framework Laravel**.
+Website ini dirancang untuk membantu **Dinas Kependudukan dan Pencatatan Sipil (Disdukcapil)** dalam melakukan **pengelolaan, rekapitulasi, dan visualisasi data penduduk secara terpadu dan efisien**.
 
-2. Install dependencies
-```bash
-composer install
-npm install
-```
+Dengan adanya SERDADU, proses pengumpulan data, pelaporan statistik, dan monitoring perkembangan penduduk di wilayah kerja dapat dilakukan secara **otomatis, akurat, dan real-time**.
 
-3. Configure environment
-```bash
-cp .env.example .env
-php artisan key:generate
-```
+## ⚙️ Spesifikasi Sistem
 
-4. Set up database
-- Create database in MySQL
-- Configure database credentials in .env file
-- Run migrations:
-```bash
-php artisan migrate
-```
+* **PHP** >= 8.0
+* **Composer**
+* **MySQL / MariaDB**
+* **Node.js & NPM**
 
-## Running the Application
+## 🚀 Langkah Instalasi
+
+1. **Clone Repository**
+
+   ```bash
+   git clone https://github.com/yourusername/serdadu.git
+   ```
+
+2. **Instal Dependensi**
+
+   ```bash
+   composer install
+   npm install
+   ```
+
+3. **Konfigurasi Lingkungan (.env)**
+
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+4. **Pengaturan Database**
+
+   * Buat database baru di MySQL
+   * Atur kredensial database di file `.env`
+   * Jalankan migrasi database:
+
+     ```bash
+     php artisan migrate
+     ```
+
+## ▶️ Menjalankan Aplikasi
+
+Untuk menjalankan aplikasi di server lokal:
+
 ```bash
 php artisan serve
 npm run dev
 ```
 
-## Features
-- [List your main features]
-- [Feature 2]
-- [Feature 3]
+Kemudian buka di browser: [http://localhost:8000](http://localhost:8000)
 
-## Contributing
-[Your contribution guidelines]
+## 🌟 Fitur Utama
 
-## Security
-If you discover any security issues, please email [your email] instead of using the issue tracker.
+* 📊 **Rekapitulasi Data Penduduk Terpadu**
+  Menampilkan data penduduk dari berbagai sumber dalam satu sistem yang mudah diakses.
+* 📈 **Statistik dan Visualisasi Data**
+  Menyajikan grafik dan laporan statistik secara dinamis.
+* 🧍‍♂️ **Manajemen Data Individu & Keluarga**
+  Fitur untuk menambah, mengubah, atau menghapus data kependudukan.
+* 🔒 **Autentikasi & Hak Akses Pengguna**
+  Sistem login dan role user (admin, operator, tamu).
+* 🗂️ **Ekspor & Cetak Laporan**
+  Mendukung ekspor data ke format Excel dan PDF.
 
-## License
-[Your chosen license]
+## 🤝 Kontribusi
+
+Kontribusi sangat terbuka!
+Silakan buat *pull request* atau ajukan *issue* untuk pengembangan lebih lanjut. Pastikan kode mengikuti standar Laravel dan memiliki dokumentasi yang jelas.
+
+## 🛡️ Keamanan
+
+Jika menemukan masalah keamanan pada sistem SERDADU, jangan tulis di *issue tracker*.
+Silakan laporkan secara langsung melalui email: **[email protected]** (ganti dengan email kamu).
+
+## 📜 Lisensi
+
+Proyek ini dilisensikan di bawah **MIT License** — silakan gunakan, modifikasi, dan kembangkan dengan menyertakan atribusi yang sesuai.
+
+--
