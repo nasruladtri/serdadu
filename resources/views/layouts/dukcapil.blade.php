@@ -71,8 +71,7 @@
 
         <div class="dk-sidebar__footer">
             <small class="dk-sidebar__meta">&copy; {{ date('Y') }} Dinas Dukcapil Kab. Madiun</small>
-            <small class="dk-sidebar__meta">Versi publik</small>
-            <small class="dk-sidebar__meta text-xs">Versi awal</small>
+            <small class="dk-sidebar__meta text-xs">v 0.1.1</small>
         </div>
     </aside>
 
@@ -94,7 +93,7 @@
             <div class="ms-auto d-none d-lg-flex align-items-center">
                 <div class="text-end">
                     <span class="fw-semibold d-block">Dinas Kependudukan dan Pencatatan Sipil</span>
-                    <small class="text-muted">Kab. Madiun</small>
+                    <small class="text-muted">Alamat: Jl. Aloon-Aloon Utara No.4, Pangongangan, Kec. Manguharjo, Kota Madiun, Jawa Timur 63121</small>
                 </div>
             </div>
         </header>
