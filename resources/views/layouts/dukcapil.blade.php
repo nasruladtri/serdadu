@@ -24,55 +24,35 @@
 
 <body class="bg-body">
     <aside class="dk-sidebar" data-sidebar>
-        <div class="dk-sidebar__brand">
+        <div class="dk-sidebar__brand mb-3">
             <div class="dk-sidebar__logo">
-                <img src="{{ asset('vendor/corporate-ui/img/kabupaten-madiun.png') }}" alt="Kabupaten Madiun"
+                <img src="{{ asset('vendor/corporate-ui/img/kabupaten-madiun.png') }}" alt="Logo"
                     class="dk-logo-img">
             </div>
-            <div class="dk-sidebar__brand-text">
-                <span class="dk-brand-title">Serdadu</span>
-                <small class="dk-brand-subtitle">Sistem Rekap Data Terpadu</small>
-            </div>
         </div>
-
-        <div class="dk-sidebar__toggle d-lg-flex">
-            <button class="dk-sidebar-fab dk-nav-link" type="button" id="sidebarToggle" aria-label="Sembunyikan sidebar">
-                <span class="dk-sidebar-fab__icon" data-icon aria-hidden="true">
-                    <img src="{{ asset('img/menu.png') }}" alt="" class="dk-sidebar-fab__image" loading="lazy">
-                </span>
-                <span class="dk-nav-link__label">Menu</span>
-                <span class="visually-hidden" data-label>Sembunyikan</span>
-            </button>
-        </div>
-
-        <nav class="dk-sidebar__nav">
+        <nav class="dk-sidebar__nav" style="margin-top: 20px;">
             <a href="{{ route('public.landing') }}"
-                class="dk-nav-link {{ request()->routeIs('public.landing') ? 'active' : '' }}">
-                <span class="dk-nav-link__icon">
-                    <img src="{{ asset('img/home.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
+                class="dk-nav-link d-flex flex-column align-items-center {{ request()->routeIs('public.landing') ? 'active' : '' }}" style="padding: 10px 0;">
+                <span class="dk-nav-link__icon mb-1">
+                    <img src="{{ asset('img/home.png') }}" alt="" class="dk-nav-link__image" loading="lazy" style="width: 24px; height: 24px;">
                 </span>
-                <span class="dk-nav-link__label">Beranda</span>
+                <span class="dk-nav-link__label" style="font-size: 12px;">Home</span>
             </a>
             <a href="{{ route('public.data') }}"
-                class="dk-nav-link {{ request()->routeIs('public.data') ? 'active' : '' }}">
-                <span class="dk-nav-link__icon">
-                    <img src="{{ asset('img/table.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
+                class="dk-nav-link d-flex flex-column align-items-center {{ request()->routeIs('public.data') ? 'active' : '' }}" style="padding: 10px 0;">
+                <span class="dk-nav-link__icon mb-1">
+                    <img src="{{ asset('img/table.png') }}" alt="" class="dk-nav-link__image" loading="lazy" style="width: 24px; height: 24px;">
                 </span>
-                <span class="dk-nav-link__label">Data Agregat</span>
+                <span class="dk-nav-link__label" style="font-size: 12px;">Tabel</span>
             </a>
             <a href="{{ route('public.charts') }}"
-                class="dk-nav-link {{ request()->routeIs('public.charts') ? 'active' : '' }}">
-                <span class="dk-nav-link__icon">
-                    <img src="{{ asset('img/bar-stats.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
+                class="dk-nav-link d-flex flex-column align-items-center {{ request()->routeIs('public.charts') ? 'active' : '' }}" style="padding: 10px 0;">
+                <span class="dk-nav-link__icon mb-1">
+                    <img src="{{ asset('img/bar-stats.png') }}" alt="" class="dk-nav-link__image" loading="lazy" style="width: 24px; height: 24px;">
                 </span>
-                <span class="dk-nav-link__label">Grafik Data</span>
+                <span class="dk-nav-link__label" style="font-size: 12px;">Grafik</span>
             </a>
         </nav>
-
-        <div class="dk-sidebar__footer">
-            <small class="dk-sidebar__meta">&copy; {{ date('Y') }} Dinas Dukcapil Kab. Madiun</small>
-            <small class="dk-sidebar__meta text-xs">v 0.1.1</small>
-        </div>
     </aside>
 
     <div class="dk-main" data-main>
@@ -239,4 +219,3 @@
 </body>
 
 </html>
-

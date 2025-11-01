@@ -30,10 +30,10 @@
                                     <tbody>
                                         <tr>
                                             <td class="fw-semibold">Nama Wilayah</td>
-                                            <td class="text-end">Kabupaten Madiun</td>
+                                            <td class="text-end">Madiun</td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-semibold">Jumlah Kecamatan</td>
+                                            <td class="fw-semibold">Jumlah Daerah</td>
                                             <td class="text-end">{{ number_format($districtCount) }}</td>
                                         </tr>
                                         <tr>
@@ -91,7 +91,7 @@
                 <div class="dk-card h-100">
                     <div class="card-body p-0">
                         <div class="p-4 pb-0">
-                            <h6 class="dk-card__title mb-2">Peta Kabupaten Madiun</h6>
+                            <h6 class="dk-card__title mb-2">Peta Madiun</h6>
                         </div>
                         <div class="p-4 pt-0">
                             <div class="ratio ratio-16x9 dk-map">
@@ -148,9 +148,9 @@
             }
 
             // Safely create layers if geo data exists
-            var kabLayer = (window.kab) ? L.geoJSON(window.kab, { style: styleKab, onEachFeature: onEachFeatureFactory('Kabupaten') }).addTo(map) : L.layerGroup().addTo(map);
-            var kecLayer = (window.kec) ? L.geoJSON(window.kec, { style: styleKec, onEachFeature: onEachFeatureFactory('Kecamatan') }) : L.layerGroup();
-            var kelLayer = (window.kel) ? L.geoJSON(window.kel, { style: styleKel, onEachFeature: onEachFeatureFactory('Kelurahan/Desa') }) : L.layerGroup();
+            var kabLayer = (window.kab) ? L.geoJSON(window.kab, { style: styleKab, onEachFeature: onEachFeatureFactory('') }).addTo(map) : L.layerGroup().addTo(map);
+            var kecLayer = (window.kec) ? L.geoJSON(window.kec, { style: styleKec, onEachFeature: onEachFeatureFactory('') }) : L.layerGroup();
+            var kelLayer = (window.kel) ? L.geoJSON(window.kel, { style: styleKel, onEachFeature: onEachFeatureFactory('') }) : L.layerGroup();
 
             try {
                 var bounds = kabLayer.getBounds && kabLayer.getBounds();
@@ -160,15 +160,15 @@
             } catch(e){}
 
             var baseLayers = { 'Carto Light': carto, 'OpenStreetMap': osm };
-            var overlays = { 'Kabupaten': kabLayer, 'Kecamatan': kecLayer, 'Kelurahan/Desa': kelLayer };
+            var overlays = { '': kabLayer, '': kecLayer, '': kelLayer };
             L.control.layers(baseLayers, overlays, {collapsed:false, position:'topright'}).addTo(map);
 
             var legend = L.control({position: 'bottomright'});
             legend.onAdd = function (){
                 var div = L.DomUtil.create('div', 'legend');
-                div.innerHTML = '<div class="legend-item"><span class="legend-color" style="background:#c0392b"></span> Kabupaten</div>' +
-                    '<div class="legend-item" style="margin-top:6px"><span class="legend-color" style="background:#e67e22"></span> Kecamatan</div>' +
-                    '<div class="legend-item" style="margin-top:6px"><span class="legend-color" style="background:#2980b9"></span> Kelurahan/Desa</div>';
+                div.innerHTML = '<div class="legend-item"><span class="legend-color" style="background:#c0392b"></span> </div>' +
+                    '<div class="legend-item" style="margin-top:6px"><span class="legend-color" style="background:#e67e22"></span> </div>' +
+                    '<div class="legend-item" style="margin-top:6px"><span class="legend-color" style="background:#2980b9"></span> </div>';
                 return div;
             };
             legend.addTo(map);

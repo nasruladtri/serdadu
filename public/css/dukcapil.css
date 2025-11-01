@@ -1,3 +1,8 @@
+:root {
+  --dk-sidebar-width: 80px;
+  --dk-sidebar-width-collapsed: 72px;
+}
+
 .text-xs {
   font-size: 0.75rem;
 }
@@ -14,7 +19,7 @@ body.bg-body {
   top: 0;
   left: 0;
   height: 100vh;
-  width: 220px;
+  width: var(--dk-sidebar-width);
   padding: 1.5rem;
   background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
   color: #f8fafc;
@@ -28,13 +33,20 @@ body.bg-body {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
+  padding: 0.5rem 0 1.25rem;
+  margin-top: -0.35rem;
+}
+
+.dk-sidebar__logo {
+  width: 56px;
+  height: 56px;
 }
 
 .dk-sidebar__logo .dk-logo {
   display: inline-flex;
-  width: 44px;
-  height: 44px;
+  width: 100%;
+  height: 100%;
   border-radius: 12px;
   background: linear-gradient(135deg, #0891b2 0%, #1d4ed8 100%);
   color: #ffffff;
@@ -45,10 +57,10 @@ body.bg-body {
 }
 
 .dk-sidebar__logo .dk-logo-img {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  object-fit: contain;
 }
 
 .dk-brand-title {
@@ -107,10 +119,20 @@ body.bg-body {
 }
 .dk-nav-link__label {
   flex: 1;
+  display: inline-block;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .dk-nav-link:hover,
 .dk-nav-link.active {
+  background: transparent;
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.dk-nav-link:hover .dk-nav-link__label,
+.dk-nav-link.active .dk-nav-link__label {
   background: rgba(14, 165, 233, 0.2);
   color: #ffffff;
 }
@@ -128,7 +150,7 @@ body.bg-body {
 }
 
 .dk-main {
-  margin-left: 220px;
+  margin-left: var(--dk-sidebar-width);
   min-height: 100vh;
   background: #e2e8f0;
 }
@@ -161,6 +183,7 @@ body.bg-body {
   text-align: left;
   align-items: flex-start;
   gap: 0.2rem;
+  margin-top: 0.9rem;
 }
 .dk-topbar__tagline-label {
   font-size: 1.05rem;
@@ -305,7 +328,7 @@ body.bg-body {
 }
 
 .dk-sidebar--collapsed {
-  width: 72px;
+  width: var(--dk-sidebar-width-collapsed);
 }
 .dk-sidebar--collapsed .dk-sidebar__brand-text,
 .dk-sidebar--collapsed .dk-nav-link .dk-nav-link__label,
@@ -326,7 +349,7 @@ body.bg-body {
   margin: 0;
 }
 .dk-main--expanded {
-  margin-left: 72px;
+  margin-left: var(--dk-sidebar-width-collapsed);
 }
 
 .dk-sidebar__toggle {
@@ -688,10 +711,11 @@ body.bg-body {
   }
 
   .dk-topbar__tagline {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-top: 0;
+  }
 
   .dk-topbar__tagline-label {
     font-size: 1rem;
