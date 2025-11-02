@@ -1,0 +1,373 @@
+@push('scripts')
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="{{ asset('map/Peta Madiun/kab.js') }}"></script>
+    <script src="{{ asset('map/Peta Madiun/kec.js') }}"></script>
+    <script src="{{ asset('map/Peta Madiun/kel.js') }}"></script>
+
+    <script>
+        (function () {
+            var mapStats = @json($mapStats ?? [
+                'districts' => ['by_code' => (object)[], 'by_slug' => (object)[]],
+                'villages' => ['by_code' => (object)[], 'by_slug' => (object)[]],
+            ]);
+
+            function ensureStats(section) {
+                section = section || {};
+                return {
+                    by_code: section.by_code || {},
+                    by_slug: section.by_slug || {},
+                };
+            }
+
+            var districtStatsIndex = ensureStats(mapStats.districts);
+            var villageStatsIndex = ensureStats(mapStats.villages);
+
+            var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap',
+            });
+            var carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors © CARTO',
+            });
+            var satellite = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibmFzcnVsYWR0ciIsImEiOiJjbWhoanA3amcwc2N1MnJwcTZybDM3NzhpIn0.WcsQUaPJbiXxWNJWfwbD1w', {
+                maxZoom: 20,
+                tileSize: 512,
+                zoomOffset: -1,
+                attribution: 'Imagery © Mapbox © OpenStreetMap',
+            });
+
+            var map = L.map('landing-map', {
+                center: [-7.629, 111.515],
+                zoom: 11,
+                layers: [carto],
+            });
+
+            map.createPane('kabPane');
+            map.getPane('kabPane').style.zIndex = 410;
+            map.getPane('kabPane').style.pointerEvents = 'none';
+            map.createPane('kecPane');
+            map.getPane('kecPane').style.zIndex = 420;
+            map.createPane('kelPane');
+            map.getPane('kelPane').style.zIndex = 430;
+
+            L.control.scale({ imperial: false, maxWidth: 160 }).addTo(map);
+
+            function styleKab() {
+                return { color: '#c0392b', weight: 2, fill: false };
+            }
+            function styleKec() {
+                return { color: '#faff09', weight: 1.6, fillColor: '#faff09', fillOpacity: 0 };
+            }
+            function styleKel() {
+                return { color: '#8e44ad', weight: 0.8, fillColor: '#8e44ad', fillOpacity: 0 };
+            }
+
+            function formatNumber(value) {
+                var num = Number(value);
+                return Number.isFinite(num) ? num.toLocaleString('id-ID') : '-';
+            }
+
+            function buildPopupContent(title, rows) {
+                var html = '<div style="max-width:280px">';
+                if (title) html += '<strong>' + title + '</strong>';
+                if (rows && rows.length) {
+                    html += '<table style="margin-top:6px">';
+                    rows.forEach(function (row) {
+                        html += '<tr><td style="padding:2px 6px;vertical-align:top;color:#555;font-size:13px"><strong>'
+                            + row.label + '</strong></td><td style="padding:2px 6px;vertical-align:top;color:#222;font-size:13px">'
+                            + row.value + '</td></tr>';
+                    });
+                    html += '</table>';
+                }
+                html += '</div>';
+                return html;
+            }
+
+            function normalizeName(value) {
+                if (value === null || value === undefined) return null;
+                var text = String(value).toLowerCase();
+                if (text.normalize) {
+                    text = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                }
+                return text.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || null;
+            }
+
+            function slugVariants(slug) {
+                if (!slug) return [];
+                var variants = [slug];
+                var noDash = slug.replace(/-/g, '');
+                if (noDash && variants.indexOf(noDash) === -1) variants.push(noDash);
+                return variants;
+            }
+
+            function codeAliases(value) {
+                var digits = (value === undefined || value === null) ? '' : String(value).replace(/\D+/g, '');
+                if (!digits) return [];
+                var aliases = [digits];
+                if (digits.length >= 3) aliases.push(digits.slice(-3).padStart(3, '0'));
+                if (digits.length >= 4) aliases.push(digits.slice(-4).padStart(4, '0'));
+                if (digits.length >= 5) aliases.push(digits.slice(-5).padStart(5, '0'));
+                return Array.from(new Set(aliases));
+            }
+
+            function highlightFeature(layer, color, weight, fillOpacity) {
+                if (!layer || !layer.setStyle) return;
+                layer.setStyle({ weight: weight, color: color, fillColor: color, fillOpacity: fillOpacity });
+                if (layer.bringToFront) layer.bringToFront();
+            }
+
+            function resetFeatureStyle(layer, styleFn) {
+                if (!layer || !layer.setStyle) return;
+                layer.setStyle(styleFn(layer.feature));
+                if (layer.bringToFront) layer.bringToFront();
+            }
+
+            function buildDistrictFilter(selectedCode, selectedSlug) {
+                var codeVal = selectedCode ? String(selectedCode).trim() : '';
+                var slugVal = selectedSlug ? normalizeName(selectedSlug) : '';
+                if (!codeVal && !slugVal) {
+                    return function () { return true; };
+                }
+                var selectedAliases = codeAliases(codeVal);
+                var slugOptions = slugVariants(slugVal);
+                return function (feature) {
+                    var props = feature && feature.properties ? feature.properties : {};
+                    var featureAliases = codeAliases(props.kd_kecamatan);
+                    for (var i = 0; i < selectedAliases.length; i++) {
+                        if (featureAliases.indexOf(selectedAliases[i]) !== -1) return true;
+                    }
+                    if (slugOptions.length) {
+                        var featureSlug = normalizeName(props.nm_kecamatan);
+                        var featureVariants = slugVariants(featureSlug);
+                        for (var s = 0; s < slugOptions.length; s++) {
+                            if (featureVariants.indexOf(slugOptions[s]) !== -1) return true;
+                        }
+                    }
+                    return false;
+                };
+            }
+
+            function findDistrictStats(props) {
+                var aliases = codeAliases(props && props.kd_kecamatan);
+                for (var i = 0; i < aliases.length; i++) {
+                    if (districtStatsIndex.by_code[aliases[i]]) {
+                        return districtStatsIndex.by_code[aliases[i]];
+                    }
+                }
+                var slug = normalizeName(props && props.nm_kecamatan);
+                var variants = slugVariants(slug);
+                for (var j = 0; j < variants.length; j++) {
+                    if (districtStatsIndex.by_slug[variants[j]]) {
+                        return districtStatsIndex.by_slug[variants[j]];
+                    }
+                }
+                return null;
+            }
+
+            function findVillageStats(props, districtState) {
+                var stats = null;
+                var districtAliases = districtState && districtState.codeAliases && districtState.codeAliases.length
+                    ? districtState.codeAliases
+                    : codeAliases(props && props.kd_kecamatan);
+                var villageAliases = codeAliases(props && props.kd_kelurahan);
+                districtAliases.some(function (dAlias) {
+                    return villageAliases.some(function (vAlias) {
+                        var key = dAlias + '-' + vAlias;
+                        if (villageStatsIndex.by_code[key]) {
+                            stats = villageStatsIndex.by_code[key];
+                            return true;
+                        }
+                        return false;
+                    });
+                });
+                if (!stats) {
+                    var districtVariants = districtState && districtState.slugVariants && districtState.slugVariants.length
+                        ? districtState.slugVariants
+                        : slugVariants(normalizeName(props && props.nm_kecamatan));
+                    var villageVariants = slugVariants(normalizeName(props && props.nm_kelurahan));
+                    districtVariants.some(function (dSlug) {
+                        return villageVariants.some(function (vSlug) {
+                            var key = dSlug + '-' + vSlug;
+                            if (villageStatsIndex.by_slug[key]) {
+                                stats = villageStatsIndex.by_slug[key];
+                                return true;
+                            }
+                            return false;
+                        });
+                    });
+                }
+                return stats;
+            }
+
+            function bindDistrictFeature(feature, layer) {
+                var props = feature && feature.properties ? feature.properties : {};
+                var stats = findDistrictStats(props);
+                var name = stats && stats.name ? stats.name : (props.nm_kecamatan || 'Kecamatan');
+                var rows = [];
+                if (stats) {
+                    rows.push({ label: 'L (Laki-laki)', value: formatNumber(stats.male) });
+                    rows.push({ label: 'P (Perempuan)', value: formatNumber(stats.female) });
+                    rows.push({ label: 'Total Penduduk', value: formatNumber(stats.total) });
+                } else {
+                    rows.push({ label: 'Informasi', value: 'Data penduduk belum tersedia' });
+                }
+                if (!layer._hoverColor) { layer._hoverColor = '#27ae60'; }
+                layer.on({
+                    mouseover: function (e) {
+                        highlightFeature(e.target, e.target._hoverColor || '#27ae60', 2, 0.18);
+                    },
+                    mouseout: function (e) {
+                        resetFeatureStyle(e.target, styleKec);
+                    },
+                    popupopen: function (e) {
+                        highlightFeature(e.target, e.target._hoverColor || '#27ae60', 2, 0.18);
+                    },
+                    popupclose: function (e) {
+                        resetFeatureStyle(e.target, styleKec);
+                    }
+                });
+                layer.bindPopup(buildPopupContent('Kecamatan ' + name, rows));
+            }
+
+            function bindVillageFeatureFactory(districtState) {
+                return function (feature, layer) {
+                    var props = feature && feature.properties ? feature.properties : {};
+                    var stats = districtState ? findVillageStats(props, districtState) : null;
+                    var districtFallback = findDistrictStats(props);
+                    var districtName = (stats && stats.district_name) ||
+                        (districtFallback && districtFallback.name) ||
+                        props.nm_kecamatan || '-';
+                    var villageName = (stats && stats.name) || props.nm_kelurahan || 'Desa/Kelurahan';
+                    var rows = [
+                        { label: 'Kecamatan', value: districtName || '-' }
+                    ];
+                    if (stats) {
+                        rows.push({ label: 'L (Laki-laki)', value: formatNumber(stats.male) });
+                        rows.push({ label: 'P (Perempuan)', value: formatNumber(stats.female) });
+                        rows.push({ label: 'Total Penduduk', value: formatNumber(stats.total) });
+                    } else {
+                        rows.push({ label: 'Informasi', value: 'Data penduduk belum tersedia' });
+                    }
+                    if (!layer._hoverColor) { layer._hoverColor = '#27ae60'; }
+                    layer.on({
+                        mouseover: function (e) {
+                            highlightFeature(e.target, e.target._hoverColor || '#27ae60', 1.2, 0.18);
+                        },
+                        mouseout: function (e) {
+                            resetFeatureStyle(e.target, styleKel);
+                        },
+                        popupopen: function (e) {
+                            highlightFeature(e.target, e.target._hoverColor || '#27ae60', 1.4, 0.22);
+                        },
+                        popupclose: function (e) {
+                            resetFeatureStyle(e.target, styleKel);
+                        }
+                    });
+                    layer.bindPopup(buildPopupContent('Desa/Kelurahan ' + villageName, rows));
+                };
+            }
+
+            var kabLayer = (window.kab) ? L.geoJSON(window.kab, { style: styleKab, pane: 'kabPane' }).addTo(map) : L.layerGroup().addTo(map);
+            var kecLayer = null;
+            var kelLayer = null;
+
+            function rebuildDistrictLayers(filterState) {
+                filterState = filterState || { code: '', slug: '' };
+                var hasSelection = !!(filterState.code || filterState.slug);
+                var kecFilterFn = buildDistrictFilter(filterState.code, filterState.slug);
+
+                var selectedKecAliasSet = null;
+                if (hasSelection && window.kec && window.kec.features && window.kec.features.length) {
+                    selectedKecAliasSet = {};
+                    for (var i = 0; i < window.kec.features.length; i++) {
+                        var ft = window.kec.features[i];
+                        if (!kecFilterFn(ft)) continue;
+                        var props = ft && ft.properties ? ft.properties : {};
+                        codeAliases(props.kd_kecamatan).forEach(function (alias) {
+                            if (alias) selectedKecAliasSet[alias] = true;
+                        });
+                    }
+                }
+
+                if (kecLayer && map.hasLayer(kecLayer)) map.removeLayer(kecLayer);
+                if (kelLayer && map.hasLayer(kelLayer)) map.removeLayer(kelLayer);
+
+                kecLayer = (window.kec) ? L.geoJSON(window.kec, { filter: kecFilterFn, style: styleKec, onEachFeature: bindDistrictFeature, pane: 'kecPane' }) : L.layerGroup();
+
+                if (hasSelection && selectedKecAliasSet) {
+                    var districtState = {
+                        codeAliases: Object.keys(selectedKecAliasSet),
+                        slugVariants: slugVariants(normalizeName(filterState.slug || ''))
+                    };
+                    var kelFilterFn = function (feature) {
+                        var props = feature && feature.properties ? feature.properties : {};
+                        var aliases = codeAliases(props.kd_kecamatan);
+                        for (var i = 0; i < aliases.length; i++) {
+                            if (selectedKecAliasSet[aliases[i]]) return true;
+                        }
+                        return false;
+                    };
+                    var kelOnEach = bindVillageFeatureFactory(districtState);
+                    kelLayer = (window.kel) ? L.geoJSON(window.kel, { filter: kelFilterFn, style: styleKel, onEachFeature: kelOnEach, pane: 'kelPane' }) : L.layerGroup();
+                } else {
+                    kelLayer = null;
+                }
+
+                if (kecLayer && kecLayer.addTo) kecLayer.addTo(map);
+                if (kelLayer && kelLayer.addTo) kelLayer.addTo(map);
+                if (!map.hasLayer(kabLayer)) kabLayer.addTo(map);
+
+                if (kelLayer && kelLayer.bringToFront) kelLayer.bringToFront();
+                if (kecLayer && kecLayer.bringToFront) kecLayer.bringToFront();
+                if (kabLayer && kabLayer.bringToFront) kabLayer.bringToFront();
+
+                var bounds = null;
+                try {
+                    if (kelLayer && kelLayer.getBounds) {
+                        var kelBounds = kelLayer.getBounds();
+                        if (kelBounds && kelBounds.isValid()) bounds = kelBounds;
+                    }
+                    if (!bounds && kecLayer && kecLayer.getBounds) {
+                        var kecBounds = kecLayer.getBounds();
+                        if (kecBounds && kecBounds.isValid()) bounds = kecBounds;
+                    }
+                    if (!bounds && kabLayer && kabLayer.getBounds) {
+                        var kabBounds = kabLayer.getBounds();
+                        if (kabBounds && kabBounds.isValid()) bounds = kabBounds;
+                    }
+                    if (bounds && bounds.isValid()) {
+                        map.fitBounds(bounds.pad(0.05));
+                    }
+                } catch (error) {}
+            }
+
+            var districtFilterEl = document.getElementById('landing-district-filter');
+            var currentDistrictFilter = { code: '', slug: '' };
+            if (districtFilterEl) {
+                var initialOption = districtFilterEl.selectedOptions && districtFilterEl.selectedOptions.length ? districtFilterEl.selectedOptions[0] : null;
+                currentDistrictFilter = {
+                    code: districtFilterEl.value or '',
+                    slug: initialOption ? (initialOption.getAttribute('data-slug') or '') : ''
+                };
+                districtFilterEl.addEventListener('change', function () {
+                    var option = this.selectedOptions and this.selectedOptions.length ? this.selectedOptions[0] : null;
+                    currentDistrictFilter = {
+                        code: this.value or '',
+                        slug: option ? (option.getAttribute('data-slug') or '') : ''
+                    };
+                    rebuildDistrictLayers(currentDistrictFilter);
+                });
+            }
+
+            var baseLayers = {
+                'Carto Light': carto,
+                'OpenStreetMap': osm,
+                'Citra Satelit': satellite
+            };
+            L.control.layers(baseLayers, null, { collapsed: false, position: 'topright' }).addTo(map);
+
+            rebuildDistrictLayers(currentDistrictFilter);
+        })();
+    </script>
+@endpush

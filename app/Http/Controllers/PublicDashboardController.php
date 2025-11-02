@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use App\Models\District;
 use App\Models\Village;
 
@@ -31,11 +32,15 @@ class PublicDashboardController extends Controller
     public function landing()
     {
         $period = $this->latestPeriod();
+        $districts = District::orderBy('name')->get(['id', 'name', 'code']);
 
         if (!$period) {
             return view('public.landing', [
                 'title' => 'Beranda',
                 'period' => null,
+                'mapStats' => $this->emptyMapStats(),
+                'districtOptions' => $districts,
+                'districtCount' => $districts->count(),
             ]);
         }
 
@@ -58,9 +63,11 @@ class PublicDashboardController extends Controller
             'wajibKtp' => $wajibKtp,
             'ageGroups' => $ageGroups,
             'districtRanking' => $districtRanking,
-            'districtCount' => District::count(),
+            'districtCount' => $districts->count(),
             'villageCount' => Village::count(),
             'education' => $education,
+            'mapStats' => $this->mapPopulationSummary($period),
+            'districtOptions' => $districts,
         ]);
     }
 
@@ -438,6 +445,164 @@ class PublicDashboardController extends Controller
             ->orderByDesc('total')
             ->limit($limit)
             ->get();
+    }
+
+    private function mapPopulationSummary(?array $period): array
+    {
+        if (!$period) {
+            return $this->emptyMapStats();
+        }
+
+        $districtRows = DB::table('pop_gender')
+            ->join('districts', 'districts.id', '=', 'pop_gender.district_id')
+            ->select('districts.id', 'districts.code', 'districts.name')
+            ->selectRaw('SUM(pop_gender.male) as male')
+            ->selectRaw('SUM(pop_gender.female) as female')
+            ->selectRaw('SUM(pop_gender.total) as total')
+            ->where('pop_gender.year', $period['year'])
+            ->where('pop_gender.semester', $period['semester'])
+            ->groupBy('districts.id', 'districts.code', 'districts.name')
+            ->get();
+
+        $districtsByCode = [];
+        $districtsBySlug = [];
+        foreach ($districtRows as $row) {
+            $entry = [
+                'code' => $row->code,
+                'name' => $row->name,
+                'male' => (int) ($row->male ?? 0),
+                'female' => (int) ($row->female ?? 0),
+                'total' => (int) ($row->total ?? 0),
+            ];
+
+            foreach ($this->codeAliases($row->code ?? null) as $alias) {
+                $districtsByCode[$alias] = $entry;
+            }
+
+            if ($slug = $this->normalizeNameKey($row->name ?? null)) {
+                $districtsBySlug[$slug] = $entry;
+            }
+        }
+
+        $villageRows = DB::table('pop_gender')
+            ->join('villages', 'villages.id', '=', 'pop_gender.village_id')
+            ->join('districts', 'districts.id', '=', 'villages.district_id')
+            ->select(
+                'villages.id as village_id',
+                'villages.code as village_code',
+                'villages.name as village_name',
+                'districts.id as district_id',
+                'districts.code as district_code',
+                'districts.name as district_name'
+            )
+            ->selectRaw('SUM(pop_gender.male) as male')
+            ->selectRaw('SUM(pop_gender.female) as female')
+            ->selectRaw('SUM(pop_gender.total) as total')
+            ->where('pop_gender.year', $period['year'])
+            ->where('pop_gender.semester', $period['semester'])
+            ->groupBy(
+                'villages.id',
+                'villages.code',
+                'villages.name',
+                'districts.id',
+                'districts.code',
+                'districts.name'
+            )
+            ->get();
+
+        $villagesByCode = [];
+        $villagesBySlug = [];
+        foreach ($villageRows as $row) {
+            $entry = [
+                'code' => $row->village_code,
+                'name' => $row->village_name,
+                'district_code' => $row->district_code,
+                'district_name' => $row->district_name,
+                'male' => (int) ($row->male ?? 0),
+                'female' => (int) ($row->female ?? 0),
+                'total' => (int) ($row->total ?? 0),
+            ];
+
+            $districtAliases = $this->codeAliases($row->district_code ?? null);
+            $villageAliases = $this->codeAliases($row->village_code ?? null);
+            foreach ($districtAliases as $districtAlias) {
+                foreach ($villageAliases as $villageAlias) {
+                    $villagesByCode[$districtAlias . '-' . $villageAlias] = $entry;
+                }
+            }
+
+            $districtSlug = $this->normalizeNameKey($row->district_name ?? null);
+            $villageSlug = $this->normalizeNameKey($row->village_name ?? null);
+            if ($districtSlug && $villageSlug) {
+                $villagesBySlug[$districtSlug . '-' . $villageSlug] = $entry;
+            }
+        }
+
+        return [
+            'districts' => [
+                'by_code' => $districtsByCode,
+                'by_slug' => $districtsBySlug,
+            ],
+            'villages' => [
+                'by_code' => $villagesByCode,
+                'by_slug' => $villagesBySlug,
+            ],
+        ];
+    }
+
+    private function codeAliases($code): array
+    {
+        if ($code === null) {
+            return [];
+        }
+
+        $digits = preg_replace('/\D/', '', (string) $code);
+        if ($digits === '') {
+            return [];
+        }
+
+        $aliases = [$digits];
+        if (strlen($digits) >= 3) {
+            $aliases[] = str_pad(substr($digits, -3), 3, '0', STR_PAD_LEFT);
+        }
+        if (strlen($digits) >= 4) {
+            $aliases[] = str_pad(substr($digits, -4), 4, '0', STR_PAD_LEFT);
+        }
+        if (strlen($digits) >= 5) {
+            $aliases[] = str_pad(substr($digits, -5), 5, '0', STR_PAD_LEFT);
+        }
+
+        return array_values(array_unique(array_filter($aliases)));
+    }
+
+    private function normalizeNameKey(?string $name): ?string
+    {
+        if ($name === null) {
+            return null;
+        }
+
+        $slug = Str::of($name)
+            ->lower()
+            ->ascii()
+            ->replaceMatches('/[^a-z0-9]+/', '-')
+            ->trim('-')
+            ->value();
+
+        return $slug === '' ? null : $slug;
+    }
+
+    private function emptyMapStats(): array
+    {
+        return [
+            'districts' => [
+                'by_code' => [],
+                'by_slug' => [],
+            ],
+            'villages' => [
+                'by_code' => [],
+                'by_slug' => [],
+            ],
+        ];
     }
 
     private function areaPopulationTable(?array $period, array $filters): array
@@ -1288,4 +1453,3 @@ class PublicDashboardController extends Controller
     }
 
 }
-
