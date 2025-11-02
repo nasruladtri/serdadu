@@ -91,7 +91,7 @@
                 <div class="dk-card h-100">
                     <div class="card-body p-0">
                         <div class="p-4 pb-0 d-flex flex-column flex-lg-row align-items-lg-center gap-3">
-                            <h6 class="dk-card__title mb-0">Peta Madiun</h6>
+                            <h6 class="dk-card__title mb-0">Peta Persebaran Penduduk Kabupaten Madiun</h6>
                             @if(!empty($districtOptions) && $districtOptions->count())
                                 <div class="ms-lg-auto w-100 w-lg-auto">
                                     <label for="landing-district-filter" class="form-label text-xs text-muted mb-1">Kecamatan</label>
@@ -189,7 +189,7 @@
             }
 
             function styleKec() {
-                return { color: '#faff09', weight: 1.7, fillColor: '#faff09', fillOpacity: 0 };
+                return { color: '#63d199', weight: 1.7, fillColor: '#63d199', fillOpacity: 0 };
             }
 
             function styleKel() {
@@ -264,7 +264,6 @@
             var kabLayer = window.kab ? L.geoJSON(window.kab, { style: styleKab, pane: 'kabPane' }).addTo(map) : L.layerGroup().addTo(map);
             var kecLayer = null;
             var kelLayer = null;
-            var hoverOutlineLayer = null;
 
             function ensureLayerOrder() {
                 if (kelLayer && kelLayer.bringToFront) {
@@ -278,11 +277,99 @@
                 }
             }
 
-            function clearHoverOutline() {
-                if (hoverOutlineLayer && map.hasLayer(hoverOutlineLayer)) {
-                    map.removeLayer(hoverOutlineLayer);
+            function removeLayer(layer) {
+                if (layer && map.hasLayer(layer)) {
+                    map.removeLayer(layer);
                 }
-                hoverOutlineLayer = null;
+            }
+
+            var hoverHighlightLayer = null;
+
+            function clearHoverHighlight() {
+                if (hoverHighlightLayer && map.hasLayer(hoverHighlightLayer)) {
+                    map.removeLayer(hoverHighlightLayer);
+                }
+                hoverHighlightLayer = null;
+            }
+
+            function createKecamatanLayer(filterFn) {
+                if (!window.kec) {
+                    return L.layerGroup();
+                }
+
+                var options = {
+                    style: styleKec,
+                    onEachFeature: bindDistrictFeature,
+                    pane: 'kecPane'
+                };
+
+                if (typeof filterFn === 'function') {
+                    options.filter = filterFn;
+                }
+
+                return L.geoJSON(window.kec, options);
+            }
+
+            function createKelurahanLayer(districtState, filterFn) {
+                if (!window.kel) {
+                    return L.layerGroup();
+                }
+
+                var options = {
+                    style: styleKel,
+                    onEachFeature: bindVillageFeatureFactory(districtState),
+                    pane: 'kelPane'
+                };
+
+                if (typeof filterFn === 'function') {
+                    options.filter = filterFn;
+                }
+
+                return L.geoJSON(window.kel, options);
+            }
+
+            function addInteractiveLayers(layers) {
+                layers = Array.isArray(layers) ? layers : [layers];
+
+                layers.forEach(function (layer) {
+                    if (layer && layer.addTo) {
+                        layer.addTo(map);
+                    }
+                });
+
+                if (!map.hasLayer(kabLayer)) {
+                    kabLayer.addTo(map);
+                }
+
+                ensureLayerOrder();
+            }
+
+            function fitToLayers(primaryLayers) {
+                var layers = Array.isArray(primaryLayers) ? primaryLayers : [primaryLayers];
+                var bounds = null;
+
+                layers.some(function (layer) {
+                    if (!layer || !layer.getBounds) {
+                        return false;
+                    }
+                    var layerBounds = layer.getBounds();
+                    if (layerBounds && layerBounds.isValid()) {
+                        bounds = layerBounds;
+                        return true;
+                    }
+                    return false;
+                });
+
+                if (!bounds && kabLayer && kabLayer.getBounds) {
+                    var kabBounds = kabLayer.getBounds();
+                    if (kabBounds && kabBounds.isValid()) {
+                        bounds = kabBounds;
+                    }
+                }
+
+                if (bounds && bounds.isValid()) {
+                    map.fitBounds(bounds.pad(0.05));
+                }
             }
 
             function highlightFeature(layer, color, weight, fillOpacity) {
@@ -290,28 +377,29 @@
                     return;
                 }
 
-                clearHoverOutline();
+                clearHoverHighlight();
 
                 if (layer.bringToFront) {
                     layer.bringToFront();
                 }
 
                 if (typeof layer.toGeoJSON === 'function') {
-                    var outlineWeight = Math.max(0.6, Number(weight) - 0.4);
-                    hoverOutlineLayer = L.geoJSON(layer.toGeoJSON(), {
+                    var geoJson = layer.toGeoJSON();
+                    var strokeWeight = typeof weight === 'number' ? weight : 2;
+                    var fillAlpha = typeof fillOpacity === 'number' ? fillOpacity : 0;
+
+                    hoverHighlightLayer = L.geoJSON(geoJson, {
                         style: function () {
                             return {
                                 color: color,
-                                weight: outlineWeight,
+                                weight: strokeWeight,
                                 opacity: 1,
-                                fill: Boolean(fillOpacity && fillOpacity > 0),
                                 fillColor: color,
-                                fillOpacity: fillOpacity || 0,
-                                pane: 'hoverPane'
+                                fillOpacity: fillAlpha
                             };
                         },
-                        interactive: false,
-                        pane: 'hoverPane'
+                        pane: 'hoverPane',
+                        interactive: false
                     }).addTo(map);
                 }
 
@@ -319,7 +407,7 @@
             }
 
             function resetFeatureStyle(layer, styleFn) {
-                clearHoverOutline();
+                clearHoverHighlight();
 
                 if (!layer || !layer.setStyle || typeof styleFn !== 'function') {
                     return;
@@ -416,6 +504,120 @@
                 return stats;
             }
 
+            function buildSelectedDistrictState(filterState) {
+                filterState = filterState || { code: '', slug: '' };
+                var hasSelection = Boolean(filterState.code || filterState.slug);
+
+                if (!hasSelection || !window.kec || !Array.isArray(window.kec.features)) {
+                    return null;
+                }
+
+                var filterFn = buildDistrictFilter(filterState.code, filterState.slug);
+                var aliasSet = {};
+                var slugSet = {};
+                var districtName = null;
+                var matchCount = 0;
+
+                window.kec.features.forEach(function (feature) {
+                    if (!filterFn(feature)) {
+                        return;
+                    }
+
+                    matchCount += 1;
+
+                    var props = feature && feature.properties ? feature.properties : {};
+
+                    codeAliases(props.kd_kecamatan).forEach(function (alias) {
+                        if (alias) {
+                            aliasSet[alias] = true;
+                        }
+                    });
+
+                    slugVariants(normalizeName(props.nm_kecamatan)).forEach(function (slug) {
+                        if (slug) {
+                            slugSet[slug] = true;
+                        }
+                    });
+
+                    if (!districtName && props.nm_kecamatan) {
+                        districtName = props.nm_kecamatan;
+                    }
+                });
+
+                if (!matchCount) {
+                    return null;
+                }
+
+                if (filterState.slug) {
+                    slugVariants(normalizeName(filterState.slug)).forEach(function (slug) {
+                        if (slug) {
+                            slugSet[slug] = true;
+                        }
+                    });
+                }
+
+                return {
+                    code: filterState.code || '',
+                    slug: filterState.slug || '',
+                    filterFn: filterFn,
+                    aliasSet: aliasSet,
+                    slugSet: Object.keys(slugSet).length ? slugSet : null,
+                    name: districtName
+                };
+            }
+
+            function renderKabupatenOverview() {
+                removeLayer(kecLayer);
+                removeLayer(kelLayer);
+
+                kecLayer = createKecamatanLayer(null);
+                kelLayer = null;
+
+                addInteractiveLayers(kecLayer);
+                fitToLayers(kecLayer);
+            }
+
+            function renderSelectedDistrict(selectionState) {
+                removeLayer(kecLayer);
+                removeLayer(kelLayer);
+
+                var districtState = {
+                    codeAliases: Object.keys(selectionState.aliasSet || {}),
+                    slugVariants: selectionState.slugSet ? Object.keys(selectionState.slugSet) : [],
+                    name: selectionState.name
+                };
+
+                kecLayer = createKecamatanLayer(selectionState.filterFn);
+
+                var kelFilterFn = function (feature) {
+                    var props = feature && feature.properties ? feature.properties : {};
+                    var aliases = codeAliases(props.kd_kecamatan);
+                    for (var i = 0; i < aliases.length; i++) {
+                        if (selectionState.aliasSet[aliases[i]]) {
+                            return true;
+                        }
+                    }
+
+                    if (selectionState.slugSet) {
+                        var slug = normalizeName(props.nm_kecamatan);
+                        if (slug && selectionState.slugSet[slug]) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                };
+
+                kelLayer = createKelurahanLayer(districtState, kelFilterFn);
+
+                if (kelLayer && typeof kelLayer.getLayers === 'function' && kelLayer.getLayers().length === 0) {
+                    kelLayer = null;
+                }
+
+                addInteractiveLayers([kecLayer, kelLayer]);
+                fitToLayers([kelLayer, kecLayer]);
+            }
+
             function bindDistrictFeature(feature, layer) {
                 var props = feature && feature.properties ? feature.properties : {};
                 var stats = findDistrictStats(props);
@@ -431,18 +633,18 @@
                 }
 
                 if (!layer._hoverColor) {
-                    layer._hoverColor = '#27ae60';
+                    layer._hoverColor = '#00b4d8';
                 }
 
                 layer.on({
                     mouseover: function (e) {
-                        highlightFeature(e.target, e.target._hoverColor || '#27ae60', 2, 0.18);
+                        highlightFeature(e.target, e.target._hoverColor || '#00b4d8', 2, 0.18);
                     },
                     mouseout: function (e) {
                         resetFeatureStyle(e.target, styleKec);
                     },
                     popupopen: function (e) {
-                        highlightFeature(e.target, e.target._hoverColor || '#27ae60', 2.2, 0.2);
+                        highlightFeature(e.target, e.target._hoverColor || '#00b4d8', 2.2, 0.2);
                     },
                     popupclose: function (e) {
                         resetFeatureStyle(e.target, styleKec);
@@ -478,18 +680,18 @@
                     }
 
                     if (!layer._hoverColor) {
-                        layer._hoverColor = '#27ae60';
+                        layer._hoverColor = '#00b4d8';
                     }
 
                     layer.on({
                         mouseover: function (e) {
-                            highlightFeature(e.target, e.target._hoverColor || '#27ae60', 1.4, 0.2);
+                            highlightFeature(e.target, e.target._hoverColor || '#00b4d8', 1.4, 0.2);
                         },
                         mouseout: function (e) {
                             resetFeatureStyle(e.target, styleKel);
                         },
                         popupopen: function (e) {
-                            highlightFeature(e.target, e.target._hoverColor || '#27ae60', 1.6, 0.24);
+                            highlightFeature(e.target, e.target._hoverColor || '#00b4d8', 1.6, 0.24);
                         },
                         popupclose: function (e) {
                             resetFeatureStyle(e.target, styleKel);
@@ -502,124 +704,13 @@
 
             function rebuildDistrictLayers(filterState) {
                 filterState = filterState || { code: '', slug: '' };
-                clearHoverOutline();
-                var hasSelection = Boolean(filterState.code || filterState.slug);
-                var kecFilterFn = buildDistrictFilter(filterState.code, filterState.slug);
 
-                var selectedKecAliasSet = null;
-                var selectedKecSlugSet = null;
-                var selectedDistrictName = null;
+                var selectionState = buildSelectedDistrictState(filterState);
 
-                if (hasSelection && window.kec && Array.isArray(window.kec.features)) {
-                    selectedKecAliasSet = {};
-                    selectedKecSlugSet = {};
-                    window.kec.features.forEach(function (feature) {
-                        if (!kecFilterFn(feature)) {
-                            return;
-                        }
-                        var props = feature && feature.properties ? feature.properties : {};
-                        codeAliases(props.kd_kecamatan).forEach(function (alias) {
-                            if (alias) {
-                                selectedKecAliasSet[alias] = true;
-                            }
-                        });
-                        slugVariants(normalizeName(props.nm_kecamatan)).forEach(function (slug) {
-                            if (slug) {
-                                selectedKecSlugSet[slug] = true;
-                            }
-                        });
-                        if (!selectedDistrictName && props.nm_kecamatan) {
-                            selectedDistrictName = props.nm_kecamatan;
-                        }
-                    });
-
-                    if (filterState.slug) {
-                        slugVariants(normalizeName(filterState.slug)).forEach(function (slug) {
-                            if (slug) {
-                                if (!selectedKecSlugSet) {
-                                    selectedKecSlugSet = {};
-                                }
-                                selectedKecSlugSet[slug] = true;
-                            }
-                        });
-                    }
-                }
-
-                if (kecLayer && map.hasLayer(kecLayer)) {
-                    map.removeLayer(kecLayer);
-                }
-                if (kelLayer && map.hasLayer(kelLayer)) {
-                    map.removeLayer(kelLayer);
-                }
-
-                kecLayer = window.kec ? L.geoJSON(window.kec, {
-                    filter: kecFilterFn,
-                    style: styleKec,
-                    onEachFeature: bindDistrictFeature,
-                    pane: 'kecPane'
-                }) : L.layerGroup();
-
-                if (hasSelection && selectedKecAliasSet && Object.keys(selectedKecAliasSet).length) {
-                    var districtState = {
-                        codeAliases: Object.keys(selectedKecAliasSet),
-                        slugVariants: selectedKecSlugSet ? Object.keys(selectedKecSlugSet) : [],
-                        name: selectedDistrictName
-                    };
-
-                    var kelFilterFn = function (feature) {
-                        var props = feature && feature.properties ? feature.properties : {};
-                        var aliases = codeAliases(props.kd_kecamatan);
-                        for (var i = 0; i < aliases.length; i++) {
-                            if (selectedKecAliasSet[aliases[i]]) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    };
-
-                    kelLayer = window.kel ? L.geoJSON(window.kel, {
-                        filter: kelFilterFn,
-                        style: styleKel,
-                        onEachFeature: bindVillageFeatureFactory(districtState),
-                        pane: 'kelPane'
-                    }) : L.layerGroup();
+                if (selectionState) {
+                    renderSelectedDistrict(selectionState);
                 } else {
-                    kelLayer = null;
-                }
-
-                if (kecLayer && kecLayer.addTo) {
-                    kecLayer.addTo(map);
-                }
-                if (kelLayer && kelLayer.addTo) {
-                    kelLayer.addTo(map);
-                }
-                if (!map.hasLayer(kabLayer)) {
-                    kabLayer.addTo(map);
-                }
-
-                ensureLayerOrder();
-
-                var bounds = null;
-                if (kelLayer && kelLayer.getBounds) {
-                    var kelBounds = kelLayer.getBounds();
-                    if (kelBounds && kelBounds.isValid()) {
-                        bounds = kelBounds;
-                    }
-                }
-                if (!bounds && kecLayer && kecLayer.getBounds) {
-                    var kecBounds = kecLayer.getBounds();
-                    if (kecBounds && kecBounds.isValid()) {
-                        bounds = kecBounds;
-                    }
-                }
-                if (!bounds && kabLayer && kabLayer.getBounds) {
-                    var kabBounds = kabLayer.getBounds();
-                    if (kabBounds && kabBounds.isValid()) {
-                        bounds = kabBounds;
-                    }
-                }
-                if (bounds && bounds.isValid()) {
-                    map.fitBounds(bounds.pad(0.05));
+                    renderKabupatenOverview();
                 }
             }
 
@@ -658,4 +749,3 @@
         })();
     </script>
 @endpush
-
