@@ -178,34 +178,9 @@
             map.getPane('kabPane').style.zIndex = 480;
             map.getPane('kabPane').style.pointerEvents = 'none';
 
-            var kabPaneElement = map.getPane('kabPane');
-            var kabPaneDefaultZIndex = kabPaneElement && kabPaneElement.style && kabPaneElement.style.zIndex
-                ? kabPaneElement.style.zIndex
-                : '480';
-            var kabPaneDefaultZIndexValue = parseInt(kabPaneDefaultZIndex, 10);
-            if (!isFinite(kabPaneDefaultZIndexValue)) {
-                kabPaneDefaultZIndexValue = 480;
-                kabPaneDefaultZIndex = String(kabPaneDefaultZIndexValue);
-            }
-            var kabPaneHighlightZIndex = String(Math.max(0, kabPaneDefaultZIndexValue - 40));
-            var kabPaneHighlightRefs = 0;
-
-            function setKabPaneHighlightActive(active) {
-                if (!kabPaneElement) {
-                    return;
-                }
-                if (active) {
-                    kabPaneHighlightRefs += 1;
-                    kabPaneElement.style.zIndex = kabPaneHighlightZIndex;
-                    return;
-                }
-                if (kabPaneHighlightRefs > 0) {
-                    kabPaneHighlightRefs -= 1;
-                }
-                if (kabPaneHighlightRefs === 0) {
-                    kabPaneElement.style.zIndex = kabPaneDefaultZIndex;
-                }
-            }
+            map.createPane('hoverPane');
+            map.getPane('hoverPane').style.zIndex = 600;
+            map.getPane('hoverPane').style.pointerEvents = 'none';
 
             L.control.scale({ imperial: false, maxWidth: 160 }).addTo(map);
 
@@ -289,34 +264,67 @@
             var kabLayer = window.kab ? L.geoJSON(window.kab, { style: styleKab, pane: 'kabPane' }).addTo(map) : L.layerGroup().addTo(map);
             var kecLayer = null;
             var kelLayer = null;
+            var hoverOutlineLayer = null;
 
             function ensureLayerOrder() {
-                if (kabLayer && kabLayer.bringToBack) {
-                    kabLayer.bringToBack();
+                if (kelLayer && kelLayer.bringToFront) {
+                    kelLayer.bringToFront();
                 }
                 if (kecLayer && kecLayer.bringToFront) {
                     kecLayer.bringToFront();
                 }
-                if (kelLayer && kelLayer.bringToFront) {
-                    kelLayer.bringToFront();
+                if (kabLayer && kabLayer.bringToFront) {
+                    kabLayer.bringToFront();
                 }
             }
 
+            function clearHoverOutline() {
+                if (hoverOutlineLayer && map.hasLayer(hoverOutlineLayer)) {
+                    map.removeLayer(hoverOutlineLayer);
+                }
+                hoverOutlineLayer = null;
+            }
+
             function highlightFeature(layer, color, weight, fillOpacity) {
-                if (!layer || !layer.setStyle) {
+                if (!layer) {
                     return;
                 }
-                layer.setStyle({ weight: weight, color: color, fillColor: color, fillOpacity: fillOpacity });
+
+                clearHoverOutline();
+
                 if (layer.bringToFront) {
                     layer.bringToFront();
                 }
+
+                if (typeof layer.toGeoJSON === 'function') {
+                    var outlineWeight = Math.max(0.6, Number(weight) - 0.4);
+                    hoverOutlineLayer = L.geoJSON(layer.toGeoJSON(), {
+                        style: function () {
+                            return {
+                                color: color,
+                                weight: outlineWeight,
+                                opacity: 1,
+                                fill: Boolean(fillOpacity && fillOpacity > 0),
+                                fillColor: color,
+                                fillOpacity: fillOpacity || 0,
+                                pane: 'hoverPane'
+                            };
+                        },
+                        interactive: false,
+                        pane: 'hoverPane'
+                    }).addTo(map);
+                }
+
                 ensureLayerOrder();
             }
 
             function resetFeatureStyle(layer, styleFn) {
+                clearHoverOutline();
+
                 if (!layer || !layer.setStyle || typeof styleFn !== 'function') {
                     return;
                 }
+
                 var baseStyle = styleFn(layer.feature);
                 layer.setStyle(baseStyle);
                 ensureLayerOrder();
@@ -428,20 +436,16 @@
 
                 layer.on({
                     mouseover: function (e) {
-                        setKabPaneHighlightActive(true);
                         highlightFeature(e.target, e.target._hoverColor || '#27ae60', 2, 0.18);
                     },
                     mouseout: function (e) {
                         resetFeatureStyle(e.target, styleKec);
-                        setKabPaneHighlightActive(false);
                     },
                     popupopen: function (e) {
-                        setKabPaneHighlightActive(true);
                         highlightFeature(e.target, e.target._hoverColor || '#27ae60', 2.2, 0.2);
                     },
                     popupclose: function (e) {
                         resetFeatureStyle(e.target, styleKec);
-                        setKabPaneHighlightActive(false);
                     }
                 });
 
@@ -479,20 +483,16 @@
 
                     layer.on({
                         mouseover: function (e) {
-                            setKabPaneHighlightActive(true);
                             highlightFeature(e.target, e.target._hoverColor || '#27ae60', 1.4, 0.2);
                         },
                         mouseout: function (e) {
                             resetFeatureStyle(e.target, styleKel);
-                            setKabPaneHighlightActive(false);
                         },
                         popupopen: function (e) {
-                            setKabPaneHighlightActive(true);
                             highlightFeature(e.target, e.target._hoverColor || '#27ae60', 1.6, 0.24);
                         },
                         popupclose: function (e) {
                             resetFeatureStyle(e.target, styleKel);
-                            setKabPaneHighlightActive(false);
                         }
                     });
 
@@ -502,6 +502,7 @@
 
             function rebuildDistrictLayers(filterState) {
                 filterState = filterState || { code: '', slug: '' };
+                clearHoverOutline();
                 var hasSelection = Boolean(filterState.code || filterState.slug);
                 var kecFilterFn = buildDistrictFilter(filterState.code, filterState.slug);
 
