@@ -22,7 +22,7 @@
             <div class="col-xl-4">
                 <div class="dk-card h-100">
                     <div class="card-body p-4">
-                        <h6 class="dk-card__title mb-3">Data Agregat Kependudukan Terbaru Risky Ali</h6>
+                        <h6 class="dk-card__title mb-3">Data Agregat Kependudukan Terbaru</h6>
                         <div class="mb-4">
                             <h6 class="text-uppercase text-xs text-muted mb-2">Wilayah</h6>
                             <div class="table-responsive">
