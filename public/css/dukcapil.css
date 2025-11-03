@@ -12,6 +12,7 @@ body.bg-body {
   font-family: "Poppins", "Inter", sans-serif;
   min-height: 100vh;
   color: #0f172a;
+  overflow-x: hidden;
 }
 
 .dk-sidebar {
@@ -804,4 +805,3 @@ body.bg-body {
     animation-iteration-count: 1 !important;
   }
 }
-

@@ -263,21 +263,28 @@
                 maxZoom: 19,
                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
             });
+            var cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            });
+            var cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            });
             var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; OpenStreetMap contributors',
             });
-            var satellite = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibmFzcnVsYWR0ciIsImEiOiJjbWhoanA3amcwc2N1MnJwcTZybDM3NzhpIn0.WcsQUaPJbiXxWNJWfwbD1w', {
+            var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
                 maxZoom: 20,
-                tileSize: 512,
-                zoomOffset: -1,
-                attribution: 'Imagery &copy; Mapbox, &copy; OpenStreetMap',
+                subdomains:['mt0','mt1','mt2','mt3'],
+                attribution: 'Imagery &copy; Google'
             });
 
             var map = L.map('landing-map', {
                 center: [-7.629, 111.515],
                 zoom: 11,
-                layers: [carto],
+                layers: [cartoDark],
             });
             var TARGET_VIEW_WIDTH_KM = 15;
 
@@ -1173,11 +1180,13 @@
 
             var baseLayers = {
                 'Carto Light': carto,
+                'Carto Dark': cartoDark,
+                'Carto Voyager': cartoVoyager,
                 'OpenStreetMap': osm,
-                'Citra Satelit (HD)': satellite
+                'Google Satellite': googleSat
             };
 
-            var layersControl = L.control.layers(baseLayers, {}, { collapsed: false, position: 'topright' }).addTo(map);
+            var layersControl = L.control.layers(baseLayers, {}, { collapsed: true, position: 'topright' }).addTo(map);
             var layersControlContainer = layersControl && typeof layersControl.getContainer === 'function'
                 ? layersControl.getContainer()
                 : null;
@@ -1187,7 +1196,21 @@
                 var legendContainer = L.DomUtil.create('div', 'dk-map-legend', layersListEl);
                 legendContainer.innerHTML =
                     '<div class="dk-map-legend__title">Keterangan Kecamatan</div>' +
-                    '<ul class="dk-map-legend__list"></ul>';
+                    '<ul class="dk-map-legend__list"></ul>' +
+                    '<div style="margin-top: 5px;">' +
+                        '<div class="dk-map-legend__item" style="display: flex; align-items: center; gap: 5px;">' +
+                            '<span style="display: inline-block; width: 20px; height: 3px; background-color: #c0392b;"></span>' +
+                            '<span>Garis Batas Kabupaten</span>' +
+                        '</div>' +
+                        '<div class="dk-map-legend__item" style="display: flex; align-items: center; gap: 5px;">' +
+                            '<span style="display: inline-block; width: 20px; height: 3px; background-color: #63d199;"></span>' +
+                            '<span>Garis Batas Kecamatan</span>' +
+                        '</div>' +
+                        '<div class="dk-map-legend__item" style="display: flex; align-items: center; gap: 5px;">' +
+                            '<span style="display: inline-block; width: 20px; height: 3px; background-color: #00b4d8;"></span>' +
+                            '<span>Garis Batas Desa/Kelurahan</span>' +
+                        '</div>' +
+                    '</div>';
                 districtLegendTitleEl = legendContainer.querySelector('.dk-map-legend__title');
                 districtLegendEl = legendContainer.querySelector('.dk-map-legend__list');
                 L.DomEvent.disableClickPropagation(legendContainer);
