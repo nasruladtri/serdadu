@@ -4,6 +4,14 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         /* Landing page map tweaks */
+        .dk-map {
+            position: relative;
+            width: 100%;
+            min-height: 420px;
+            flex: 1 1 auto;
+            height: 100%;
+        }
+
         .dk-map .leaflet-container {
             width: 100%;
             height: 100%;
@@ -105,13 +113,13 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 24px;
-            height: 24px;
-            border-radius: 12px;
+            width: 18px;
+            height: 18px;
+            border-radius: 9px;
             background: #1e88e5;
             color: #ffffff;
             font-weight: 600;
-            font-size: 0.75rem;
+            font-size: 0.6rem;
         }
     </style>
 @endpush
@@ -193,7 +201,7 @@
             </div>
             <div class="col-xl-8">
                 <div class="dk-card h-100">
-                    <div class="card-body p-0">
+                    <div class="card-body p-0 d-flex flex-column h-100">
                         <div class="p-4 pb-0 d-flex flex-column flex-lg-row align-items-lg-center gap-3">
                             <h6 class="dk-card__title mb-0">Peta Persebaran Penduduk Kabupaten Madiun</h6>
                             @if(!empty($districtOptions) && $districtOptions->count())
@@ -210,8 +218,8 @@
                                 </div>
                             @endif
                         </div>
-                        <div class="p-4 pt-0">
-                            <div class="ratio ratio-16x9 dk-map">
+                        <div class="p-4 pt-3 d-flex flex-grow-1">
+                            <div class="dk-map flex-grow-1">
                                 <div id="landing-map"></div>
                             </div>
                         </div>
