@@ -71,7 +71,7 @@
     </aside>
 
     <div class="dk-main" data-main>
-        <main class="dk-content py-4">
+        <main class="dk-content">
             @yield('content')
         </main>
     </div>
