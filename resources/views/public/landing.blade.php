@@ -1179,10 +1179,10 @@
             }
 
             var baseLayers = {
-                'Carto Voyager': cartoVoyager,
-                'Carto Light': carto,
-                'Carto Dark': cartoDark,
-                'Google Satellite': googleSat
+                'Default': cartoVoyager,
+                'Light': carto,
+                'Dark': cartoDark,
+                'Satellite': googleSat
             };
 
             var layersControl = L.control.layers(baseLayers, {}, { collapsed: true, position: 'topright' }).addTo(map);
