@@ -29,30 +29,45 @@
                 <img src="{{ asset('vendor/corporate-ui/img/kabupaten-madiun.png') }}" alt="Logo"
                     class="dk-logo-img">
             </div>
+            <div class="dk-sidebar__brand-text">
+                <span class="dk-brand-title">Serdadu</span>
+            </div>
         </div>
-        <nav class="dk-sidebar__nav" style="margin-top: 20px;">
+        <div class="dk-sidebar__toggle">
+            <button id="sidebarToggle" class="dk-sidebar-fab" type="button" aria-label="Sembunyikan sidebar">
+                <span class="dk-sidebar-fab__icon">
+                    <img src="{{ asset('img/arrow.png') }}" alt="Toggle sidebar">
+                </span>
+                <span class="dk-sidebar-fab__label text-xs" data-label>Sembunyikan</span>
+            </button>
+        </div>
+        <nav class="dk-sidebar__nav">
             <a href="{{ route('public.landing') }}"
-                class="dk-nav-link d-flex flex-column align-items-center {{ request()->routeIs('public.landing') ? 'active' : '' }}" style="padding: 10px 0;">
-                <span class="dk-nav-link__icon mb-1">
+                class="dk-nav-link {{ request()->routeIs('public.landing') ? 'active' : '' }}">
+                <span class="dk-nav-link__icon">
                     <img src="{{ asset('img/home.png') }}" alt="" class="dk-nav-link__image" loading="lazy" style="width: 24px; height: 24px;">
                 </span>
-                <span class="dk-nav-link__label" style="font-size: 12px;">Home</span>
+                <span class="dk-nav-link__label">Home</span>
             </a>
             <a href="{{ route('public.data') }}"
-                class="dk-nav-link d-flex flex-column align-items-center {{ request()->routeIs('public.data') ? 'active' : '' }}" style="padding: 10px 0;">
-                <span class="dk-nav-link__icon mb-1">
+                class="dk-nav-link {{ request()->routeIs('public.data') ? 'active' : '' }}">
+                <span class="dk-nav-link__icon">
                     <img src="{{ asset('img/table.png') }}" alt="" class="dk-nav-link__image" loading="lazy" style="width: 24px; height: 24px;">
                 </span>
-                <span class="dk-nav-link__label" style="font-size: 12px;">Tabel</span>
+                <span class="dk-nav-link__label">Tabel</span>
             </a>
             <a href="{{ route('public.charts') }}"
-                class="dk-nav-link d-flex flex-column align-items-center {{ request()->routeIs('public.charts') ? 'active' : '' }}" style="padding: 10px 0;">
-                <span class="dk-nav-link__icon mb-1">
+                class="dk-nav-link {{ request()->routeIs('public.charts') ? 'active' : '' }}">
+                <span class="dk-nav-link__icon">
                     <img src="{{ asset('img/bar-stats.png') }}" alt="" class="dk-nav-link__image" loading="lazy" style="width: 24px; height: 24px;">
                 </span>
-                <span class="dk-nav-link__label" style="font-size: 12px;">Grafik</span>
+                <span class="dk-nav-link__label">Grafik</span>
             </a>
         </nav>
+        <div class="dk-sidebar__footer text-center">
+            <span class="dk-sidebar__meta">&copy; Dinas Dukcapil Kabupaten Madiun</span>
+            <span class="dk-sidebar__meta">Versi 0.1.2</span>
+        </div>
     </aside>
 
     <div class="dk-main" data-main>
@@ -185,32 +200,111 @@
             }
 
             if (toggleBtn && sidebar && main) {
-                const syncFabState = () => {
-                    const isCollapsed = sidebar.classList.contains('dk-sidebar--collapsed');
-                    toggleBtn.classList.toggle('is-collapsed', isCollapsed);
+                let manualCollapsed = sidebar.classList.contains('dk-sidebar--collapsed');
+                let hoverExpanded = false;
+                let hoverTimeoutId = null;
+                let animationTimeoutId = null;
+                let isAnimating = false;
 
-                    if (labelElement) {
-                        labelElement.textContent = isCollapsed ? 'Tampilkan' : 'Sembunyikan';
-                    }
-                    toggleBtn.setAttribute('aria-label', isCollapsed ? 'Tampilkan sidebar' : 'Sembunyikan sidebar');
+                const applyLayoutState = () => {
+                    const shouldCollapse = manualCollapsed && !hoverExpanded;
+                    beginAnimation();
+                    sidebar.classList.toggle('dk-sidebar--collapsed', shouldCollapse);
+                    sidebar.classList.toggle('dk-sidebar--hovering', hoverExpanded);
+                    main.classList.toggle('dk-main--expanded', shouldCollapse);
                 };
 
+                const syncFabState = () => {
+                    toggleBtn.classList.toggle('is-collapsed', manualCollapsed);
+
+                    if (labelElement) {
+                        labelElement.textContent = manualCollapsed ? 'Tampilkan' : 'Sembunyikan';
+                    }
+                    toggleBtn.setAttribute('aria-label', manualCollapsed ? 'Tampilkan sidebar' : 'Sembunyikan sidebar');
+                };
+
+                const clearHoverTimeout = () => {
+                    if (hoverTimeoutId) {
+                        window.clearTimeout(hoverTimeoutId);
+                        hoverTimeoutId = null;
+                    }
+                };
+
+                const beginAnimation = () => {
+                    isAnimating = true;
+                    if (animationTimeoutId) {
+                        window.clearTimeout(animationTimeoutId);
+                    }
+                    animationTimeoutId = window.setTimeout(() => {
+                        isAnimating = false;
+                        animationTimeoutId = null;
+                    }, 260);
+                };
+
+                const handleTransitionEnd = (event) => {
+                    if (event.target !== sidebar) {
+                        return;
+                    }
+                    if (event.propertyName === 'width') {
+                        isAnimating = false;
+                        if (animationTimeoutId) {
+                            window.clearTimeout(animationTimeoutId);
+                            animationTimeoutId = null;
+                        }
+                    }
+                };
+
+                sidebar.addEventListener('transitionend', handleTransitionEnd);
+
+                const setCollapsed = (collapsed) => {
+                    manualCollapsed = collapsed;
+                    if (!collapsed) {
+                        hoverExpanded = false;
+                    }
+                    clearHoverTimeout();
+                    applyLayoutState();
+                    syncFabState();
+                };
+
+                applyLayoutState();
                 syncFabState();
 
                 toggleBtn.addEventListener('click', () => {
                     const isMobile = window.matchMedia('(max-width: 991.98px)').matches;
                     if (isMobile) {
-                        // On mobile/open small screens, open the offcanvas sidebar instead
                         if (offcanvasInstance) {
                             offcanvasInstance.show();
-                            return;
                         }
+                        return;
                     }
 
-                    // Desktop behaviour: collapse/expand sidebar
-                    sidebar.classList.toggle('dk-sidebar--collapsed');
-                    main.classList.toggle('dk-main--expanded');
-                    syncFabState();
+                    setCollapsed(!manualCollapsed);
+                });
+
+                sidebar.addEventListener('mouseenter', () => {
+                    if (!manualCollapsed || hoverExpanded || isAnimating) {
+                        return;
+                    }
+                    clearHoverTimeout();
+                    hoverTimeoutId = window.setTimeout(() => {
+                        hoverExpanded = true;
+                        applyLayoutState();
+                        hoverTimeoutId = null;
+                    }, 80);
+                });
+
+                sidebar.addEventListener('mouseleave', () => {
+                    if (hoverTimeoutId) {
+                        clearHoverTimeout();
+                    }
+                    if (!manualCollapsed || !hoverExpanded) {
+                        return;
+                    }
+                    if (isAnimating) {
+                        return;
+                    }
+                    hoverExpanded = false;
+                    applyLayoutState();
                 });
             }
         });
