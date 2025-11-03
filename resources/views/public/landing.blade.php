@@ -284,7 +284,7 @@
             var map = L.map('landing-map', {
                 center: [-7.629, 111.515],
                 zoom: 11,
-                layers: [cartoDark],
+                layers: [cartoVoyager],
             });
             var TARGET_VIEW_WIDTH_KM = 15;
 
@@ -1179,10 +1179,9 @@
             }
 
             var baseLayers = {
+                'Carto Voyager': cartoVoyager,
                 'Carto Light': carto,
                 'Carto Dark': cartoDark,
-                'Carto Voyager': cartoVoyager,
-                'OpenStreetMap': osm,
                 'Google Satellite': googleSat
             };
 
