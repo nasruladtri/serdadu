@@ -71,28 +71,6 @@
     </aside>
 
     <div class="dk-main" data-main>
-        <header class="dk-topbar shadow-sm">
-            <div class="dk-title-group">
-                <button class="dk-title-toggle d-lg-none" type="button" aria-label="Tampilkan menu"
-                    data-offcanvas-toggle>
-                    <span class="dk-title-toggle__icon">
-                        <i class="fa-solid fa-bars-staggered"></i>
-                    </span>
-                    <span class="dk-title-toggle__text">Menu</span>
-                </button>
-                <div class="dk-topbar__tagline">
-                    <span class="dk-topbar__tagline-label">Statistik Data Penduduk</span>
-                    <small class="dk-topbar__tagline-note">Kabupaten Madiun</small>
-                </div>
-            </div>
-            <div class="ms-auto d-none d-lg-flex align-items-center">
-                <div class="text-end">
-                    <span class="fw-semibold d-block">Dinas Kependudukan dan Pencatatan Sipil</span>
-                    <small class="text-muted">Alamat: Jl. Aloon-Aloon Utara No.4, Pangongangan, Kec. Manguharjo, Kota Madiun, Jawa Timur 63121</small>
-                </div>
-            </div>
-        </header>
-
         <main class="dk-content py-4">
             @yield('content')
         </main>
