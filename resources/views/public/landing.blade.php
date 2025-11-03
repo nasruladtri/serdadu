@@ -9,6 +9,110 @@
             height: 100%;
             border-radius: 6px;
         }
+
+        .dk-district-label {
+            background: #1e88e5;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            border-radius: 999px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+        }
+
+        .dk-district-label span {
+            line-height: 1;
+            transform: translateY(1px);
+        }
+
+        .dk-village-label {
+            background: #1e88e5;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            border-radius: 999px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+            pointer-events: none;
+        }
+
+        .dk-village-label span {
+            line-height: 1;
+            transform: translateY(1px);
+        }
+
+        .leaflet-control-layers .dk-map-legend {
+            background: transparent;
+            border-radius: 0;
+            padding: 6px 0 0;
+            border: 0;
+            box-shadow: none;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 6px;
+            border-top: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .leaflet-control-layers .dk-map-legend__title {
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .leaflet-control-layers .dk-map-legend__list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            max-height: 160px;
+            overflow-y: auto;
+        }
+
+        .leaflet-control-layers .dk-map-legend__item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0;
+            font-size: 0.78rem;
+            border-bottom: 1px dotted #e0e6ed;
+        }
+
+        .leaflet-control-layers .dk-map-legend__item:last-child {
+            border-bottom: none;
+        }
+
+        .leaflet-control-layers .dk-map-legend__item span:last-child {
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .leaflet-control-layers .dk-map-legend__badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 12px;
+            background: #1e88e5;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
     </style>
 @endpush
 
@@ -167,6 +271,7 @@
                 zoom: 11,
                 layers: [carto],
             });
+            var TARGET_VIEW_WIDTH_KM = 15;
 
             map.createPane('kelPane');
             map.getPane('kelPane').style.zIndex = 470;
@@ -181,6 +286,10 @@
             map.createPane('hoverPane');
             map.getPane('hoverPane').style.zIndex = 600;
             map.getPane('hoverPane').style.pointerEvents = 'none';
+
+            map.createPane('labelPane');
+            map.getPane('labelPane').style.zIndex = 650;
+            map.getPane('labelPane').style.pointerEvents = 'none';
 
             L.control.scale({ imperial: false, maxWidth: 160 }).addTo(map);
 
@@ -199,6 +308,18 @@
             function formatNumber(value) {
                 var num = Number(value);
                 return Number.isFinite(num) ? num.toLocaleString('id-ID') : '-';
+            }
+
+            function escapeHtml(value) {
+                if (value === null || value === undefined) {
+                    return '';
+                }
+                return String(value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
             }
 
             function buildPopupContent(title, rows) {
@@ -283,13 +404,303 @@
                 }
             }
 
+            function computeRingCentroid(ring) {
+                if (!Array.isArray(ring) || ring.length < 3) {
+                    return null;
+                }
+                var twiceArea = 0;
+                var x = 0;
+                var y = 0;
+                for (var i = 0; i < ring.length - 1; i++) {
+                    var p1 = ring[i];
+                    var p2 = ring[i + 1];
+                    if (!p1 || !p2) {
+                        continue;
+                    }
+                    var f = (p1[0] * p2[1]) - (p2[0] * p1[1]);
+                    twiceArea += f;
+                    x += (p1[0] + p2[0]) * f;
+                    y += (p1[1] + p2[1]) * f;
+                }
+                if (!twiceArea) {
+                    return null;
+                }
+                var areaFactor = twiceArea * 3;
+                return [x / areaFactor, y / areaFactor];
+            }
+
+            function computeFeatureCenter(feature) {
+                if (!feature || !feature.geometry) {
+                    return null;
+                }
+                var geom = feature.geometry;
+                var type = geom.type;
+                var coords = geom.coordinates;
+                if (!coords) {
+                    return null;
+                }
+
+                var result = null;
+                var bestArea = 0;
+
+                function accumulateCentroid(rings) {
+                    if (!Array.isArray(rings) || !rings.length) {
+                        return;
+                    }
+                    var outerRing = rings[0];
+                    if (!Array.isArray(outerRing) || outerRing.length < 4) {
+                        return;
+                    }
+                    var centroid = computeRingCentroid(outerRing);
+                    if (!centroid) {
+                        return;
+                    }
+                    var twiceArea = 0;
+                    for (var i = 0; i < outerRing.length - 1; i++) {
+                        var p1 = outerRing[i];
+                        var p2 = outerRing[i + 1];
+                        twiceArea += (p1[0] * p2[1]) - (p2[0] * p1[1]);
+                    }
+                    var area = Math.abs(twiceArea / 2);
+                    if (!area) {
+                        return;
+                    }
+                    if (area > bestArea) {
+                        bestArea = area;
+                        result = centroid;
+                    }
+                }
+
+                if (type === 'Polygon') {
+                    accumulateCentroid(coords);
+                } else if (type === 'MultiPolygon') {
+                    for (var i = 0; i < coords.length; i++) {
+                        accumulateCentroid(coords[i]);
+                    }
+                }
+
+                if (result && Number.isFinite(result[0]) && Number.isFinite(result[1])) {
+                    return L.latLng(result[1], result[0]);
+                }
+
+                try {
+                    var tempLayer = L.geoJSON(feature);
+                    var bounds = tempLayer.getBounds();
+                    if (bounds && bounds.isValid()) {
+                        return bounds.getCenter();
+                    }
+                } catch (err) {
+                    // ignore
+                }
+                return null;
+            }
+
+            function adjustZoomToTargetWidth(targetKm) {
+                if (!map || typeof map.getBounds !== 'function') {
+                    return;
+                }
+                var bounds = map.getBounds();
+                if (!bounds || !bounds.isValid()) {
+                    return;
+                }
+                var mapSize = map.getSize();
+                if (!mapSize || !mapSize.x) {
+                    return;
+                }
+                var targetMeters = Number(targetKm) * 1000;
+                if (!Number.isFinite(targetMeters) || targetMeters <= 0) {
+                    return;
+                }
+
+                var currentMeters = map.distance(bounds.getNorthWest(), bounds.getNorthEast());
+                if (!Number.isFinite(currentMeters) || currentMeters >= targetMeters) {
+                    return;
+                }
+
+                var lat = map.getCenter() && Number.isFinite(map.getCenter().lat) ? map.getCenter().lat : 0;
+                var cosLat = Math.cos(lat * Math.PI / 180);
+                var calculatedZoom = Math.log2((156543.03392 * cosLat * mapSize.x) / targetMeters);
+                if (!Number.isFinite(calculatedZoom)) {
+                    return;
+                }
+
+                var targetZoom = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), calculatedZoom));
+                if (targetZoom < map.getZoom()) {
+                    map.setZoom(targetZoom);
+                }
+            }
+
             var hoverHighlightLayer = null;
+            var districtLabelLayer = L.layerGroup().addTo(map);
+            var villageLabelLayer = L.layerGroup().addTo(map);
+            var districtLegendEl = null;
+            var districtLegendTitleEl = null;
+            var districtLabelData = [];
 
             function clearHoverHighlight() {
                 if (hoverHighlightLayer && map.hasLayer(hoverHighlightLayer)) {
                     map.removeLayer(hoverHighlightLayer);
                 }
                 hoverHighlightLayer = null;
+            }
+
+            function buildDistrictLabelData() {
+                if (!window.kec || !Array.isArray(window.kec.features)) {
+                    return [];
+                }
+                return window.kec.features.map(function (feature, index) {
+                    var props = feature && feature.properties ? feature.properties : {};
+                    var name = props.nm_kecamatan || ('Kecamatan ' + (index + 1));
+                    var center = computeFeatureCenter(feature);
+                    return {
+                        feature: feature,
+                        number: index + 1,
+                        name: name,
+                        center: center
+                    };
+                });
+            }
+
+            function renderLegend(items, options) {
+                if (!districtLegendEl || !districtLegendTitleEl) {
+                    return;
+                }
+
+                options = options || {};
+                var titleText = options.title || 'Keterangan';
+                var prefix = typeof options.prefix === 'string' ? options.prefix.trim() : '';
+
+                districtLegendTitleEl.textContent = titleText;
+
+                if (!items || !items.length) {
+                    districtLegendEl.innerHTML = '<li class="dk-map-legend__item text-muted">Data belum tersedia</li>';
+                    districtLegendEl.scrollTop = 0;
+                    return;
+                }
+
+                var legendHtml = items.map(function (item) {
+                    var safeName = escapeHtml(item.name || '');
+                    var labelText = safeName;
+                    if (prefix) {
+                        labelText = prefix + ' ' + labelText;
+                    }
+                    return '<li class="dk-map-legend__item">' +
+                        '<span class="dk-map-legend__badge">' + escapeHtml(String(item.number)) + '</span>' +
+                        '<span>' + labelText + '</span>' +
+                        '</li>';
+                }).join('');
+
+                districtLegendEl.innerHTML = legendHtml;
+                districtLegendEl.scrollTop = 0;
+            }
+
+            function renderDistrictLabels(selectionState) {
+                if (!districtLabelLayer) {
+                    return;
+                }
+                districtLabelLayer.clearLayers();
+
+                var filterFn = selectionState && typeof selectionState.filterFn === 'function'
+                    ? selectionState.filterFn
+                    : null;
+
+                districtLabelData.forEach(function (item) {
+                    if (!item.center) {
+                        return;
+                    }
+                    if (filterFn && !filterFn(item.feature)) {
+                        return;
+                    }
+                    L.marker(item.center, {
+                        icon: L.divIcon({
+                            className: 'leaflet-div-icon dk-district-label',
+                            html: '<span>' + item.number + '</span>',
+                            iconSize: [15, 15],
+                            iconAnchor: [20, 20]
+                        }),
+                        pane: 'labelPane',
+                        interactive: false
+                    }).addTo(districtLabelLayer);
+                });
+            }
+
+            districtLabelData = buildDistrictLabelData();
+
+            function renderVillageLabels(entries) {
+                if (!villageLabelLayer) {
+                    return;
+                }
+                villageLabelLayer.clearLayers();
+                if (!entries || !entries.length) {
+                    return;
+                }
+                entries.forEach(function (item) {
+                    if (!item.center) {
+                        return;
+                    }
+                    L.marker(item.center, {
+                        icon: L.divIcon({
+                            className: 'leaflet-div-icon dk-village-label',
+                            html: '<span>' + item.number + '</span>',
+                            iconSize: [15, 15],
+                            iconAnchor: [18, 18]
+                        }),
+                        pane: 'labelPane',
+                        interactive: false
+                    }).addTo(villageLabelLayer);
+                });
+            }
+
+            function buildVillageLabelData(filterFn) {
+                if (!window.kel || !Array.isArray(window.kel.features)) {
+                    return [];
+                }
+
+                var entries = [];
+                window.kel.features.forEach(function (feature) {
+                    if (typeof filterFn === 'function' && !filterFn(feature)) {
+                        return;
+                    }
+                    var props = feature && feature.properties ? feature.properties : {};
+                    var name = props.nm_kelurahan || props.nm_desa || props.nama || props.nm_desa_kelurahan || 'Desa/Kelurahan';
+                    var code = props.kd_kelurahan || props.kode_desa || props.kode || props.code || '';
+                    var center = computeFeatureCenter(feature);
+                    entries.push({
+                        feature: feature,
+                        code: code ? String(code) : '',
+                        name: name,
+                        center: center
+                    });
+                });
+
+                entries.sort(function (a, b) {
+                    var codeA = (a.code || '').replace(/\D+/g, '');
+                    var codeB = (b.code || '').replace(/\D+/g, '');
+                    if (codeA && codeB && codeA !== codeB) {
+                        return codeA < codeB ? -1 : 1;
+                    }
+                    if (codeA && !codeB) {
+                        return -1;
+                    }
+                    if (!codeA && codeB) {
+                        return 1;
+                    }
+                    var nameA = (a.name || '').toLowerCase();
+                    var nameB = (b.name || '').toLowerCase();
+                    if (nameA < nameB) {
+                        return -1;
+                    }
+                    if (nameA > nameB) {
+                        return 1;
+                    }
+                    return 0;
+                });
+
+                entries.forEach(function (item, idx) {
+                    item.number = idx + 1;
+                });
+
+                return entries;
             }
 
             function createKecamatanLayer(filterFn) {
@@ -369,6 +780,9 @@
 
                 if (bounds && bounds.isValid()) {
                     map.fitBounds(bounds.pad(0.05));
+                    map.once('moveend', function () {
+                        adjustZoomToTargetWidth(TARGET_VIEW_WIDTH_KM);
+                    });
                 }
             }
 
@@ -575,11 +989,16 @@
 
                 addInteractiveLayers(kecLayer);
                 fitToLayers(kecLayer);
+                renderDistrictLabels(null);
+                renderVillageLabels([]);
+                renderLegend(districtLabelData, { title: 'Keterangan Kecamatan', prefix: 'Kec.' });
             }
 
             function renderSelectedDistrict(selectionState) {
                 removeLayer(kecLayer);
                 removeLayer(kelLayer);
+                districtLabelLayer.clearLayers();
+                renderVillageLabels([]);
 
                 var districtState = {
                     codeAliases: Object.keys(selectionState.aliasSet || {}),
@@ -616,6 +1035,13 @@
 
                 addInteractiveLayers([kecLayer, kelLayer]);
                 fitToLayers([kelLayer, kecLayer]);
+                var villageLabelData = buildVillageLabelData(kelFilterFn);
+                renderVillageLabels(villageLabelData);
+                var legendTitle = 'Desa/Kelurahan';
+                if (districtState.name) {
+                    legendTitle += ' ' + districtState.name;
+                }
+                renderLegend(villageLabelData, { title: legendTitle, prefix: 'Desa/Kel.' });
             }
 
             function bindDistrictFeature(feature, layer) {
@@ -743,7 +1169,24 @@
                 'Citra Satelit (HD)': satellite
             };
 
-            L.control.layers(baseLayers, {}, { collapsed: false, position: 'topright' }).addTo(map);
+            var layersControl = L.control.layers(baseLayers, {}, { collapsed: false, position: 'topright' }).addTo(map);
+            var layersControlContainer = layersControl && typeof layersControl.getContainer === 'function'
+                ? layersControl.getContainer()
+                : null;
+
+            if (layersControlContainer) {
+                var layersListEl = layersControlContainer.querySelector('.leaflet-control-layers-list') || layersControlContainer;
+                var legendContainer = L.DomUtil.create('div', 'dk-map-legend', layersListEl);
+                legendContainer.innerHTML =
+                    '<div class="dk-map-legend__title">Keterangan Kecamatan</div>' +
+                    '<ul class="dk-map-legend__list"></ul>';
+                districtLegendTitleEl = legendContainer.querySelector('.dk-map-legend__title');
+                districtLegendEl = legendContainer.querySelector('.dk-map-legend__list');
+                L.DomEvent.disableClickPropagation(legendContainer);
+                L.DomEvent.disableScrollPropagation(legendContainer);
+            }
+
+            renderLegend(districtLabelData, { title: 'Keterangan Kecamatan', prefix: 'Kec.' });
 
             rebuildDistrictLayers(currentDistrictFilter);
         })();
