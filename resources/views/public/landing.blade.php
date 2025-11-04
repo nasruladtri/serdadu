@@ -75,6 +75,210 @@
             font-size: 1.2rem;
         }
 
+        /* Improved spacing for Wilayah section */
+        .landing-wilayah-section {
+            margin-bottom: 2rem;
+        }
+
+        .landing-wilayah-section .table {
+            margin-bottom: 0;
+        }
+
+        .landing-wilayah-section .table td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .landing-wilayah-section .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Improved metric cards with hover effects */
+        .landing-metric-card {
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .landing-metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .landing-metric-card:hover::before {
+            left: 100%;
+        }
+
+        .landing-metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+        }
+
+        .landing-metric-card--primary {
+            background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+            color: #ffffff;
+        }
+
+        .landing-metric-card--primary:hover {
+            background: linear-gradient(135deg, #0ea5e9 0%, #1d4ed8 100%);
+            box-shadow: 0 12px 32px rgba(37, 99, 235, 0.25);
+        }
+
+        .landing-metric-card--light {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #0f172a;
+        }
+
+        .landing-metric-card--light:hover {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+        }
+
+        .landing-metric-card--male {
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            border: 1px solid #7dd3fc;
+            color: #0f172a;
+        }
+
+        .landing-metric-card--male:hover {
+            background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 100%);
+            border-color: #38bdf8;
+            box-shadow: 0 8px 24px rgba(14, 165, 233, 0.15);
+        }
+
+        .landing-metric-card--female {
+            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+            border: 1px solid #f9a8d4;
+            color: #0f172a;
+        }
+
+        .landing-metric-card--female:hover {
+            background: linear-gradient(135deg, #fbcfe8 0%, #f9a8d4 100%);
+            border-color: #f472b6;
+            box-shadow: 0 8px 24px rgba(236, 72, 153, 0.15);
+        }
+
+        /* Metric icon styling */
+        .landing-metric-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: inherit;
+        }
+
+        .landing-metric-card--light .landing-metric-icon {
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+            color: #ffffff;
+        }
+
+        .landing-metric-card--male .landing-metric-icon {
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+            color: #ffffff;
+        }
+
+        .landing-metric-card--female .landing-metric-icon {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            color: #ffffff;
+        }
+
+        /* Progress bar for percentage visualization */
+        .landing-metric-progress {
+            margin-top: 0.75rem;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .landing-metric-card--light .landing-metric-progress {
+            background: #e2e8f0;
+        }
+
+        .landing-metric-card--male .landing-metric-progress {
+            background: rgba(14, 165, 233, 0.15);
+        }
+
+        .landing-metric-card--female .landing-metric-progress {
+            background: rgba(236, 72, 153, 0.15);
+        }
+
+        .landing-metric-progress-bar {
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 2px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .landing-metric-card--light .landing-metric-progress-bar {
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+        }
+
+        .landing-metric-card--male .landing-metric-progress-bar {
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+        }
+
+        .landing-metric-card--female .landing-metric-progress-bar {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+        }
+
+        /* Percentage badge */
+        .landing-metric-percentage {
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+
+        /* Loading state */
+        .landing-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            color: #64748b;
+        }
+
+        .landing-loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Error state */
+        .landing-error {
+            padding: 1.5rem;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            color: #991b1b;
+        }
+
         /* Popup content styling (replaces inline styles) */
         .dk-popup {
             max-width: 280px;
@@ -207,6 +411,17 @@
             .landing-map-card__map {
                 padding-top: 0.75rem;
             }
+
+            .landing-metric-card {
+                padding: 1.1rem;
+            }
+
+            .landing-metric-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1.1rem;
+                margin-bottom: 0.65rem;
+            }
         }
 
         @media (max-width: 575.98px) {
@@ -231,7 +446,73 @@
             .dk-map {
                 min-height: clamp(220px, 52vh, 420px);
             }
+
+            .landing-wilayah-section {
+                margin-bottom: 1.5rem;
+            }
+
+            .landing-wilayah-section .table td {
+                padding: 0.7rem 0.85rem;
+                font-size: 0.88rem;
+            }
+
+            .landing-metric-card {
+                padding: 1rem;
+            }
+
+            .landing-metric-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+                margin-bottom: 0.6rem;
+            }
+
+            .dk-metric {
+                font-size: clamp(1.1rem, 2vw + 0.9rem, 1.4rem);
+            }
+
+            .dk-metric--sm {
+                font-size: 1.05rem;
+            }
+
+            .landing-metric-percentage {
+                font-size: 0.7rem;
+            }
         }
+
+        /* Touch device improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .landing-metric-card:active {
+                transform: translateY(0);
+                transition: transform 0.1s ease;
+            }
+
+            .landing-metric-card:hover {
+                transform: none;
+            }
+        }
+
+        /* Smooth number animation on load */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .landing-metric-card {
+            animation: fadeInUp 0.5s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .landing-metric-card:nth-child(1) { animation-delay: 0.1s; }
+        .landing-metric-card:nth-child(2) { animation-delay: 0.2s; }
+        .landing-metric-card:nth-child(3) { animation-delay: 0.3s; }
+        .landing-metric-card:nth-child(4) { animation-delay: 0.4s; }
 
     </style>
 @endpush
@@ -239,18 +520,24 @@
 @section('content')
     @if (!$period)
         <div class="alert alert-warning border-0 dk-card">
-            <strong>Data belum tersedia.</strong> Silakan unggah dataset terlebih dahulu melalui halaman admin.
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <strong>Data belum tersedia.</strong> Silakan unggah dataset terlebih dahulu melalui halaman admin.
+                </div>
+            </div>
         </div>
     @else
         <div class="row g-4 align-items-stretch landing-layout">
             <div class="col-12 col-lg-5 col-xl-4">
                 <div class="dk-card h-100 landing-overview">
                     <div class="card-body p-4">
-                        <h6 class="dk-card__title mb-3">Data Agregat Kependudukan Terbaru</h6>
-                        <div class="mb-4">
-                            <h6 class="text-uppercase text-xs text-muted mb-2">Wilayah</h6>
+                        <h6 class="dk-card__title mb-4">Data Agregat Kependudukan Terbaru</h6>
+                        
+                        <div class="landing-wilayah-section">
+                            <h6 class="text-uppercase text-xs text-muted mb-3">Wilayah</h6>
                             <div class="table-responsive">
-                                <table class="table table-sm dk-table mb-3">
+                                <table class="table table-sm dk-table">
                                     <tbody>
                                         <tr>
                                             <td class="fw-semibold">Nama Wilayah</td>
@@ -270,39 +557,71 @@
                         </div>
 
                         <div class="mb-4">
-                            <h6 class="text-uppercase text-xs text-muted mb-2">Jumlah Penduduk</h6>
+                            <h6 class="text-uppercase text-xs text-muted mb-3">Jumlah Penduduk</h6>
                             <div class="row g-3">
+                                @php
+                                    $totalPop = $totals['population'] ?? 0;
+                                    $malePop = $totals['male'] ?? 0;
+                                    $femalePop = $totals['female'] ?? 0;
+                                    $malePercent = $totalPop > 0 ? ($malePop / $totalPop) * 100 : 0;
+                                    $femalePercent = $totalPop > 0 ? ($femalePop / $totalPop) * 100 : 0;
+                                @endphp
+                                
                                 <div class="col-12">
-                                    <div class="p-3 rounded-3 dk-metric--light">
-                                        <div class="dk-metric__label text-white-50">Total Penduduk</div>
-                                        <div class="dk-metric text-white">{{ number_format($totals['population']) }}</div>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="bg-light rounded-3 p-3">
-                                        <div class="dk-metric__label">Laki-laki</div>
-                                <div class="dk-metric dk-metric--sm">
-                                            {{ number_format($totals['male']) }}
+                                    <div class="landing-metric-card landing-metric-card--primary">
+                                        <div class="landing-metric-icon">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                        <div class="dk-metric__label text-white-50 mb-1">Total Penduduk</div>
+                                        <div class="dk-metric text-white mb-2">{{ number_format($totalPop) }}</div>
+                                        <div class="landing-metric-progress">
+                                            <div class="landing-metric-progress-bar" style="width: 100%"></div>
                                         </div>
                                     </div>
                                 </div>
+                                
                                 <div class="col-12 col-sm-6">
-                                    <div class="bg-light rounded-3 p-3">
-                                        <div class="dk-metric__label">Perempuan</div>
-                                <div class="dk-metric dk-metric--sm">
-                                            {{ number_format($totals['female']) }}
+                                    <div class="landing-metric-card landing-metric-card--male">
+                                        <div class="landing-metric-icon">
+                                            <i class="fas fa-mars"></i>
+                                        </div>
+                                        <div class="dk-metric__label mb-1">Laki-laki</div>
+                                        <div class="dk-metric dk-metric--sm mb-2">{{ number_format($malePop) }}</div>
+                                        <div class="landing-metric-progress">
+                                            <div class="landing-metric-progress-bar" style="width: {{ $malePercent }}%"></div>
+                                        </div>
+                                        <div class="landing-metric-percentage">
+                                            <i class="fas fa-chart-line me-1"></i>{{ number_format($malePercent, 1) }}%
                                         </div>
                                     </div>
                                 </div>
+                                
+                                <div class="col-12 col-sm-6">
+                                    <div class="landing-metric-card landing-metric-card--female">
+                                        <div class="landing-metric-icon">
+                                            <i class="fas fa-venus"></i>
+                                        </div>
+                                        <div class="dk-metric__label mb-1">Perempuan</div>
+                                        <div class="dk-metric dk-metric--sm mb-2">{{ number_format($femalePop) }}</div>
+                                        <div class="landing-metric-progress">
+                                            <div class="landing-metric-progress-bar" style="width: {{ $femalePercent }}%"></div>
+                                        </div>
+                                        <div class="landing-metric-percentage">
+                                            <i class="fas fa-chart-line me-1"></i>{{ number_format($femalePercent, 1) }}%
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 <div class="col-12">
-                                    <div class="bg-light rounded-3 p-3">
-                                        <div class="dk-metric__label">Wajib KTP (&ge; 17 tahun)</div>
-                                <div class="dk-metric dk-metric--sm">
-                                            {{ number_format($wajibKtp['total']) }}
+                                    <div class="landing-metric-card landing-metric-card--light">
+                                        <div class="landing-metric-icon">
+                                            <i class="fas fa-id-card"></i>
                                         </div>
-                                        <small class="text-muted d-block">
-                                            L: {{ number_format($wajibKtp['male']) }} &bull;
-                                            P: {{ number_format($wajibKtp['female']) }}
+                                        <div class="dk-metric__label mb-1">Wajib KTP (&ge; 17 tahun)</div>
+                                        <div class="dk-metric dk-metric--sm mb-2">{{ number_format($wajibKtp['total'] ?? 0) }}</div>
+                                        <small class="text-muted d-block mt-2">
+                                            <i class="fas fa-mars me-1"></i> L: {{ number_format($wajibKtp['male'] ?? 0) }} &bull;
+                                            <i class="fas fa-venus ms-2 me-1"></i> P: {{ number_format($wajibKtp['female'] ?? 0) }}
                                         </small>
                                     </div>
                                 </div>
@@ -330,7 +649,13 @@
                                 </div>
                             @endif
                         </div>
-                        <div class="landing-map-card__map d-flex flex-grow-1">
+                        <div class="landing-map-card__map d-flex flex-grow-1 position-relative">
+                            <div id="landing-map-loader" class="landing-loading position-absolute w-100 h-100" style="z-index: 1000; background: rgba(255, 255, 255, 0.9); border-radius: 6px;">
+                                <div class="text-center">
+                                    <div class="landing-loading-spinner mx-auto mb-3"></div>
+                                    <div class="text-muted small">Memuat peta...</div>
+                                </div>
+                            </div>
                             <div class="dk-map flex-grow-1">
                                 <div id="landing-map"></div>
                             </div>
@@ -399,6 +724,18 @@
                 layers: [cartoVoyager],
             });
             var TARGET_VIEW_WIDTH_KM = 15;
+
+            // Hide loading spinner when map is ready
+            map.whenReady(function() {
+                var loader = document.getElementById('landing-map-loader');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    loader.style.transition = 'opacity 0.3s ease';
+                    setTimeout(function() {
+                        loader.style.display = 'none';
+                    }, 300);
+                }
+            });
 
             map.createPane('kelPane');
             map.getPane('kelPane').style.zIndex = 470;

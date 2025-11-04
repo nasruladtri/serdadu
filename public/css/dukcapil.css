@@ -735,6 +735,12 @@ body.bg-body {
   }
 /* End global topbar */
 
+@media (min-width: 992px) {
+  .dk-topbar {
+    display: none;
+  }
+}
+
 /* Keep mobile-specific tweaks (if any) */
 @media (max-width: 991.98px) {
   .dk-topbar {
