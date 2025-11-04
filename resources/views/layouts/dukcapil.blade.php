@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         integrity="sha512-31on1Uwx1PcT6zG17Q6C7GdYr387cMGX5CujjJVOk+3O8VjMBYPWaFzx5b9mzfFh1YgUo10xXMYN9bB+FsSjVg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="{{ asset('css/dukcapil.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/dukcapil.css') . '?v=' . filemtime(public_path('css/dukcapil.css')) }}">
     @stack('styles')
 </head>
 
@@ -45,21 +45,21 @@
             <a href="{{ route('public.landing') }}"
                 class="dk-nav-link {{ request()->routeIs('public.landing') ? 'active' : '' }}">
                 <span class="dk-nav-link__icon">
-                    <img src="{{ asset('img/home.png') }}" alt="" class="dk-nav-link__image" loading="lazy" style="width: 24px; height: 24px;">
+                    <img src="{{ asset('img/home.png') }}" alt="" class="dk-nav-link__image" loading="lazy" decoding="async">
                 </span>
                 <span class="dk-nav-link__label">Home</span>
             </a>
             <a href="{{ route('public.data') }}"
                 class="dk-nav-link {{ request()->routeIs('public.data') ? 'active' : '' }}">
                 <span class="dk-nav-link__icon">
-                    <img src="{{ asset('img/table.png') }}" alt="" class="dk-nav-link__image" loading="lazy" style="width: 24px; height: 24px;">
+                    <img src="{{ asset('img/table.png') }}" alt="" class="dk-nav-link__image" loading="lazy" decoding="async">
                 </span>
                 <span class="dk-nav-link__label">Tabel</span>
             </a>
             <a href="{{ route('public.charts') }}"
                 class="dk-nav-link {{ request()->routeIs('public.charts') ? 'active' : '' }}">
                 <span class="dk-nav-link__icon">
-                    <img src="{{ asset('img/bar-stats.png') }}" alt="" class="dk-nav-link__image" loading="lazy" style="width: 24px; height: 24px;">
+                    <img src="{{ asset('img/bar-stats.png') }}" alt="" class="dk-nav-link__image" loading="lazy" decoding="async">
                 </span>
                 <span class="dk-nav-link__label">Grafik</span>
             </a>
@@ -68,7 +68,14 @@
             <span class="dk-sidebar__meta">&copy; Dinas Dukcapil Kabupaten Madiun</span>
             <span class="dk-sidebar__meta">Versi 0.1.2</span>
         </div>
-    </aside>
+</aside>
+
+    <header class="dk-topbar">
+        <button class="dk-topbar__menu" type="button" data-offcanvas-toggle aria-controls="sidebarOffcanvas"
+            aria-expanded="false" aria-label="Buka navigasi">
+            <img src="{{ asset('img/menu.png') }}" alt="Menu">
+        </button>
+    </header>
 
     <div class="dk-main" data-main>
         <main class="dk-content">
@@ -131,20 +138,29 @@
             const main = document.querySelector('[data-main]');
             const labelElement = toggleBtn?.querySelector('[data-label]');
             const offcanvasEl = document.getElementById('sidebarOffcanvas');
-            const fab = document.querySelector('.dk-sidebar-fab');
+            const fabButtons = document.querySelectorAll('.dk-sidebar-fab, .dk-offcanvas-fab');
             const hasBootstrap = typeof bootstrap !== 'undefined';
             const offcanvasInstance = (offcanvasEl && hasBootstrap)
                 ? bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl)
                 : null;
 
             // Hide floating FAB while offcanvas is open to prevent it blocking clicks
-            if (offcanvasEl && fab) {
+            if (offcanvasEl && fabButtons.length) {
                 offcanvasEl.addEventListener('show.bs.offcanvas', () => {
-                    fab.style.display = 'none';
+                    fabButtons.forEach((btn) => {
+                        btn.dataset.prevVisibility = btn.style.visibility;
+                        btn.style.visibility = 'hidden';
+                    });
                 });
                 offcanvasEl.addEventListener('hidden.bs.offcanvas', () => {
-                    // restore display for mobile; keep desktop visibility as earlier rules
-                    fab.style.display = '';
+                    fabButtons.forEach((btn) => {
+                        if ('prevVisibility' in btn.dataset) {
+                            btn.style.visibility = btn.dataset.prevVisibility || '';
+                            delete btn.dataset.prevVisibility;
+                        } else {
+                            btn.style.visibility = '';
+                        }
+                    });
                 });
             }
 
@@ -285,6 +301,8 @@
                     applyLayoutState();
                 });
             }
+
+            // No sidebar injection for category tabs (reverted)
         });
     </script>
     @stack('scripts')

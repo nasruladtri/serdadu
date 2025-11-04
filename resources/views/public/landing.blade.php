@@ -1,4 +1,4 @@
-﻿@extends('layouts.dukcapil', ['title' => 'Beranda'])
+@extends('layouts.dukcapil', ['title' => 'Beranda'])
 
 @push('styles')
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -7,9 +7,19 @@
         .dk-map {
             position: relative;
             width: 100%;
-            min-height: 420px;
             flex: 1 1 auto;
             height: 100%;
+            min-height: clamp(260px, 48vh, 540px);
+        }
+
+        .landing-map-card__header {
+            padding: clamp(1.25rem, 1.6vw + 1rem, 2rem);
+            padding-bottom: 0.75rem;
+        }
+
+        .landing-map-card__map {
+            padding: clamp(1rem, 1.4vw + 0.75rem, 1.75rem);
+            padding-top: 1rem;
         }
 
         .dk-map .leaflet-container {
@@ -59,6 +69,48 @@
             line-height: 1;
             transform: translateY(1px);
         }
+
+        /* Reusable metric size */
+        .dk-metric--sm {
+            font-size: 1.2rem;
+        }
+
+        /* Popup content styling (replaces inline styles) */
+        .dk-popup {
+            max-width: 280px;
+        }
+        .dk-popup__table {
+            margin-top: 6px;
+        }
+        .dk-popup__table td {
+            padding: 2px 6px;
+            vertical-align: top;
+            font-size: 13px;
+        }
+        .dk-popup__table td:first-child {
+            color: #555;
+        }
+        .dk-popup__table td:last-child {
+            color: #222;
+        }
+
+        /* Legend layout helpers (replaces inline styles) */
+        .dk-legend-lines {
+            margin-top: 5px;
+        }
+        .dk-legend-line {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .dk-legend-swatch {
+            display: inline-block;
+            width: 20px;
+            height: 3px;
+        }
+        .dk-legend-swatch--kab { background-color: #c0392b; }
+        .dk-legend-swatch--kec { background-color: #63d199; }
+        .dk-legend-swatch--kel { background-color: #00b4d8; }
 
         .leaflet-control-layers .dk-map-legend {
             background: transparent;
@@ -121,6 +173,66 @@
             font-weight: 600;
             font-size: 0.6rem;
         }
+
+        @media (min-width: 992px) {
+            .landing-layout > [class*="col-"] {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+
+        @media (min-width: 1440px) {
+            .dk-map {
+                min-height: clamp(320px, 38vh, 640px);
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .landing-overview .card-body {
+                padding: clamp(1.35rem, 2vw + 1rem, 1.75rem);
+            }
+
+            .landing-layout .dk-card__title {
+                font-size: 1.05rem;
+            }
+
+            .landing-overview .table {
+                font-size: 0.95rem;
+            }
+
+            .landing-map-card__header {
+                padding-bottom: 0.5rem;
+            }
+
+            .landing-map-card__map {
+                padding-top: 0.75rem;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .landing-overview .card-body {
+                padding: 1.15rem;
+            }
+
+            .landing-layout .dk-card__title {
+                font-size: 1rem;
+            }
+
+            .landing-layout select.form-select-sm {
+                font-size: 0.85rem;
+            }
+
+            .landing-map-card__header,
+            .landing-map-card__map {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .dk-map {
+                min-height: clamp(220px, 52vh, 420px);
+            }
+        }
+
     </style>
 @endpush
 
@@ -130,9 +242,9 @@
             <strong>Data belum tersedia.</strong> Silakan unggah dataset terlebih dahulu melalui halaman admin.
         </div>
     @else
-        <div class="row g-4">
-            <div class="col-xl-4">
-                <div class="dk-card h-100">
+        <div class="row g-4 align-items-stretch landing-layout">
+            <div class="col-12 col-lg-5 col-xl-4">
+                <div class="dk-card h-100 landing-overview">
                     <div class="card-body p-4">
                         <h6 class="dk-card__title mb-3">Data Agregat Kependudukan Terbaru</h6>
                         <div class="mb-4">
@@ -166,18 +278,18 @@
                                         <div class="dk-metric text-white">{{ number_format($totals['population']) }}</div>
                                     </div>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-12 col-sm-6">
                                     <div class="bg-light rounded-3 p-3">
                                         <div class="dk-metric__label">Laki-laki</div>
-                                        <div class="dk-metric" style="font-size: 1.2rem;">
+                                <div class="dk-metric dk-metric--sm">
                                             {{ number_format($totals['male']) }}
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-12 col-sm-6">
                                     <div class="bg-light rounded-3 p-3">
                                         <div class="dk-metric__label">Perempuan</div>
-                                        <div class="dk-metric" style="font-size: 1.2rem;">
+                                <div class="dk-metric dk-metric--sm">
                                             {{ number_format($totals['female']) }}
                                         </div>
                                     </div>
@@ -185,7 +297,7 @@
                                 <div class="col-12">
                                     <div class="bg-light rounded-3 p-3">
                                         <div class="dk-metric__label">Wajib KTP (&ge; 17 tahun)</div>
-                                        <div class="dk-metric" style="font-size: 1.2rem;">
+                                <div class="dk-metric dk-metric--sm">
                                             {{ number_format($wajibKtp['total']) }}
                                         </div>
                                         <small class="text-muted d-block">
@@ -199,10 +311,10 @@
                     </div>
                 </div>
             </div>
-            <div class="col-xl-8">
-                <div class="dk-card h-100">
+            <div class="col-12 col-lg-7 col-xl-8">
+                <div class="dk-card h-100 landing-map-card">
                     <div class="card-body p-0 d-flex flex-column h-100">
-                        <div class="p-4 pb-0 d-flex flex-column flex-lg-row align-items-lg-center gap-3">
+                        <div class="landing-map-card__header d-flex flex-column flex-lg-row align-items-lg-center gap-3">
                             <h6 class="dk-card__title mb-0">Peta Persebaran Penduduk Kabupaten Madiun</h6>
                             @if(!empty($districtOptions) && $districtOptions->count())
                                 <div class="ms-lg-auto w-100 w-lg-auto">
@@ -218,7 +330,7 @@
                                 </div>
                             @endif
                         </div>
-                        <div class="p-4 pt-3 d-flex flex-grow-1">
+                        <div class="landing-map-card__map d-flex flex-grow-1">
                             <div class="dk-map flex-grow-1">
                                 <div id="landing-map"></div>
                             </div>
@@ -275,7 +387,7 @@
                 maxZoom: 19,
                 attribution: '&copy; OpenStreetMap contributors',
             });
-            var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+            var googleSat = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
                 maxZoom: 20,
                 subdomains:['mt0','mt1','mt2','mt3'],
                 attribution: 'Imagery &copy; Google'
@@ -338,15 +450,15 @@
             }
 
             function buildPopupContent(title, rows) {
-                var html = '<div style="max-width:280px">';
+                var html = '<div class="dk-popup">';
                 if (title) {
                     html += '<strong>' + title + '</strong>';
                 }
                 if (rows && rows.length) {
-                    html += '<table style="margin-top:6px">';
+                    html += '<table class="dk-popup__table">';
                     rows.forEach(function (row) {
-                        html += '<tr><td style="padding:2px 6px;vertical-align:top;color:#555;font-size:13px"><strong>'
-                            + row.label + '</strong></td><td style="padding:2px 6px;vertical-align:top;color:#222;font-size:13px">'
+                        html += '<tr><td><strong>'
+                            + row.label + '</strong></td><td>'
                             + row.value + '</td></tr>';
                     });
                     html += '</table>';
@@ -1182,6 +1294,7 @@
                 'Default': cartoVoyager,
                 'Light': carto,
                 'Dark': cartoDark,
+                'OSM': osm,
                 'Satellite': googleSat
             };
 
@@ -1196,17 +1309,17 @@
                 legendContainer.innerHTML =
                     '<div class="dk-map-legend__title">Keterangan Kecamatan</div>' +
                     '<ul class="dk-map-legend__list"></ul>' +
-                    '<div style="margin-top: 5px;">' +
-                        '<div class="dk-map-legend__item" style="display: flex; align-items: center; gap: 5px;">' +
-                            '<span style="display: inline-block; width: 20px; height: 3px; background-color: #c0392b;"></span>' +
+                    '<div class="dk-legend-lines">' +
+                        '<div class="dk-map-legend__item dk-legend-line">' +
+                            '<span class="dk-legend-swatch dk-legend-swatch--kab"></span>' +
                             '<span>Garis Batas Kabupaten</span>' +
                         '</div>' +
-                        '<div class="dk-map-legend__item" style="display: flex; align-items: center; gap: 5px;">' +
-                            '<span style="display: inline-block; width: 20px; height: 3px; background-color: #63d199;"></span>' +
+                        '<div class="dk-map-legend__item dk-legend-line">' +
+                            '<span class="dk-legend-swatch dk-legend-swatch--kec"></span>' +
                             '<span>Garis Batas Kecamatan</span>' +
                         '</div>' +
-                        '<div class="dk-map-legend__item" style="display: flex; align-items: center; gap: 5px;">' +
-                            '<span style="display: inline-block; width: 20px; height: 3px; background-color: #00b4d8;"></span>' +
+                        '<div class="dk-map-legend__item dk-legend-line">' +
+                            '<span class="dk-legend-swatch dk-legend-swatch--kel"></span>' +
                             '<span>Garis Batas Desa/Kelurahan</span>' +
                         '</div>' +
                     '</div>';
@@ -1222,3 +1335,4 @@
         })();
     </script>
 @endpush
+
