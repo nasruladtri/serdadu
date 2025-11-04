@@ -1,4 +1,4 @@
-@extends('layouts.dukcapil', ['title' => 'Beranda1'])
+@extends('layouts.dukcapil', ['title' => 'Beranda'])
 
 @push('styles')
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -169,6 +169,18 @@
             box-shadow: 0 8px 24px rgba(236, 72, 153, 0.15);
         }
 
+        .landing-metric-card--ktp {
+            background: linear-gradient(135deg, #dcfce7 0%, #86efac 100%);
+            border: 1px solid #22c55e;
+            color: #0f172a;
+        }
+
+        .landing-metric-card--ktp:hover {
+            background: linear-gradient(135deg, #bbf7d0 0%, #22c55e 100%);
+            border-color: #16a34a;
+            box-shadow: 0 8px 24px rgba(34, 197, 94, 0.18);
+        }
+
         /* Metric icon styling */
         .landing-metric-icon {
             width: 40px;
@@ -183,6 +195,12 @@
             color: inherit;
         }
 
+        .landing-metric-icon__img {
+            width: 26px;
+            height: 26px;
+            object-fit: contain;
+        }
+
         .landing-metric-card--light .landing-metric-icon {
             background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
             color: #ffffff;
@@ -195,6 +213,11 @@
 
         .landing-metric-card--female .landing-metric-icon {
             background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            color: #ffffff;
+        }
+
+        .landing-metric-card--ktp .landing-metric-icon {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
             color: #ffffff;
         }
 
@@ -220,6 +243,10 @@
             background: rgba(236, 72, 153, 0.15);
         }
 
+        .landing-metric-card--ktp .landing-metric-progress {
+            background: rgba(34, 197, 94, 0.2);
+        }
+
         .landing-metric-progress-bar {
             height: 100%;
             background: rgba(255, 255, 255, 0.8);
@@ -238,6 +265,10 @@
 
         .landing-metric-card--female .landing-metric-progress-bar {
             background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+        }
+
+        .landing-metric-card--ktp .landing-metric-progress-bar {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
         }
 
         /* Percentage badge */
@@ -563,14 +594,16 @@
                                     $totalPop = $totals['population'] ?? 0;
                                     $malePop = $totals['male'] ?? 0;
                                     $femalePop = $totals['female'] ?? 0;
+                                    $wajibKtpTotal = $wajibKtp['total'] ?? 0;
                                     $malePercent = $totalPop > 0 ? ($malePop / $totalPop) * 100 : 0;
                                     $femalePercent = $totalPop > 0 ? ($femalePop / $totalPop) * 100 : 0;
+                                    $wajibKtpPercent = $totalPop > 0 ? ($wajibKtpTotal / $totalPop) * 100 : 0;
                                 @endphp
                                 
                                 <div class="col-12">
                                     <div class="landing-metric-card landing-metric-card--primary">
                                         <div class="landing-metric-icon">
-                                            <i class="fas fa-users"></i>
+                                            <img src="{{ asset('img/penduduk.png') }}" alt="Total Penduduk" class="landing-metric-icon__img">
                                         </div>
                                         <div class="dk-metric__label text-white-50 mb-1">Total Penduduk</div>
                                         <div class="dk-metric text-white mb-2">{{ number_format($totalPop) }}</div>
@@ -583,7 +616,7 @@
                                 <div class="col-12 col-sm-6">
                                     <div class="landing-metric-card landing-metric-card--male">
                                         <div class="landing-metric-icon">
-                                            <i class="fas fa-mars"></i>
+                                            <img src="{{ asset('img/l.png') }}" alt="Penduduk Laki-laki" class="landing-metric-icon__img">
                                         </div>
                                         <div class="dk-metric__label mb-1">Laki-laki</div>
                                         <div class="dk-metric dk-metric--sm mb-2">{{ number_format($malePop) }}</div>
@@ -599,7 +632,7 @@
                                 <div class="col-12 col-sm-6">
                                     <div class="landing-metric-card landing-metric-card--female">
                                         <div class="landing-metric-icon">
-                                            <i class="fas fa-venus"></i>
+                                            <img src="{{ asset('img/p.png') }}" alt="Penduduk Perempuan" class="landing-metric-icon__img">
                                         </div>
                                         <div class="dk-metric__label mb-1">Perempuan</div>
                                         <div class="dk-metric dk-metric--sm mb-2">{{ number_format($femalePop) }}</div>
@@ -613,12 +646,18 @@
                                 </div>
                                 
                                 <div class="col-12">
-                                    <div class="landing-metric-card landing-metric-card--light">
+                                    <div class="landing-metric-card landing-metric-card--ktp">
                                         <div class="landing-metric-icon">
-                                            <i class="fas fa-id-card"></i>
+                                            <img src="{{ asset('img/ktp.png') }}" alt="Wajib KTP" class="landing-metric-icon__img">
                                         </div>
                                         <div class="dk-metric__label mb-1">Wajib KTP (&ge; 17 tahun)</div>
-                                        <div class="dk-metric dk-metric--sm mb-2">{{ number_format($wajibKtp['total'] ?? 0) }}</div>
+                                        <div class="dk-metric dk-metric--sm mb-2">{{ number_format($wajibKtpTotal) }}</div>
+                                        <div class="landing-metric-progress">
+                                            <div class="landing-metric-progress-bar" style="width: {{ $wajibKtpPercent }}%"></div>
+                                        </div>
+                                        <div class="landing-metric-percentage">
+                                            <i class="fas fa-chart-pie me-1"></i>{{ number_format($wajibKtpPercent, 1) }}%
+                                        </div>
                                         <small class="text-muted d-block mt-2">
                                             <i class="fas fa-mars me-1"></i> L: {{ number_format($wajibKtp['male'] ?? 0) }} &bull;
                                             <i class="fas fa-venus ms-2 me-1"></i> P: {{ number_format($wajibKtp['female'] ?? 0) }}
