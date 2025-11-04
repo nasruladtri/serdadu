@@ -2,6 +2,7 @@
 <html lang="id">
 
 <head>
+    {{-- Pengaturan meta, judul halaman, serta pemuatan aset global untuk layout publik --}}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ ($title ?? null) ? $title . ' · ' : '' }}{{ config('app.name', 'Dukcapil Madiun') }}</title>
@@ -19,11 +20,13 @@
         integrity="sha512-31on1Uwx1PcT6zG17Q6C7GdYr387cMGX5CujjJVOk+3O8VjMBYPWaFzx5b9mzfFh1YgUo10xXMYN9bB+FsSjVg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ asset('css/dukcapil.css') . '?v=' . filemtime(public_path('css/dukcapil.css')) }}">
+    {{-- Slot untuk menambahkan stylesheet khusus dari halaman turunan --}}
     @stack('styles')
 </head>
 
 <body class="bg-body">
-    <aside class="dk-sidebar" data-sidebar>
+    {{-- Sidebar utama untuk navigasi halaman publik Serdadu --}}
+    <aside class="dk-sidebar dk-sidebar--collapsed" data-sidebar>
         <div class="dk-sidebar__brand mb-3">
             <div class="dk-sidebar__logo">
                 <img src="{{ asset('vendor/corporate-ui/img/kabupaten-madiun.png') }}" alt="Logo"
@@ -31,6 +34,7 @@
             </div>
             <div class="dk-sidebar__brand-text">
                 <span class="dk-brand-title">Serdadu</span>
+                <span class="dk-brand-subtitle">Sistem Rekap Data Terpadu</span>
             </div>
         </div>
         <div class="dk-sidebar__toggle">
@@ -41,6 +45,7 @@
                 <span class="dk-sidebar-fab__label text-xs" data-label>Sembunyikan</span>
             </button>
         </div>
+        {{-- Daftar tautan menu utama pada sidebar desktop --}}
         <nav class="dk-sidebar__nav">
             <a href="{{ route('public.landing') }}"
                 class="dk-nav-link {{ request()->routeIs('public.landing') ? 'active' : '' }}">
@@ -63,13 +68,31 @@
                 </span>
                 <span class="dk-nav-link__label">Grafik</span>
             </a>
+            <a href="{{ url('/compare') }}"
+                class="dk-nav-link {{ request()->is('compare') ? 'active' : '' }}">
+                <span class="dk-nav-link__icon">
+                    <img src="{{ asset('img/compare.png') }}" alt="" class="dk-nav-link__image" loading="lazy" decoding="async">
+                </span>
+                <span class="dk-nav-link__label">Compare</span>
+            </a>
+            <a href="{{ url('/terms') }}"
+                class="dk-nav-link {{ request()->is('terms') ? 'active' : '' }}">
+                <span class="dk-nav-link__icon">
+                    <img src="{{ asset('img/terms.png') }}" alt="" class="dk-nav-link__image" loading="lazy" decoding="async">
+                </span>
+                <span class="dk-nav-link__label">Terms</span>
+            </a>
         </nav>
+        {{-- Informasi hak cipta dan versi aplikasi pada bagian bawah sidebar --}}
         <div class="dk-sidebar__footer text-center">
-            <span class="dk-sidebar__meta">&copy; Dinas Dukcapil Kabupaten Madiun</span>
-            <span class="dk-sidebar__meta">Versi 0.1.2</span>
+            <span class="dk-sidebar__meta" data-sidebar-meta-full>Copyright © 2025 Serdadu Dukcapil Kab. Madiun. All rights reserved.</span>
+            <span class="dk-sidebar__meta" data-sidebar-meta-full>Versi 0.1.2</span>
+            <span class="dk-sidebar__meta" data-sidebar-meta-compact>&copy;</span>
+            <span class="dk-sidebar__meta" data-sidebar-meta-compact>Versi 0.1.2</span>
         </div>
 </aside>
 
+    {{-- Topbar untuk tombol menu pada tampilan responsif --}}
     <header class="dk-topbar">
         <button class="dk-topbar__menu" type="button" data-offcanvas-toggle aria-controls="sidebarOffcanvas"
             aria-expanded="false" aria-label="Buka navigasi">
@@ -77,13 +100,14 @@
         </button>
     </header>
 
-    <div class="dk-main" data-main>
+    <div class="dk-main dk-main--expanded" data-main>
+        {{-- Kontainer konten dinamis yang diisi oleh masing-masing halaman --}}
         <main class="dk-content">
             @yield('content')
         </main>
     </div>
 
-    {{-- Offcanvas sidebar for mobile --}}
+    {{-- Sidebar offcanvas khusus tampilan seluler --}}
     <div class="offcanvas offcanvas-start dk-offcanvas" tabindex="-1" id="sidebarOffcanvas">
         <div class="offcanvas-header">
             <div class="dk-offcanvas-brand">
@@ -124,6 +148,22 @@
                     </span>
                     <span class="dk-nav-link__label">Grafik Data</span>
                 </a>
+                <a href="{{ url('/compare') }}"
+                    class="dk-nav-link {{ request()->is('compare') ? 'active' : '' }}"
+                    data-offcanvas-close>
+                    <span class="dk-nav-link__icon">
+                        <img src="{{ asset('img/compare.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
+                    </span>
+                    <span class="dk-nav-link__label">Compare</span>
+                </a>
+                <a href="{{ url('/terms') }}"
+                    class="dk-nav-link {{ request()->is('terms') ? 'active' : '' }}"
+                    data-offcanvas-close>
+                    <span class="dk-nav-link__icon">
+                        <img src="{{ asset('img/terms.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
+                    </span>
+                    <span class="dk-nav-link__label">Terms</span>
+                </a>
             </nav>
         </div>
     </div>
@@ -144,7 +184,7 @@
                 ? bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl)
                 : null;
 
-            // Hide floating FAB while offcanvas is open to prevent it blocking clicks
+            // Sembunyikan tombol FAB mengambang saat offcanvas terbuka agar tidak menutupi konten
             if (offcanvasEl && fabButtons.length) {
                 offcanvasEl.addEventListener('show.bs.offcanvas', () => {
                     fabButtons.forEach((btn) => {
@@ -164,13 +204,13 @@
                 });
             }
 
-            // Ensure offcanvas menu links close the drawer without blocking navigation
+            // Pastikan tautan menu offcanvas menutup panel tanpa menghalangi perpindahan halaman
             if (offcanvasEl) {
                 const offcanvasLinks = offcanvasEl.querySelectorAll('[data-offcanvas-close]');
                 offcanvasLinks.forEach((link) => {
                     link.addEventListener('click', () => {
                         if (offcanvasInstance) {
-                            // Hide the drawer on the next frame so the navigation can proceed normally
+                            // Sembunyikan panel pada frame berikutnya supaya navigasi tetap lancar
                             requestAnimationFrame(() => offcanvasInstance.hide());
                         }
                     });
@@ -302,9 +342,10 @@
                 });
             }
 
-            // No sidebar injection for category tabs (reverted)
+            // Tidak ada injeksi sidebar untuk tab kategori (dikembalikan seperti semula)
         });
     </script>
+    {{-- Slot untuk menyisipkan skrip tambahan dari halaman turunan --}}
     @stack('scripts')
 </body>
 

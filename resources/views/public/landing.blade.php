@@ -1,667 +1,170 @@
 @extends('layouts.dukcapil', ['title' => 'Beranda'])
 
 @push('styles')
+    {{-- Berkas gaya dasar Leaflet untuk elemen kontrol peta --}}
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <style>
-        /* Landing page map tweaks */
-        .dk-map {
-            position: relative;
-            width: 100%;
-            flex: 1 1 auto;
-            height: 100%;
-            min-height: clamp(260px, 48vh, 540px);
-        }
-
-        .landing-map-card__header {
-            padding: clamp(1.25rem, 1.6vw + 1rem, 2rem);
-            padding-bottom: 0.75rem;
-        }
-
-        .landing-map-card__map {
-            padding: clamp(1rem, 1.4vw + 0.75rem, 1.75rem);
-            padding-top: 1rem;
-        }
-
-        .dk-map .leaflet-container {
-            width: 100%;
-            height: 100%;
-            border-radius: 6px;
-        }
-
-        .dk-district-label {
-            background: #1e88e5;
-            color: #ffffff;
-            border: 2px solid #ffffff;
-            border-radius: 999px;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: 600;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-            pointer-events: none;
-        }
-
-        .dk-district-label span {
-            line-height: 1;
-            transform: translateY(1px);
-        }
-
-        .dk-village-label {
-            background: #1e88e5;
-            color: #ffffff;
-            border: 2px solid #ffffff;
-            border-radius: 999px;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: 600;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-            pointer-events: none;
-        }
-
-        .dk-village-label span {
-            line-height: 1;
-            transform: translateY(1px);
-        }
-
-        /* Reusable metric size */
-        .dk-metric--sm {
-            font-size: 1.2rem;
-        }
-
-        /* Improved spacing for Wilayah section */
-        .landing-wilayah-section {
-            margin-bottom: 2rem;
-        }
-
-        .landing-wilayah-section .table {
-            margin-bottom: 0;
-        }
-
-        .landing-wilayah-section .table td {
-            padding: 0.85rem 1rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .landing-wilayah-section .table tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        /* Improved metric cards with hover effects */
-        .landing-metric-card {
-            border-radius: 12px;
-            padding: 1.25rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .landing-metric-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .landing-metric-card:hover::before {
-            left: 100%;
-        }
-
-        .landing-metric-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-        }
-
-        .landing-metric-card--primary {
-            background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
-            color: #ffffff;
-        }
-
-        .landing-metric-card--primary:hover {
-            background: linear-gradient(135deg, #0ea5e9 0%, #1d4ed8 100%);
-            box-shadow: 0 12px 32px rgba(37, 99, 235, 0.25);
-        }
-
-        .landing-metric-card--light {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            color: #0f172a;
-        }
-
-        .landing-metric-card--light:hover {
-            background: #ffffff;
-            border-color: #cbd5e1;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
-        }
-
-        .landing-metric-card--male {
-            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-            border: 1px solid #7dd3fc;
-            color: #0f172a;
-        }
-
-        .landing-metric-card--male:hover {
-            background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 100%);
-            border-color: #38bdf8;
-            box-shadow: 0 8px 24px rgba(14, 165, 233, 0.15);
-        }
-
-        .landing-metric-card--female {
-            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
-            border: 1px solid #f9a8d4;
-            color: #0f172a;
-        }
-
-        .landing-metric-card--female:hover {
-            background: linear-gradient(135deg, #fbcfe8 0%, #f9a8d4 100%);
-            border-color: #f472b6;
-            box-shadow: 0 8px 24px rgba(236, 72, 153, 0.15);
-        }
-
-        .landing-metric-card--ktp {
-            background: linear-gradient(135deg, #dcfce7 0%, #86efac 100%);
-            border: 1px solid #22c55e;
-            color: #0f172a;
-        }
-
-        .landing-metric-card--ktp:hover {
-            background: linear-gradient(135deg, #bbf7d0 0%, #22c55e 100%);
-            border-color: #16a34a;
-            box-shadow: 0 8px 24px rgba(34, 197, 94, 0.18);
-        }
-
-        /* Metric icon styling */
-        .landing-metric-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            margin-bottom: 0.75rem;
-            background: rgba(255, 255, 255, 0.2);
-            color: inherit;
-        }
-
-        .landing-metric-icon__img {
-            width: 26px;
-            height: 26px;
-            object-fit: contain;
-        }
-
-        .landing-metric-card--light .landing-metric-icon {
-            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
-            color: #ffffff;
-        }
-
-        .landing-metric-card--male .landing-metric-icon {
-            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
-            color: #ffffff;
-        }
-
-        .landing-metric-card--female .landing-metric-icon {
-            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
-            color: #ffffff;
-        }
-
-        .landing-metric-card--ktp .landing-metric-icon {
-            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-            color: #ffffff;
-        }
-
-        /* Progress bar for percentage visualization */
-        .landing-metric-progress {
-            margin-top: 0.75rem;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 2px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .landing-metric-card--light .landing-metric-progress {
-            background: #e2e8f0;
-        }
-
-        .landing-metric-card--male .landing-metric-progress {
-            background: rgba(14, 165, 233, 0.15);
-        }
-
-        .landing-metric-card--female .landing-metric-progress {
-            background: rgba(236, 72, 153, 0.15);
-        }
-
-        .landing-metric-card--ktp .landing-metric-progress {
-            background: rgba(34, 197, 94, 0.2);
-        }
-
-        .landing-metric-progress-bar {
-            height: 100%;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 2px;
-            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-        }
-
-        .landing-metric-card--light .landing-metric-progress-bar {
-            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
-        }
-
-        .landing-metric-card--male .landing-metric-progress-bar {
-            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
-        }
-
-        .landing-metric-card--female .landing-metric-progress-bar {
-            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
-        }
-
-        .landing-metric-card--ktp .landing-metric-progress-bar {
-            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-        }
-
-        /* Percentage badge */
-        .landing-metric-percentage {
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-top: 0.5rem;
-            opacity: 0.9;
-        }
-
-        /* Loading state */
-        .landing-loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 200px;
-            color: #64748b;
-        }
-
-        .landing-loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #e2e8f0;
-            border-top-color: #2563eb;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Error state */
-        .landing-error {
-            padding: 1.5rem;
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            border-radius: 12px;
-            color: #991b1b;
-        }
-
-        /* Popup content styling (replaces inline styles) */
-        .dk-popup {
-            max-width: 280px;
-        }
-        .dk-popup__table {
-            margin-top: 6px;
-        }
-        .dk-popup__table td {
-            padding: 2px 6px;
-            vertical-align: top;
-            font-size: 13px;
-        }
-        .dk-popup__table td:first-child {
-            color: #555;
-        }
-        .dk-popup__table td:last-child {
-            color: #222;
-        }
-
-        /* Legend layout helpers (replaces inline styles) */
-        .dk-legend-lines {
-            margin-top: 5px;
-        }
-        .dk-legend-line {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .dk-legend-swatch {
-            display: inline-block;
-            width: 20px;
-            height: 3px;
-        }
-        .dk-legend-swatch--kab { background-color: #c0392b; }
-        .dk-legend-swatch--kec { background-color: #63d199; }
-        .dk-legend-swatch--kel { background-color: #00b4d8; }
-
-        .leaflet-control-layers .dk-map-legend {
-            background: transparent;
-            border-radius: 0;
-            padding: 6px 0 0;
-            border: 0;
-            box-shadow: none;
-            width: 100%;
-            box-sizing: border-box;
-            margin-top: 6px;
-            border-top: 1px solid rgba(0, 0, 0, 0.2);
-        }
-
-        .leaflet-control-layers .dk-map-legend__title {
-            font-size: 0.68rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: #6c757d;
-            margin-bottom: 0.5rem;
-        }
-
-        .leaflet-control-layers .dk-map-legend__list {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            max-height: 160px;
-            overflow-y: auto;
-        }
-
-        .leaflet-control-layers .dk-map-legend__item {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.25rem 0;
-            font-size: 0.78rem;
-            border-bottom: 1px dotted #e0e6ed;
-        }
-
-        .leaflet-control-layers .dk-map-legend__item:last-child {
-            border-bottom: none;
-        }
-
-        .leaflet-control-layers .dk-map-legend__item span:last-child {
-            flex: 1;
-            min-width: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .leaflet-control-layers .dk-map-legend__badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 18px;
-            height: 18px;
-            border-radius: 9px;
-            background: #1e88e5;
-            color: #ffffff;
-            font-weight: 600;
-            font-size: 0.6rem;
-        }
-
-        @media (min-width: 992px) {
-            .landing-layout > [class*="col-"] {
-                display: flex;
-                flex-direction: column;
-            }
-        }
-
-        @media (min-width: 1440px) {
-            .dk-map {
-                min-height: clamp(320px, 38vh, 640px);
-            }
-        }
-
-        @media (max-width: 991.98px) {
-            .landing-overview .card-body {
-                padding: clamp(1.35rem, 2vw + 1rem, 1.75rem);
-            }
-
-            .landing-layout .dk-card__title {
-                font-size: 1.05rem;
-            }
-
-            .landing-overview .table {
-                font-size: 0.95rem;
-            }
-
-            .landing-map-card__header {
-                padding-bottom: 0.5rem;
-            }
-
-            .landing-map-card__map {
-                padding-top: 0.75rem;
-            }
-
-            .landing-metric-card {
-                padding: 1.1rem;
-            }
-
-            .landing-metric-icon {
-                width: 36px;
-                height: 36px;
-                font-size: 1.1rem;
-                margin-bottom: 0.65rem;
-            }
-        }
-
-        @media (max-width: 575.98px) {
-            .landing-overview .card-body {
-                padding: 1.15rem;
-            }
-
-            .landing-layout .dk-card__title {
-                font-size: 1rem;
-            }
-
-            .landing-layout select.form-select-sm {
-                font-size: 0.85rem;
-            }
-
-            .landing-map-card__header,
-            .landing-map-card__map {
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
-
-            .dk-map {
-                min-height: clamp(220px, 52vh, 420px);
-            }
-
-            .landing-wilayah-section {
-                margin-bottom: 1.5rem;
-            }
-
-            .landing-wilayah-section .table td {
-                padding: 0.7rem 0.85rem;
-                font-size: 0.88rem;
-            }
-
-            .landing-metric-card {
-                padding: 1rem;
-            }
-
-            .landing-metric-icon {
-                width: 32px;
-                height: 32px;
-                font-size: 1rem;
-                margin-bottom: 0.6rem;
-            }
-
-            .dk-metric {
-                font-size: clamp(1.1rem, 2vw + 0.9rem, 1.4rem);
-            }
-
-            .dk-metric--sm {
-                font-size: 1.05rem;
-            }
-
-            .landing-metric-percentage {
-                font-size: 0.7rem;
-            }
-        }
-
-        /* Touch device improvements */
-        @media (hover: none) and (pointer: coarse) {
-            .landing-metric-card:active {
-                transform: translateY(0);
-                transition: transform 0.1s ease;
-            }
-
-            .landing-metric-card:hover {
-                transform: none;
-            }
-        }
-
-        /* Smooth number animation on load */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .landing-metric-card {
-            animation: fadeInUp 0.5s ease-out;
-            animation-fill-mode: both;
-        }
-
-        .landing-metric-card:nth-child(1) { animation-delay: 0.1s; }
-        .landing-metric-card:nth-child(2) { animation-delay: 0.2s; }
-        .landing-metric-card:nth-child(3) { animation-delay: 0.3s; }
-        .landing-metric-card:nth-child(4) { animation-delay: 0.4s; }
-
-    </style>
+    {{-- Berkas CSS khusus halaman landing agar tidak lagi tercampur di dalam Blade --}}
+    <link rel="stylesheet" href="{{ asset('css/landing.css') . '?v=' . filemtime(public_path('css/landing.css')) }}">
 @endpush
 
 @section('content')
-    @if (!$period)
-        <div class="alert alert-warning border-0 dk-card">
-            <div class="d-flex align-items-center gap-2">
-                <i class="fas fa-exclamation-triangle"></i>
-                <div>
-                    <strong>Data belum tersedia.</strong> Silakan unggah dataset terlebih dahulu melalui halaman admin.
+    {{-- Kontainer utama halaman landing untuk pengunjung publik --}}
+    <div class="landing-page">
+        @if (!$period)
+            {{-- Tampilkan pengingat apabila dataset belum pernah diunggah --}}
+            <div class="alert alert-warning border-0 dk-card">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <strong>Data belum tersedia.</strong> Silakan unggah dataset terlebih dahulu melalui halaman admin.
+                    </div>
                 </div>
             </div>
-        </div>
-    @else
-        <div class="row g-4 align-items-stretch landing-layout">
-            <div class="col-12 col-lg-5 col-xl-4">
-                <div class="dk-card h-100 landing-overview">
-                    <div class="card-body p-4">
-                        <h6 class="dk-card__title mb-4">Data Agregat Kependudukan Terbaru</h6>
-                        
-                        <div class="landing-wilayah-section">
-                            <h6 class="text-uppercase text-xs text-muted mb-3">Wilayah</h6>
-                            <div class="table-responsive">
-                                <table class="table table-sm dk-table">
-                                    <tbody>
-                                        <tr>
-                                            <td class="fw-semibold">Nama Wilayah</td>
-                                            <td class="text-end">Madiun</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-semibold">Jumlah Daerah</td>
-                                            <td class="text-end">{{ number_format($districtCount) }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-semibold">Jumlah Desa/Kel</td>
-                                            <td class="text-end">{{ number_format($villageCount) }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+        @else
+            {{-- Konten statistik dan peta hanya dirender ketika data terbaru tersedia --}}
+            <div class="landing-fullscreen">
+                <div class="row g-4 align-items-stretch landing-layout">
+                    <div class="col-12 col-lg-5 col-xl-4">
+                        <div class="dk-card h-100 landing-overview">
+                            <div class="card-body p-4">
+                                <h6 class="dk-card__title mb-4">Data Agregat Kependudukan Terbaru</h6>
 
-                        <div class="mb-4">
-                            <h6 class="text-uppercase text-xs text-muted mb-3">Jumlah Penduduk</h6>
-                            <div class="row g-3">
-                                @php
-                                    $totalPop = $totals['population'] ?? 0;
-                                    $malePop = $totals['male'] ?? 0;
-                                    $femalePop = $totals['female'] ?? 0;
-                                    $wajibKtpTotal = $wajibKtp['total'] ?? 0;
-                                    $malePercent = $totalPop > 0 ? ($malePop / $totalPop) * 100 : 0;
-                                    $femalePercent = $totalPop > 0 ? ($femalePop / $totalPop) * 100 : 0;
-                                    $wajibKtpPercent = $totalPop > 0 ? ($wajibKtpTotal / $totalPop) * 100 : 0;
-                                @endphp
-                                
-                                <div class="col-12">
-                                    <div class="landing-metric-card landing-metric-card--primary">
-                                        <div class="landing-metric-icon">
-                                            <img src="{{ asset('img/penduduk.png') }}" alt="Total Penduduk" class="landing-metric-icon__img">
+                                <div class="landing-wilayah-section">
+                                    <h6 class="text-uppercase text-xs text-muted mb-3">Wilayah</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm dk-table">
+                                            <tbody>
+                                                <tr>
+                                                    <td class="fw-semibold">Nama Wilayah</td>
+                                                    <td class="text-end">Madiun</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="fw-semibold">Jumlah Daerah</td>
+                                                    <td class="text-end">{{ number_format($districtCount) }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="fw-semibold">Jumlah Desa/Kel</td>
+                                                    <td class="text-end">{{ number_format($villageCount) }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {{-- Ringkasan jumlah penduduk berdasarkan kategori utama --}}
+                                <div class="mb-4">
+                                    <h6 class="text-uppercase text-xs text-muted mb-3">Jumlah Penduduk</h6>
+                                    <div class="row g-3 landing-metric-grid">
+                                        @php
+                                            // Hitung nilai agregat serta persentase yang dipakai untuk visualisasi progress bar
+                                            $totalPop = $totals['population'] ?? 0;
+                                            $malePop = $totals['male'] ?? 0;
+                                            $femalePop = $totals['female'] ?? 0;
+                                            $wajibKtpTotal = $wajibKtp['total'] ?? 0;
+                                            $malePercent = $totalPop > 0 ? ($malePop / $totalPop) * 100 : 0;
+                                            $femalePercent = $totalPop > 0 ? ($femalePop / $totalPop) * 100 : 0;
+                                            $wajibKtpPercent = $totalPop > 0 ? ($wajibKtpTotal / $totalPop) * 100 : 0;
+                                        @endphp
+
+                                        <div class="col-12 landing-metric-item">
+                                            <div class="landing-metric-card landing-metric-card--primary">
+                                                <div class="landing-metric-icon">
+                                                    <img src="{{ asset('img/penduduk.png') }}" alt="Total Penduduk" class="landing-metric-icon__img">
+                                                </div>
+                                                <div class="dk-metric__label text-white-50 mb-1">Total Penduduk</div>
+                                                <div class="dk-metric text-white mb-2">{{ number_format($totalPop) }}</div>
+                                                <div class="landing-metric-progress">
+                                                    <div class="landing-metric-progress-bar" style="--landing-progress: 100%;"></div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="dk-metric__label text-white-50 mb-1">Total Penduduk</div>
-                                        <div class="dk-metric text-white mb-2">{{ number_format($totalPop) }}</div>
-                                        <div class="landing-metric-progress">
-                                            <div class="landing-metric-progress-bar" style="width: 100%"></div>
+
+                                        <div class="col-12 col-sm-6 landing-metric-item">
+                                            <div class="landing-metric-card landing-metric-card--male">
+                                                <div class="landing-metric-icon">
+                                                    <img src="{{ asset('img/l.png') }}" alt="Penduduk Laki-laki" class="landing-metric-icon__img">
+                                                </div>
+                                                <div class="dk-metric__label mb-1">Laki-laki</div>
+                                                <div class="dk-metric dk-metric--sm mb-2">{{ number_format($malePop) }}</div>
+                                                <div class="landing-metric-progress">
+                                                    <div class="landing-metric-progress-bar" style="--landing-progress: {{ $malePercent }}%;"></div>
+                                                </div>
+                                                <div class="landing-metric-percentage">
+                                                    <i class="fas fa-chart-line me-1"></i>{{ number_format($malePercent, 1) }}%
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 col-sm-6 landing-metric-item">
+                                            <div class="landing-metric-card landing-metric-card--female">
+                                                <div class="landing-metric-icon">
+                                                    <img src="{{ asset('img/p.png') }}" alt="Penduduk Perempuan" class="landing-metric-icon__img">
+                                                </div>
+                                                <div class="dk-metric__label mb-1">Perempuan</div>
+                                                <div class="dk-metric dk-metric--sm mb-2">{{ number_format($femalePop) }}</div>
+                                                <div class="landing-metric-progress">
+                                                    <div class="landing-metric-progress-bar" style="--landing-progress: {{ $femalePercent }}%;"></div>
+                                                </div>
+                                                <div class="landing-metric-percentage">
+                                                    <i class="fas fa-chart-line me-1"></i>{{ number_format($femalePercent, 1) }}%
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 landing-metric-item">
+                                            <div class="landing-metric-card landing-metric-card--ktp">
+                                                <div class="landing-metric-icon">
+                                                    <img src="{{ asset('img/ktp.png') }}" alt="Wajib KTP" class="landing-metric-icon__img">
+                                                </div>
+                                                <div class="dk-metric__label mb-1">Wajib KTP (&ge; 17 tahun)</div>
+                                                <div class="dk-metric dk-metric--sm mb-2">{{ number_format($wajibKtpTotal) }}</div>
+                                                <div class="landing-metric-progress">
+                                                    <div class="landing-metric-progress-bar" style="--landing-progress: {{ $wajibKtpPercent }}%;"></div>
+                                                </div>
+                                                <div class="landing-metric-percentage">
+                                                    <i class="fas fa-chart-pie me-1"></i>{{ number_format($wajibKtpPercent, 1) }}%
+                                                </div>
+                                                <small class="text-muted d-block mt-2">
+                                                    <i class="fas fa-mars me-1"></i> L: {{ number_format($wajibKtp['male'] ?? 0) }} &bull;
+                                                    <i class="fas fa-venus ms-2 me-1"></i> P: {{ number_format($wajibKtp['female'] ?? 0) }}
+                                                </small>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <div class="col-12 col-sm-6">
-                                    <div class="landing-metric-card landing-metric-card--male">
-                                        <div class="landing-metric-icon">
-                                            <img src="{{ asset('img/l.png') }}" alt="Penduduk Laki-laki" class="landing-metric-icon__img">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-7 col-xl-8">
+                        <div class="dk-card h-100 landing-map-card">
+                            <div class="card-body p-0 d-flex flex-column h-100">
+                                <div class="landing-map-card__header d-flex flex-column flex-lg-row align-items-lg-start gap-3">
+                                    <h6 class="dk-card__title mb-0">Peta Persebaran Penduduk Kabupaten Madiun</h6>
+                                    @if(!empty($districtOptions) && $districtOptions->count())
+                                        <div class="ms-lg-auto w-100 w-lg-auto landing-map-card__filter">
+                                            <label for="landing-district-filter" class="form-label text-xs text-muted mb-1">Kecamatan</label>
+                                            <select id="landing-district-filter" class="form-select form-select-sm">
+                                                <option value="">SEMUA</option>
+                                                @foreach($districtOptions as $district)
+                                                    <option value="{{ $district->code }}" data-slug="{{ \Illuminate\Support\Str::slug($district->name) }}">
+                                                        {{ $district->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </div>
-                                        <div class="dk-metric__label mb-1">Laki-laki</div>
-                                        <div class="dk-metric dk-metric--sm mb-2">{{ number_format($malePop) }}</div>
-                                        <div class="landing-metric-progress">
-                                            <div class="landing-metric-progress-bar" style="width: {{ $malePercent }}%"></div>
-                                        </div>
-                                        <div class="landing-metric-percentage">
-                                            <i class="fas fa-chart-line me-1"></i>{{ number_format($malePercent, 1) }}%
+                                    @endif
+                                </div>
+                                {{-- Area kanan berisi peta interaktif beserta loader bawaan --}}
+                                <div class="landing-map-card__map d-flex flex-grow-1 position-relative">
+                                    <div id="landing-map-loader" class="landing-loading landing-map-loader position-absolute w-100 h-100">
+                                        <div class="text-center">
+                                            <div class="landing-loading-spinner mx-auto mb-3"></div>
+                                            <div class="text-muted small">Memuat peta...</div>
                                         </div>
                                     </div>
-                                </div>
-                                
-                                <div class="col-12 col-sm-6">
-                                    <div class="landing-metric-card landing-metric-card--female">
-                                        <div class="landing-metric-icon">
-                                            <img src="{{ asset('img/p.png') }}" alt="Penduduk Perempuan" class="landing-metric-icon__img">
-                                        </div>
-                                        <div class="dk-metric__label mb-1">Perempuan</div>
-                                        <div class="dk-metric dk-metric--sm mb-2">{{ number_format($femalePop) }}</div>
-                                        <div class="landing-metric-progress">
-                                            <div class="landing-metric-progress-bar" style="width: {{ $femalePercent }}%"></div>
-                                        </div>
-                                        <div class="landing-metric-percentage">
-                                            <i class="fas fa-chart-line me-1"></i>{{ number_format($femalePercent, 1) }}%
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="col-12">
-                                    <div class="landing-metric-card landing-metric-card--ktp">
-                                        <div class="landing-metric-icon">
-                                            <img src="{{ asset('img/ktp.png') }}" alt="Wajib KTP" class="landing-metric-icon__img">
-                                        </div>
-                                        <div class="dk-metric__label mb-1">Wajib KTP (&ge; 17 tahun)</div>
-                                        <div class="dk-metric dk-metric--sm mb-2">{{ number_format($wajibKtpTotal) }}</div>
-                                        <div class="landing-metric-progress">
-                                            <div class="landing-metric-progress-bar" style="width: {{ $wajibKtpPercent }}%"></div>
-                                        </div>
-                                        <div class="landing-metric-percentage">
-                                            <i class="fas fa-chart-pie me-1"></i>{{ number_format($wajibKtpPercent, 1) }}%
-                                        </div>
-                                        <small class="text-muted d-block mt-2">
-                                            <i class="fas fa-mars me-1"></i> L: {{ number_format($wajibKtp['male'] ?? 0) }} &bull;
-                                            <i class="fas fa-venus ms-2 me-1"></i> P: {{ number_format($wajibKtp['female'] ?? 0) }}
-                                        </small>
+                                    <div class="dk-map flex-grow-1">
+                                        <div id="landing-map"></div>
                                     </div>
                                 </div>
                             </div>
@@ -669,45 +172,13 @@
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-lg-7 col-xl-8">
-                <div class="dk-card h-100 landing-map-card">
-                    <div class="card-body p-0 d-flex flex-column h-100">
-                        <div class="landing-map-card__header d-flex flex-column flex-lg-row align-items-lg-center gap-3">
-                            <h6 class="dk-card__title mb-0">Peta Persebaran Penduduk Kabupaten Madiun</h6>
-                            @if(!empty($districtOptions) && $districtOptions->count())
-                                <div class="ms-lg-auto w-100 w-lg-auto">
-                                    <label for="landing-district-filter" class="form-label text-xs text-muted mb-1">Kecamatan</label>
-                                    <select id="landing-district-filter" class="form-select form-select-sm">
-                                        <option value="">Seluruh Kecamatan</option>
-                                        @foreach($districtOptions as $district)
-                                            <option value="{{ $district->code }}" data-slug="{{ \Illuminate\Support\Str::slug($district->name) }}">
-                                                {{ $district->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="landing-map-card__map d-flex flex-grow-1 position-relative">
-                            <div id="landing-map-loader" class="landing-loading position-absolute w-100 h-100" style="z-index: 1000; background: rgba(255, 255, 255, 0.9); border-radius: 6px;">
-                                <div class="text-center">
-                                    <div class="landing-loading-spinner mx-auto mb-3"></div>
-                                    <div class="text-muted small">Memuat peta...</div>
-                                </div>
-                            </div>
-                            <div class="dk-map flex-grow-1">
-                                <div id="landing-map"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
+        @endif
+    </div>
 @endsection
 
 
 @push('scripts')
+    {{-- Skrip peta interaktif yang mengikat data demografis ke layer Leaflet --}}
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="{{ asset('map/Peta Madiun/kab.js') }}"></script>
     <script src="{{ asset('map/Peta Madiun/kec.js') }}"></script>
@@ -722,8 +193,12 @@
 
     <script>
         (function () {
+            // Ambil statistik yang sudah diproses di backend sebagai sumber data peta
             var mapStats = @json($mapStats);
 
+            /**
+             * Pastikan setiap bagian statistik mempunyai struktur default agar aman diakses.
+             */
             function ensureStats(section) {
                 section = section || {};
                 return {
@@ -732,9 +207,11 @@
                 };
             }
 
+            // Bentuk indeks pencarian cepat untuk kecamatan dan desa/kelurahan
             var districtStatsIndex = ensureStats(mapStats.districts);
             var villageStatsIndex = ensureStats(mapStats.villages);
 
+            // Siapkan beberapa opsi tile layer agar pengguna bisa memilih tampilan peta
             var carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 maxZoom: 19,
                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
@@ -757,6 +234,7 @@
                 attribution: 'Imagery &copy; Google'
             });
 
+            // Inisialisasi peta dengan fokus ke Kabupaten Madiun
             var map = L.map('landing-map', {
                 center: [-7.629, 111.515],
                 zoom: 11,
@@ -764,7 +242,7 @@
             });
             var TARGET_VIEW_WIDTH_KM = 15;
 
-            // Hide loading spinner when map is ready
+            // Hilangkan indikator loading ketika peta siap digunakan
             map.whenReady(function() {
                 var loader = document.getElementById('landing-map-loader');
                 if (loader) {
@@ -776,6 +254,7 @@
                 }
             });
 
+            // Buat pane khusus agar batas administratif memiliki urutan tumpukan yang konsisten
             map.createPane('kelPane');
             map.getPane('kelPane').style.zIndex = 470;
 
@@ -796,23 +275,38 @@
 
             L.control.scale({ imperial: false, maxWidth: 160 }).addTo(map);
 
+            /**
+             * Gaya garis batas kabupaten.
+             */
             function styleKab() {
                 return { color: '#c0392b', weight: 2, fillOpacity: 0, fill: false };
             }
 
+            /**
+             * Gaya garis batas kecamatan.
+             */
             function styleKec() {
                 return { color: '#63d199', weight: 1.7, fillColor: '#63d199', fillOpacity: 0 };
             }
 
+            /**
+             * Gaya garis batas desa/kelurahan.
+             */
             function styleKel() {
                 return { color: '#00b4d8', weight: 1.3, fillColor: '#48cae4', fillOpacity: 0 };
             }
 
+            /**
+             * Format angka agar ramah dibaca dengan pemisah ribuan lokal.
+             */
             function formatNumber(value) {
                 var num = Number(value);
                 return Number.isFinite(num) ? num.toLocaleString('id-ID') : '-';
             }
 
+            /**
+             * Escape nilai teks agar aman dimasukkan ke HTML popup.
+             */
             function escapeHtml(value) {
                 if (value === null || value === undefined) {
                     return '';
@@ -825,6 +319,9 @@
                     .replace(/'/g, '&#39;');
             }
 
+            /**
+             * Susun isi popup Leaflet dari judul dan daftar data kunci.
+             */
             function buildPopupContent(title, rows) {
                 var html = '<div class="dk-popup">';
                 if (title) {
@@ -843,6 +340,9 @@
                 return html;
             }
 
+            /**
+             * Normalisasi nama kecamatan/desa menjadi slug sederhana.
+             */
             function normalizeName(value) {
                 if (value === null || value === undefined) {
                     return null;
@@ -855,6 +355,9 @@
                 return text || null;
             }
 
+            /**
+             * Bentuk beberapa variasi slug untuk menoleransi perbedaan penulisan.
+             */
             function slugVariants(slug) {
                 if (!slug) {
                     return [];
@@ -867,6 +370,9 @@
                 return variants;
             }
 
+            /**
+             * Hasilkan kemungkinan variasi kode wilayah agar pencocokan lebih fleksibel.
+             */
             function codeAliases(value) {
                 var digits = value === undefined || value === null ? '' : String(value).replace(/\D+/g, '');
                 if (!digits) {
@@ -885,10 +391,14 @@
                 return Array.from(new Set(aliases));
             }
 
+            // Layer batas kabupaten selalu ada sebagai referensi utama
             var kabLayer = window.kab ? L.geoJSON(window.kab, { style: styleKab, pane: 'kabPane' }).addTo(map) : L.layerGroup().addTo(map);
             var kecLayer = null;
             var kelLayer = null;
 
+            /**
+             * Pastikan urutan layer mengikuti struktur administratif (desa di atas kecamatan, dst).
+             */
             function ensureLayerOrder() {
                 if (kelLayer && kelLayer.bringToFront) {
                     kelLayer.bringToFront();
@@ -901,12 +411,18 @@
                 }
             }
 
+            /**
+             * Lepas layer dari peta bila sedang tidak digunakan.
+             */
             function removeLayer(layer) {
                 if (layer && map.hasLayer(layer)) {
                     map.removeLayer(layer);
                 }
             }
 
+            /**
+             * Hitung centroid sederhana dari polygon agar label berada di posisi yang wajar.
+             */
             function computeRingCentroid(ring) {
                 if (!Array.isArray(ring) || ring.length < 3) {
                     return null;
@@ -932,6 +448,9 @@
                 return [x / areaFactor, y / areaFactor];
             }
 
+            /**
+             * Dapatkan titik representatif sebuah fitur geojson.
+             */
             function computeFeatureCenter(feature) {
                 if (!feature || !feature.geometry) {
                     return null;
@@ -993,11 +512,14 @@
                         return bounds.getCenter();
                     }
                 } catch (err) {
-                    // ignore
+                    // abaikan kesalahan pengambilan batas sementara
                 }
                 return null;
             }
 
+            /**
+             * Jaga agar lebar tampilan peta tidak terlalu sempit ketika pengguna fokus ke satu wilayah kecil.
+             */
             function adjustZoomToTargetWidth(targetKm) {
                 if (!map || typeof map.getBounds !== 'function') {
                     return;
@@ -1033,6 +555,7 @@
                 }
             }
 
+            // Layer-layer tambahan untuk highlight dan label numerik pada peta
             var hoverHighlightLayer = null;
             var districtLabelLayer = L.layerGroup().addTo(map);
             var villageLabelLayer = L.layerGroup().addTo(map);
@@ -1040,6 +563,9 @@
             var districtLegendTitleEl = null;
             var districtLabelData = [];
 
+            /**
+             * Hilangkan highlight sementara agar interaksi berikutnya konsisten.
+             */
             function clearHoverHighlight() {
                 if (hoverHighlightLayer && map.hasLayer(hoverHighlightLayer)) {
                     map.removeLayer(hoverHighlightLayer);
@@ -1047,6 +573,9 @@
                 hoverHighlightLayer = null;
             }
 
+            /**
+             * Siapkan data statis label kecamatan (nomor urut dan titik koordinat untuk marker).
+             */
             function buildDistrictLabelData() {
                 if (!window.kec || !Array.isArray(window.kec.features)) {
                     return [];
@@ -1064,6 +593,9 @@
                 });
             }
 
+            /**
+             * Render legenda kecamatan atau desa sesuai item yang diberikan.
+             */
             function renderLegend(items, options) {
                 if (!districtLegendEl || !districtLegendTitleEl) {
                     return;
@@ -1097,6 +629,9 @@
                 districtLegendEl.scrollTop = 0;
             }
 
+            /**
+             * Tempelkan label angka kecamatan sesuai filter yang aktif.
+             */
             function renderDistrictLabels(selectionState) {
                 if (!districtLabelLayer) {
                     return;
@@ -1129,6 +664,9 @@
 
             districtLabelData = buildDistrictLabelData();
 
+            /**
+             * Render label numerik desa/kelurahan setelah difilter.
+             */
             function renderVillageLabels(entries) {
                 if (!villageLabelLayer) {
                     return;
@@ -1154,6 +692,9 @@
                 });
             }
 
+            /**
+             * Kumpulkan daftar desa/kelurahan yang relevan dengan filter aktif.
+             */
             function buildVillageLabelData(filterFn) {
                 if (!window.kel || !Array.isArray(window.kel.features)) {
                     return [];
@@ -1206,6 +747,9 @@
                 return entries;
             }
 
+            /**
+             * Buat layer geojson kecamatan dengan opsi filter opsional.
+             */
             function createKecamatanLayer(filterFn) {
                 if (!window.kec) {
                     return L.layerGroup();
@@ -1224,6 +768,9 @@
                 return L.geoJSON(window.kec, options);
             }
 
+            /**
+             * Buat layer geojson desa/kelurahan menyesuaikan kecamatan terpilih.
+             */
             function createKelurahanLayer(districtState, filterFn) {
                 if (!window.kel) {
                     return L.layerGroup();
@@ -1242,6 +789,9 @@
                 return L.geoJSON(window.kel, options);
             }
 
+            /**
+             * Tambahkan layer interaktif baru ke peta sekaligus atur ulang urutannya.
+             */
             function addInteractiveLayers(layers) {
                 layers = Array.isArray(layers) ? layers : [layers];
 
@@ -1258,6 +808,9 @@
                 ensureLayerOrder();
             }
 
+            /**
+             * Sesuaikan tampilan peta agar fokus ke layer utama yang sedang aktif.
+             */
             function fitToLayers(primaryLayers) {
                 var layers = Array.isArray(primaryLayers) ? primaryLayers : [primaryLayers];
                 var bounds = null;
@@ -1289,6 +842,9 @@
                 }
             }
 
+            /**
+             * Beri efek highlight pada fitur yang disorot pengguna.
+             */
             function highlightFeature(layer, color, weight, fillOpacity) {
                 if (!layer) {
                     return;
@@ -1323,6 +879,9 @@
                 ensureLayerOrder();
             }
 
+            /**
+             * Kembalikan gaya dasar sebuah fitur setelah interaksi selesai.
+             */
             function resetFeatureStyle(layer, styleFn) {
                 clearHoverHighlight();
 
@@ -1335,6 +894,9 @@
                 ensureLayerOrder();
             }
 
+            /**
+             * Buat fungsi filter untuk memilih kecamatan berdasarkan kode maupun slug.
+             */
             function buildDistrictFilter(selectedCode, selectedSlug) {
                 var codeVal = selectedCode ? String(selectedCode).trim() : '';
                 var slugVal = selectedSlug ? normalizeName(selectedSlug) : '';
@@ -1366,6 +928,9 @@
                 };
             }
 
+            /**
+             * Cari statistik kecamatan sesuai properti geojson yang sedang diakses.
+             */
             function findDistrictStats(props) {
                 var aliases = codeAliases(props && props.kd_kecamatan);
                 for (var i = 0; i < aliases.length; i++) {
@@ -1383,6 +948,9 @@
                 return null;
             }
 
+            /**
+             * Cari statistik desa/kelurahan berdasarkan kombinasi kode atau slug kecamatan dan desa.
+             */
             function findVillageStats(props, districtState) {
                 var stats = null;
                 var districtAliases = districtState && Array.isArray(districtState.codeAliases) && districtState.codeAliases.length
@@ -1421,6 +989,9 @@
                 return stats;
             }
 
+            /**
+             * Bangun state kecamatan terpilih lengkap dengan alias kode dan slug.
+             */
             function buildSelectedDistrictState(filterState) {
                 filterState = filterState || { code: '', slug: '' };
                 var hasSelection = Boolean(filterState.code || filterState.slug);
@@ -1483,6 +1054,9 @@
                 };
             }
 
+            /**
+             * Tampilkan keseluruhan kabupaten ketika tidak ada filter kecamatan.
+             */
             function renderKabupatenOverview() {
                 removeLayer(kecLayer);
                 removeLayer(kelLayer);
@@ -1497,6 +1071,9 @@
                 renderLegend(districtLabelData, { title: 'Keterangan Kecamatan', prefix: 'Kec.' });
             }
 
+            /**
+             * Render tampilan detail ketika pengguna memilih kecamatan tertentu.
+             */
             function renderSelectedDistrict(selectionState) {
                 removeLayer(kecLayer);
                 removeLayer(kelLayer);
@@ -1547,6 +1124,9 @@
                 renderLegend(villageLabelData, { title: legendTitle, prefix: 'Desa/Kel.' });
             }
 
+            /**
+             * Kaitkan popup dan interaksi mouse untuk setiap geojson kecamatan.
+             */
             function bindDistrictFeature(feature, layer) {
                 var props = feature && feature.properties ? feature.properties : {};
                 var stats = findDistrictStats(props);
@@ -1583,6 +1163,9 @@
                 layer.bindPopup(buildPopupContent('Kecamatan ' + name, rows));
             }
 
+            /**
+             * Buat handler popup serta highlight untuk fitur desa/kelurahan.
+             */
             function bindVillageFeatureFactory(districtState) {
                 return function (feature, layer) {
                     var props = feature && feature.properties ? feature.properties : {};
@@ -1631,6 +1214,9 @@
                 };
             }
 
+            /**
+             * Render ulang layer peta sesuai pilihan kecamatan terbaru.
+             */
             function rebuildDistrictLayers(filterState) {
                 filterState = filterState || { code: '', slug: '' };
 
@@ -1647,6 +1233,7 @@
             var currentDistrictFilter = { code: '', slug: '' };
 
             if (districtFilterEl) {
+                // Ambil nilai awal filter saat halaman dimuat
                 var initialOption = districtFilterEl.selectedOptions && districtFilterEl.selectedOptions.length
                     ? districtFilterEl.selectedOptions[0]
                     : null;
@@ -1656,6 +1243,7 @@
                     slug: initialOption ? (initialOption.getAttribute('data-slug') || '') : ''
                 };
 
+                // Ketika pengguna memilih kecamatan berbeda, rebuild layer peta
                 districtFilterEl.addEventListener('change', function () {
                     var option = this.selectedOptions && this.selectedOptions.length ? this.selectedOptions[0] : null;
                     currentDistrictFilter = {
@@ -1680,6 +1268,7 @@
                 : null;
 
             if (layersControlContainer) {
+                // Sisipkan legenda kustom di dalam kontainer kontrol layer
                 var layersListEl = layersControlContainer.querySelector('.leaflet-control-layers-list') || layersControlContainer;
                 var legendContainer = L.DomUtil.create('div', 'dk-map-legend', layersListEl);
                 legendContainer.innerHTML =
@@ -1705,8 +1294,10 @@
                 L.DomEvent.disableScrollPropagation(legendContainer);
             }
 
+            // Render legenda kecamatan saat pertama kali dimuat
             renderLegend(districtLabelData, { title: 'Keterangan Kecamatan', prefix: 'Kec.' });
 
+            // Pastikan layer peta sesuai kondisi filter awal
             rebuildDistrictLayers(currentDistrictFilter);
         })();
     </script>

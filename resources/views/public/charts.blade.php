@@ -12,7 +12,7 @@
                 </div>
                 <form method="GET" class="col-xl-9 col-lg-8">
                     <div class="row g-3 align-items-md-end">
-                        <div class="col-xl-2 col-lg-3 col-md-6">
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-2">
                             <label class="form-label text-uppercase text-xs text-muted">Tahun</label>
                             <select class="form-select" name="year" onchange="this.form.submit()">
                                 <option value="">Terbaru</option>
@@ -23,7 +23,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-xl-2 col-lg-3 col-md-6">
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-2">
                             <label class="form-label text-uppercase text-xs text-muted">Semester</label>
                             <select class="form-select" name="semester" onchange="this.form.submit()">
                                 <option value="">Terbaru</option>
@@ -36,10 +36,10 @@
                                 @endforelse
                             </select>
                         </div>
-                        <div class="col-xl-4 col-lg-3 col-md-6">
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-2">
                             <label class="form-label text-uppercase text-xs text-muted">Kecamatan</label>
                             <select class="form-select" name="district_id" onchange="this.form.submit()">
-                                <option value="">Seluruh Kecamatan</option>
+                                <option value="">SEMUA</option>
                                 @foreach ($districts as $district)
                                     <option value="{{ $district->id }}" {{ (int) $selectedDistrict === $district->id ? 'selected' : '' }}>
                                         {{ $district->name }}
@@ -47,20 +47,32 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-xl-4 col-lg-3 col-md-6 dk-filter-village">
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-2 dk-filter-village">
                             <label class="form-label text-uppercase text-xs text-muted">Desa/Kelurahan</label>
-                            <div class="d-flex flex-column flex-sm-row gap-2 align-items-sm-end">
-                                <select class="form-select flex-fill" name="village_id" onchange="this.form.submit()" {{ $villages->isEmpty() ? 'disabled' : '' }}>
-                                    <option value="">Semua Desa/Kel</option>
-                                    @foreach ($villages as $village)
-                                        <option value="{{ $village->id }}" {{ (int) $selectedVillage === $village->id ? 'selected' : '' }}>
-                                            {{ $village->name }}
+                            <select class="form-select" name="village_id" onchange="this.form.submit()" {{ $villages->isEmpty() ? 'disabled' : '' }}>
+                                <option value="">SEMUA</option>
+                                @foreach ($villages as $village)
+                                    <option value="{{ $village->id }}" {{ (int) $selectedVillage === $village->id ? 'selected' : '' }}>
+                                        {{ $village->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-8 col-lg-4">
+                            <label class="form-label text-uppercase text-xs text-muted" for="chart-category-select">Kategori</label>
+                            <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch">
+                                <select id="chart-category-select" class="form-select js-chart-category-select flex-fill" aria-label="Pilih kategori grafik" {{ !$period ? 'disabled' : '' }}>
+                                    @foreach ($chartTitles as $key => $label)
+                                        <option value="{{ $key }}" {{ $loop->first ? 'selected' : '' }}>
+                                            {{ $label }}
                                         </option>
                                     @endforeach
                                 </select>
-                                <a href="{{ route('public.charts') }}" class="btn btn-outline-secondary flex-shrink-0 px-3">
-                                    Reset
-                                </a>
+                                <div class="d-grid d-sm-inline-flex">
+                                    <a href="{{ route('public.charts') }}" class="btn btn-outline-secondary flex-shrink-0 d-inline-flex align-items-center justify-content-center px-4 h-100">
+                                        Reset
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -81,9 +93,9 @@
             $areaSegments = [$kabupatenName];
             if ($districtName) {
                 $areaSegments[] = 'Kecamatan ' . $districtName;
-                $areaSegments[] = $villageName ? ('Desa/Kelurahan ' . $villageName) : 'Seluruh Desa/Kelurahan';
+                $areaSegments[] = $villageName ? ('Desa/Kelurahan ' . $villageName) : 'SEMUA';
             } else {
-                $areaSegments[] = 'Seluruh Kecamatan';
+                $areaSegments[] = 'SEMUA';
             }
             $areaDescriptor = implode(' • ', array_filter($areaSegments));
             $periodParts = [];
@@ -96,9 +108,17 @@
             $periodLabel = !empty($periodParts) ? implode(' ', $periodParts) : null;
         @endphp
 
-        <div class="row g-4">
+        <div class="row g-4 js-chart-sections">
             @foreach ($charts as $key => $chart)
-                <div class="col-12">
+                @php
+                    $isActive = $loop->first;
+                    $chartHeight = match ($key) {
+                        'occupation' => '540px',
+                        'single-age' => '420px',
+                        default => '360px'
+                    };
+                @endphp
+                <div class="col-12 js-chart-card {{ $isActive ? '' : 'd-none' }}" data-chart-key="{{ $key }}">
                     <div class="dk-card h-100">
                         <div class="card-body">
                             @include('public.partials.table-heading', [
@@ -112,15 +132,8 @@
                                     Data {{ strtolower($chart['title'] ?? $key) }} belum tersedia untuk filter yang dipilih.
                                 </p>
                             @else
-                                @php
-                                    $chartHeight = match ($key) {
-                                        'occupation' => '540px',
-                                        'single-age' => '420px',
-                                        default => '360px'
-                                    };
-                                @endphp
                                 <div class="chart-container" style="height: {{ $chartHeight }};">
-                                    <canvas id="chart-{{ $key }}"></canvas>
+                                    <canvas id="chart-{{ $key }}" data-chart-key="{{ $key }}"></canvas>
                                 </div>
                             @endif
                         </div>
@@ -135,9 +148,19 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const charts = @json($charts);
+            const chartConfigs = @json($charts);
+            const chartOrder = @json(array_keys($chartTitles));
             const chartsNeedingTags = @json($chartsNeedingTags);
             const chartsAngledTags = @json($chartsAngledTags);
+
+            const dropdowns = document.querySelectorAll('.js-chart-category-select');
+            const chartCards = document.querySelectorAll('.js-chart-card');
+
+            if (!chartCards.length) {
+                return;
+            }
+
+            const chartInstances = {};
 
             const categoryTagPlugin = {
                 id: 'categoryTagPlugin',
@@ -151,7 +174,7 @@
                         return;
                     }
 
-                    const {ctx, chartArea, scales} = chart;
+                    const { ctx, chartArea, scales } = chart;
                     const xScale = scales.x;
                     if (!xScale) {
                         return;
@@ -212,14 +235,20 @@
 
             Chart.register(categoryTagPlugin);
 
-            Object.entries(charts).forEach(([key, config]) => {
-                if (!config.labels || config.labels.length === 0 || !Array.isArray(config.datasets) || config.datasets.length === 0) {
-                    return;
+            const ensureChart = (key) => {
+                if (chartInstances[key]) {
+                    chartInstances[key].resize();
+                    return chartInstances[key];
+                }
+
+                const config = chartConfigs[key];
+                if (!config || !Array.isArray(config.labels) || !config.labels.length || !Array.isArray(config.datasets) || !config.datasets.length) {
+                    return null;
                 }
 
                 const canvas = document.getElementById(`chart-${key}`);
                 if (!canvas) {
-                    return;
+                    return null;
                 }
 
                 const ctx = canvas.getContext('2d');
@@ -230,7 +259,8 @@
                 const bottomPadding = angledTags
                     ? Math.min(260, Math.max(160, longestLabel * 6 + 32))
                     : (needsTags ? 70 : 16);
-                new Chart(ctx, {
+
+                chartInstances[key] = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: config.labels,
@@ -248,7 +278,7 @@
                             y: {
                                 beginAtZero: true,
                                 ticks: {
-                                    callback: function(value) {
+                                    callback(value) {
                                         return new Intl.NumberFormat('id-ID').format(value);
                                     }
                                 }
@@ -258,7 +288,7 @@
                                     autoSkip: false,
                                     maxRotation: 45,
                                     minRotation: 0,
-                                    callback: function(value, index, ticks) {
+                                    callback(value, index, ticks) {
                                         const label = (ticks[index] && ticks[index].label) || '';
                                         return label.length > 20 ? label.substring(0, 20) + '…' : label;
                                     }
@@ -271,7 +301,7 @@
                             },
                             tooltip: {
                                 callbacks: {
-                                    label: function(context) {
+                                    label(context) {
                                         const label = context.dataset.label || '';
                                         const raw = context.parsed.y ?? context.parsed;
                                         return `${label}: ${new Intl.NumberFormat('id-ID').format(raw)}`;
@@ -284,6 +314,56 @@
                             }
                         }
                     }
+                });
+
+                return chartInstances[key];
+            };
+
+            const setActiveChart = (key) => {
+                let found = false;
+
+                chartCards.forEach((card) => {
+                    const isMatch = card.dataset.chartKey === key;
+                    card.classList.toggle('d-none', !isMatch);
+                    if (isMatch) {
+                        found = true;
+                        ensureChart(key);
+                    }
+                });
+
+                if (!found) {
+                    const fallbackKey = chartOrder.find((candidate) => candidate !== key && document.querySelector(`.js-chart-card[data-chart-key="${candidate}"]`));
+                    if (fallbackKey) {
+                        dropdowns.forEach((select) => {
+                            select.value = fallbackKey;
+                        });
+                        setActiveChart(fallbackKey);
+                    }
+                }
+            };
+
+            const params = new URLSearchParams(window.location.search);
+            let initialKey = params.get('category');
+            if (!initialKey || !chartConfigs[initialKey]) {
+                initialKey = dropdowns[0]?.value ?? chartOrder[0] ?? null;
+            }
+
+            if (initialKey) {
+                dropdowns.forEach((select) => {
+                    select.value = initialKey;
+                });
+                setActiveChart(initialKey);
+            }
+
+            dropdowns.forEach((select) => {
+                select.addEventListener('change', (event) => {
+                    const targetKey = event.target.value;
+                    dropdowns.forEach((other) => {
+                        if (other !== event.target) {
+                            other.value = targetKey;
+                        }
+                    });
+                    setActiveChart(targetKey);
                 });
             });
         });

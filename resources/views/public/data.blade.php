@@ -1,6 +1,21 @@
 @extends('layouts.dukcapil', ['title' => 'Data Agregat'])
 
 @section('content')
+    @php
+        $tabs = [
+            'gender' => 'Jenis Kelamin',
+            'age' => 'Kelompok Umur',
+            'single-age' => 'Umur Tunggal',
+            'education' => 'Pendidikan',
+            'occupation' => 'Pekerjaan',
+            'marital' => 'Status Perkawinan',
+            'household' => 'Kepala Keluarga',
+            'religion' => 'Agama',
+            'wajib-ktp' => 'Wajib KTP',
+        ];
+    @endphp
+
+    {{-- Kartu filter untuk memilih wilayah dan periode data agregat yang ditampilkan --}}
     <div class="dk-card mb-4">
         <div class="card-body p-4">
             <div class="row g-3 align-items-lg-end">
@@ -11,8 +26,9 @@
                     </p>
                 </div>
                 <form method="GET" class="col-xl-9 col-lg-8">
+                    {{-- Set filter wilayah dan periode; setiap perubahan auto submit agar data langsung diperbarui --}}
                     <div class="row g-3 align-items-md-end">
-                        <div class="col-xl-2 col-lg-3 col-md-6">
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-2">
                             <label class="form-label text-uppercase text-xs text-muted">Tahun</label>
                             <select class="form-select" name="year" onchange="this.form.submit()">
                                 <option value="">Terbaru</option>
@@ -23,7 +39,7 @@
                             @endforeach
                             </select>
                         </div>
-                        <div class="col-xl-2 col-lg-3 col-md-6">
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-2">
                             <label class="form-label text-uppercase text-xs text-muted">Semester</label>
                             <select class="form-select" name="semester" onchange="this.form.submit()">
                                 <option value="">Terbaru</option>
@@ -36,10 +52,10 @@
                                 @endforelse
                             </select>
                         </div>
-                        <div class="col-xl-4 col-lg-3 col-md-6">
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-2">
                             <label class="form-label text-uppercase text-xs text-muted">Kecamatan</label>
                             <select class="form-select" name="district_id" onchange="this.form.submit()">
-                                <option value="">Seluruh Kecamatan</option>
+                                <option value="">SEMUA</option>
                                 @foreach ($districts as $district)
                                     <option value="{{ $district->id }}" {{ (int) $selectedDistrict === $district->id ? 'selected' : '' }}>
                                         {{ $district->name }}
@@ -47,20 +63,36 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-xl-4 col-lg-3 col-md-6 dk-filter-village">
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-2 dk-filter-village">
                             <label class="form-label text-uppercase text-xs text-muted">Desa/Kelurahan</label>
-                            <div class="d-flex flex-column flex-sm-row gap-2 align-items-sm-end">
-                                <select class="form-select flex-fill" name="village_id" onchange="this.form.submit()" {{ $villages->isEmpty() ? 'disabled' : '' }}>
-                                    <option value="">Semua Desa/Kel</option>
-                                    @foreach ($villages as $village)
-                                        <option value="{{ $village->id }}" {{ (int) $selectedVillage === $village->id ? 'selected' : '' }}>
-                                            {{ $village->name }}
+                            <select class="form-select" name="village_id" onchange="this.form.submit()" {{ $villages->isEmpty() ? 'disabled' : '' }}>
+                                <option value="">SEMUA</option>
+                                @foreach ($villages as $village)
+                                    <option value="{{ $village->id }}" {{ (int) $selectedVillage === $village->id ? 'selected' : '' }}>
+                                        {{ $village->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-8 col-lg-4">
+                            <label class="form-label text-uppercase text-xs text-muted" for="aggregate-category-select">Kategori</label>
+                            <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch">
+                                <select id="aggregate-category-select" class="form-select js-aggregate-tabs-select flex-fill"
+                                    aria-label="Pilih kategori data" {{ !$period ? 'disabled' : '' }}>
+                                    @foreach ($tabs as $key => $label)
+                                        @php
+                                            $optionValue = 'tab-' . $key;
+                                        @endphp
+                                        <option value="{{ $optionValue }}" {{ $loop->first ? 'selected' : '' }}>
+                                            {{ $label }}
                                         </option>
                                     @endforeach
                                 </select>
-                                <a href="{{ route('public.data') }}" class="btn btn-outline-secondary flex-shrink-0 px-3">
-                                    Reset
-                                </a>
+                                <div class="d-grid d-sm-inline-flex">
+                                    <a href="{{ route('public.data') }}" class="btn btn-outline-secondary flex-shrink-0 d-inline-flex align-items-center justify-content-center px-4 h-100">
+                                        Reset
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -69,11 +101,13 @@
         </div>
     </div>
 
+    {{-- Tampilkan pesan jika belum ada dataset yang dipilih atau diunggah --}}
     @if (!$period)
         <div class="alert alert-warning border-0 dk-card">
             <strong>Data belum tersedia.</strong> Unggah dataset terlebih dahulu untuk menampilkan ringkasan agregat.
         </div>
     @else
+        {{-- Inisialisasi variabel bantu untuk menyusun informasi tabel dan label tampilan --}}
         @php
             $areaRows = $areaTable['rows'] ?? [];
             $areaTotals = $areaTable['totals'] ?? ['male' => 0, 'female' => 0, 'total' => 0];
@@ -84,9 +118,9 @@
             $areaSegments = [$kabupatenName];
             if ($districtName) {
                 $areaSegments[] = 'Kecamatan ' . $districtName;
-                $areaSegments[] = $villageName ? ('Desa/Kelurahan ' . $villageName) : 'Seluruh Desa/Kelurahan';
+                $areaSegments[] = $villageName ? ('Desa/Kelurahan ' . $villageName) : 'SEMUA';
             } else {
-                $areaSegments[] = 'Seluruh Kecamatan';
+                $areaSegments[] = 'SEMUA';
             }
             $areaDescriptor = implode(' • ', array_filter($areaSegments));
             $periodLabelParts = [];
@@ -97,22 +131,12 @@
                 $periodLabelParts[] = 'Tahun ' . $period['year'];
             }
             $periodLabel = !empty($periodLabelParts) ? implode(' ', $periodLabelParts) : null;
-            $tabs = [
-                'gender' => 'Jenis Kelamin',
-                'age' => 'Kelompok Umur',
-                'single-age' => 'Umur Tunggal',
-                'education' => 'Pendidikan',
-                'occupation' => 'Pekerjaan',
-                'marital' => 'Status Perkawinan',
-                'household' => 'Kepala Keluarga',
-                'religion' => 'Agama',
-                'wajib-ktp' => 'Wajib KTP',
-            ];
         @endphp
 
         <div class="dk-card mt-4">
             <div class="card-body p-4">
-                <ul class="nav nav-pills dk-tabs" id="aggregateTabs" role="tablist">
+                {{-- Navigasi tab pada layar desktop untuk berpindah antar kategori data --}}
+                <ul class="nav nav-pills dk-tabs d-none" id="aggregateTabs" role="tablist">
                     @foreach ($tabs as $key => $label)
                         <li class="nav-item" role="presentation">
                             <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="tab-{{ $key }}-tab"
@@ -124,7 +148,8 @@
                     @endforeach
                 </ul>
 
-                <div class="tab-content dk-tab-content mt-4" id="aggregateTabsContent">
+                <div class="tab-content dk-tab-content mt-3" id="aggregateTabsContent">
+                    {{-- Tab ringkasan berdasarkan jenis kelamin --}}
                     <div class="tab-pane fade show active dk-tab-pane" id="tab-gender" role="tabpanel"
                         aria-labelledby="tab-gender-tab">
                         @include('public.partials.table-heading', [
@@ -175,6 +200,7 @@
                         </div>
                     </div>
 
+                    {{-- Tab ringkasan berdasarkan kelompok umur --}}
                     <div class="tab-pane fade dk-tab-pane" id="tab-age" role="tabpanel"
                         aria-labelledby="tab-age-tab">
                         @include('public.partials.table-heading', [
@@ -227,6 +253,7 @@
                         </div>
                     </div>
 
+                    {{-- Tab matriks pendidikan penduduk --}}
                     <div class="tab-pane fade dk-tab-pane" id="tab-education" role="tabpanel"
                         aria-labelledby="tab-education-tab">
                         @include('public.partials.table-heading', [
@@ -242,6 +269,7 @@
                         </div>
                     </div>
 
+                    {{-- Tab data pekerjaan terbanyak --}}
                     <div class="tab-pane fade dk-tab-pane" id="tab-occupation" role="tabpanel"
                         aria-labelledby="tab-occupation-tab">
                         @include('public.partials.table-heading', [
@@ -294,6 +322,7 @@
                         </div>
                     </div>
 
+                    {{-- Tab distribusi umur tunggal (setiap usia) --}}
                     <div class="tab-pane fade dk-tab-pane" id="tab-single-age" role="tabpanel"
                         aria-labelledby="tab-single-age-tab">
                         @include('public.partials.table-heading', [
@@ -346,6 +375,7 @@
                         </div>
                     </div>
 
+                    {{-- Tab matriks penduduk wajib KTP --}}
                     <div class="tab-pane fade dk-tab-pane" id="tab-wajib-ktp" role="tabpanel"
                         aria-labelledby="tab-wajib-ktp-tab">
                         @include('public.partials.table-heading', [
@@ -361,6 +391,7 @@
                         </div>
                     </div>
 
+                    {{-- Tab matriks status perkawinan --}}
                     <div class="tab-pane fade dk-tab-pane" id="tab-marital" role="tabpanel"
                         aria-labelledby="tab-marital-tab">
                         @include('public.partials.table-heading', [
@@ -376,6 +407,7 @@
                         </div>
                     </div>
 
+                    {{-- Tab matriks kepala keluarga --}}
                     <div class="tab-pane fade dk-tab-pane" id="tab-household" role="tabpanel"
                         aria-labelledby="tab-household-tab">
                         @include('public.partials.table-heading', [
@@ -391,6 +423,7 @@
                         </div>
                     </div>
 
+                    {{-- Tab matriks agama penduduk --}}
                     <div class="tab-pane fade dk-tab-pane" id="tab-religion" role="tabpanel"
                         aria-labelledby="tab-religion-tab">
                         @include('public.partials.table-heading', [
@@ -411,10 +444,60 @@
     @endif
 @endsection
 
+@push('scripts')
+    {{-- Sinkronisasi antara dropdown kategori dan tab Bootstrap --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Ambil elemen dropdown kategori dan tombol tab Bootstrap
+            var dropdowns = document.querySelectorAll('.js-aggregate-tabs-select');
+            var tabButtons = document.querySelectorAll('#aggregateTabs button[data-bs-toggle="tab"]');
 
+            if (!dropdowns.length || !tabButtons.length) {
+                return;
+            }
 
+            // Samakan nilai dropdown dengan tab aktif saat halaman dimuat
+            var activeTabTrigger = document.querySelector('#aggregateTabs button.nav-link.active');
+            if (activeTabTrigger) {
+                var initialTarget = activeTabTrigger.getAttribute('data-bs-target');
+                if (initialTarget) {
+                    var initialId = initialTarget.replace('#', '');
+                    dropdowns.forEach(function (dropdown) {
+                        if (dropdown.value !== initialId) {
+                            dropdown.value = initialId;
+                        }
+                    });
+                }
+            }
 
+            // Ketika memilih opsi di dropdown kategori, tampilkan tab yang sesuai
+            dropdowns.forEach(function (dropdown) {
+                dropdown.addEventListener('change', function () {
+                    var targetId = this.value;
+                    var tabTrigger = document.querySelector('#aggregateTabs button[data-bs-target="#' + targetId + '"]');
 
+                    if (tabTrigger && typeof bootstrap !== 'undefined') {
+                        bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
+                    }
+                });
+            });
 
+            // Sinkronkan nilai setiap dropdown saat tab Bootstrap berpindah secara manual
+            tabButtons.forEach(function (button) {
+                button.addEventListener('shown.bs.tab', function (event) {
+                    var targetSelector = event.target.getAttribute('data-bs-target');
+                    if (!targetSelector) {
+                        return;
+                    }
 
-
+                    var targetId = targetSelector.replace('#', '');
+                    dropdowns.forEach(function (dropdown) {
+                        if (dropdown.value !== targetId) {
+                            dropdown.value = targetId;
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+@endpush

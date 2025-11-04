@@ -883,7 +883,7 @@ class PublicDashboardController extends Controller
 
         return [
             'level' => 'district',
-            'columnLabel' => 'Seluruh Kecamatan',
+            'columnLabel' => 'SEMUA',
             'highlightId' => null,
         ];
     }

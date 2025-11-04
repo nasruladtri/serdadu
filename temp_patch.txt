@@ -38,7 +38,7 @@
 +
 +        return [
 +            'level' => 'district',
-+            'columnLabel' => 'Seluruh Kecamatan',
++            'columnLabel' => 'SEMUA',
 +            'highlightId' => null,
 +        ];
 +    }
