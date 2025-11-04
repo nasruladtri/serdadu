@@ -1,4 +1,4 @@
-@extends('layouts.dukcapil', ['title' => 'Beranda'])
+@extends('layouts.dukcapil', ['title' => 'Beranda1'])
 
 @push('styles')
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
