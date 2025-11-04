@@ -43,15 +43,15 @@ npm run dev
 ```
 
 ## Features
-- [List your main features]
-- [Feature 2]
-- [Feature 3]
-
-## Contributing
-[Your contribution guidelines]
+- Ringkasan wilayah memuat nama kabupaten, jumlah kecamatan, serta jumlah desa/kelurahan dalam format tabel ringkas untuk memberi konteks cakupan data 
+- Kartu statistik penduduk merinci total populasi, pembagian laki-laki dan perempuan, serta jumlah wajib KTP (termasuk rinciannya per gender) agar pengguna cepat memahami komposisi demografis
+- Peta interaktif Leaflet menampilkan persebaran penduduk Kabupaten Madiun lengkap dengan opsi basemap (Default, Light, Dark, Satellite) dan kontrol layer di sudut kanan atas
+- Dropdown filter kecamatan memungkinkan pengguna memusatkan peta dan statistik ke area pilihan, sekaligus memicu pembaruan legend serta label desa/kelurahan secara dinamis
+- Setiap batas wilayah (kabupaten, kecamatan, desa/kelurahan) diberi styling dan label otomatis di peta, termasuk badge bernomor pada legend untuk memudahkan identifikas
+- Hover dan popup pada fitur kecamatan/desa menonjolkan area yang dipilih sekaligus menampilkan statistik Laki-laki/Perempuan/Total; interaksi ini memanfaatkan fungsi highlight dan reset agar pengalaman eksplorasi terasa responsif
 
 ## Security
-If you discover any security issues, please email [your email] instead of using the issue tracker.
+-
 
 ## License
-[Your chosen license]
+-
