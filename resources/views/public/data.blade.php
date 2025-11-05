@@ -55,10 +55,10 @@
                         <div class="col-12 col-sm-6 col-md-4 col-lg-2">
                             <label class="form-label text-uppercase text-xs text-muted">Kecamatan</label>
                             <select class="form-select" name="district_id" onchange="this.form.submit()">
-                                <option value="">SEMUA</option>
+                                <option value="">Semua Kecamatan</option>
                                 @foreach ($districts as $district)
                                     <option value="{{ $district->id }}" {{ (int) $selectedDistrict === $district->id ? 'selected' : '' }}>
-                                        {{ $district->name }}
+                                        {{ \Illuminate\Support\Str::title($district->name) }}
                                     </option>
                                 @endforeach
                             </select>
@@ -66,10 +66,10 @@
                         <div class="col-12 col-sm-6 col-md-4 col-lg-2 dk-filter-village">
                             <label class="form-label text-uppercase text-xs text-muted">Desa/Kelurahan</label>
                             <select class="form-select" name="village_id" onchange="this.form.submit()" {{ $villages->isEmpty() ? 'disabled' : '' }}>
-                                <option value="">SEMUA</option>
+                                <option value="">Semua Desa/Kelurahan</option>
                                 @foreach ($villages as $village)
                                     <option value="{{ $village->id }}" {{ (int) $selectedVillage === $village->id ? 'selected' : '' }}>
-                                        {{ $village->name }}
+                                        {{ \Illuminate\Support\Str::title($village->name) }}
                                     </option>
                                 @endforeach
                             </select>
@@ -117,10 +117,10 @@
             $kabupatenName = config('app.region_name', 'Kabupaten Madiun');
             $areaSegments = [$kabupatenName];
             if ($districtName) {
-                $areaSegments[] = 'Kecamatan ' . $districtName;
-                $areaSegments[] = $villageName ? ('Desa/Kelurahan ' . $villageName) : 'SEMUA';
+                $areaSegments[] = 'Kecamatan ' . \Illuminate\Support\Str::title($districtName);
+                $areaSegments[] = $villageName ? ('Desa/Kelurahan ' . \Illuminate\Support\Str::title($villageName)) : 'Semua Desa/Kelurahan';
             } else {
-                $areaSegments[] = 'SEMUA';
+                $areaSegments[] = 'Semua Desa/Kelurahan';
             }
             $areaDescriptor = implode(' • ', array_filter($areaSegments));
             $periodLabelParts = [];
@@ -174,7 +174,7 @@
                                     @endphp
                                     <tr class="{{ $isHighlighted ? 'table-active' : '' }}">
                                         <td>{{ $index + 1 }}</td>
-                                        <td>{{ $row['name'] }}</td>
+                                        <td>{{ \Illuminate\Support\Str::title($row['name']) }}</td>
                                         <td class="text-end">{{ number_format($row['male']) }}</td>
                                         <td class="text-end">{{ number_format($row['female']) }}</td>
                                         <td class="text-end fw-semibold">{{ number_format($row['total']) }}</td>

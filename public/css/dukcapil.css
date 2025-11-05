@@ -869,24 +869,30 @@ body.bg-body {
   .dk-content {
     padding-top: 0.95rem;
     padding-bottom: 1.75rem;
-    padding-left: 0.1rem;
-    padding-right: 0.1rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 
   .dk-card {
-    margin-left: -0.75rem;
-    margin-right: -0.75rem;
+    margin-left: 0;
+    margin-right: 0;
     border-radius: 12px;
   }
 
   .dk-card .card-body {
-    padding: 1rem 0.35rem 1.2rem;
+    padding: 1.25rem 1rem 1.5rem;
+  }
+  
+  /* Untuk card yang tidak menggunakan card-body (seperti alert) */
+  .dk-card.alert {
+    padding: 1.25rem 1rem;
   }
 
   .dk-table-heading {
-    padding: 0.75rem 0.35rem;
-    margin-left: -0.75rem;
-    margin-right: -0.75rem;
+    padding: 1rem;
+    margin-left: 0;
+    margin-right: 0;
+    border-radius: 12px;
   }
 
   .dk-table-heading__badge,
@@ -906,9 +912,9 @@ body.bg-body {
 
   .dk-card .card-body > .table-responsive,
   .dk-card .card-body > .dk-table-scroll {
-    margin-left: -0.35rem;
-    margin-right: -0.35rem;
-    width: calc(100% + 0.7rem);
+    margin-left: -1rem;
+    margin-right: -1rem;
+    width: calc(100% + 2rem);
   }
 
   .dk-card .card-body > .table-responsive .dk-table,
@@ -1098,9 +1104,13 @@ body.bg-body {
   }
 
   /* Make cards span full width with comfortable padding */
-  .dk-card, .dk-tab-content .dk-tab-pane {
+  .dk-tab-content .dk-tab-pane {
     border-radius: 12px;
     padding: 1.25rem;
+  }
+  
+  .dk-card .card-body {
+    padding: 1.25rem 1rem 1.5rem;
   }
 
   .dk-table-heading__actions {

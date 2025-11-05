@@ -33,7 +33,7 @@
             @endphp
             <tr class="{{ $highlight ? 'table-active' : '' }}">
                 <td>{{ $index + 1 }}</td>
-                <td>{{ $row['name'] }}</td>
+                <td>{{ \Illuminate\Support\Str::title($row['name']) }}</td>
                 @foreach ($columns as $column)
                     @php
                         $key = $column['key'];

@@ -39,10 +39,10 @@
                         <div class="col-12 col-sm-6 col-md-4 col-lg-2">
                             <label class="form-label text-uppercase text-xs text-muted">Kecamatan</label>
                             <select class="form-select" name="district_id" onchange="this.form.submit()">
-                                <option value="">SEMUA</option>
+                                <option value="">Semua Kecamatan</option>
                                 @foreach ($districts as $district)
                                     <option value="{{ $district->id }}" {{ (int) $selectedDistrict === $district->id ? 'selected' : '' }}>
-                                        {{ $district->name }}
+                                        {{ \Illuminate\Support\Str::title($district->name) }}
                                     </option>
                                 @endforeach
                             </select>
@@ -50,10 +50,10 @@
                         <div class="col-12 col-sm-6 col-md-4 col-lg-2 dk-filter-village">
                             <label class="form-label text-uppercase text-xs text-muted">Desa/Kelurahan</label>
                             <select class="form-select" name="village_id" onchange="this.form.submit()" {{ $villages->isEmpty() ? 'disabled' : '' }}>
-                                <option value="">SEMUA</option>
+                                <option value="">Semua Desa/Kelurahan</option>
                                 @foreach ($villages as $village)
                                     <option value="{{ $village->id }}" {{ (int) $selectedVillage === $village->id ? 'selected' : '' }}>
-                                        {{ $village->name }}
+                                        {{ \Illuminate\Support\Str::title($village->name) }}
                                     </option>
                                 @endforeach
                             </select>
@@ -92,10 +92,10 @@
             $villageName = $selectedVillage ? optional($villages->firstWhere('id', (int) $selectedVillage))->name : null;
             $areaSegments = [$kabupatenName];
             if ($districtName) {
-                $areaSegments[] = 'Kecamatan ' . $districtName;
-                $areaSegments[] = $villageName ? ('Desa/Kelurahan ' . $villageName) : 'SEMUA';
+                $areaSegments[] = 'Kecamatan ' . \Illuminate\Support\Str::title($districtName);
+                $areaSegments[] = $villageName ? ('Desa/Kelurahan ' . \Illuminate\Support\Str::title($villageName)) : 'Semua Desa/Kelurahan';
             } else {
-                $areaSegments[] = 'SEMUA';
+                $areaSegments[] = 'Semua Desa/Kelurahan';
             }
             $areaDescriptor = implode(' • ', array_filter($areaSegments));
             $periodParts = [];
@@ -108,7 +108,7 @@
             $periodLabel = !empty($periodParts) ? implode(' ', $periodParts) : null;
         @endphp
 
-        <div class="row g-4 js-chart-sections">
+        <div class="js-chart-sections">
             @foreach ($charts as $key => $chart)
                 @php
                     $isActive = $loop->first;
@@ -118,9 +118,9 @@
                         default => '360px'
                     };
                 @endphp
-                <div class="col-12 js-chart-card {{ $isActive ? '' : 'd-none' }}" data-chart-key="{{ $key }}">
-                    <div class="dk-card h-100">
-                        <div class="card-body">
+                <div class="js-chart-card {{ $isActive ? '' : 'd-none' }} {{ $loop->first ? 'mt-4' : '' }}" data-chart-key="{{ $key }}">
+                    <div class="dk-card">
+                        <div class="card-body p-4">
                             @include('public.partials.table-heading', [
                                 'title' => $chart['title'] ?? ucfirst($key),
                                 'areaDescriptor' => $areaDescriptor,
@@ -327,7 +327,10 @@
                     card.classList.toggle('d-none', !isMatch);
                     if (isMatch) {
                         found = true;
+                        card.classList.add('mt-4');
                         ensureChart(key);
+                    } else {
+                        card.classList.remove('mt-4');
                     }
                 });
 

@@ -78,7 +78,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-12 col-sm-6 landing-metric-item">
+                                    <div class="col-6 landing-metric-item">
                                         <div class="landing-metric-card landing-metric-card--male">
                                             <div class="landing-metric-icon">
                                                 <img src="{{ asset('img/l.png') }}" alt="Penduduk Laki-laki" class="landing-metric-icon__img">
@@ -94,7 +94,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-12 col-sm-6 landing-metric-item">
+                                    <div class="col-6 landing-metric-item">
                                         <div class="landing-metric-card landing-metric-card--female">
                                             <div class="landing-metric-icon">
                                                 <img src="{{ asset('img/p.png') }}" alt="Penduduk Perempuan" class="landing-metric-icon__img">
@@ -147,7 +147,7 @@
                                             <option value="">SEMUA</option>
                                             @foreach($districtOptions as $district)
                                                 <option value="{{ $district->code }}" data-slug="{{ \Illuminate\Support\Str::slug($district->name) }}">
-                                                    {{ $district->name }}
+                                                    {{ \Illuminate\Support\Str::title($district->name) }}
                                                 </option>
                                             @endforeach
                                         </select>

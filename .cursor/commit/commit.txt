@@ -1,3 +1,8 @@
+fix: perbaiki CSS grid menjadi flexbox agar kartu gender side-by-side di mobile seperti desktop
+fix: ubah layout mobile kartu gender menjadi horizontal seperti desktop (side-by-side)
+fix: ubah format nama kecamatan dan desa/kelurahan dari CAPSLOCK menjadi format normal (Title Case)
+fix: samakan penempatan dan spacing card grafik dengan halaman tabel untuk konsistensi
+feat: tambahkan padding yang lebih baik untuk dk-card pada mode mobile di semua halaman
 feat: aktifkan scrollbar tabel hanya saat lebih dari 17 baris untuk semua kategori
 fix: samakan jarak spacing atas tab-pane dengan dk-card untuk konsistensi tampilan
 feat: tata ulang tampilan brand sidebar dan jadikan mode collapse sebagai default
