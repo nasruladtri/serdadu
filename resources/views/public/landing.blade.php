@@ -22,150 +22,148 @@
             </div>
         @else
             {{-- Konten statistik dan peta hanya dirender ketika data terbaru tersedia --}}
-            <div class="landing-fullscreen">
-                <div class="row g-4 align-items-stretch landing-layout">
-                    <div class="col-12 col-lg-5 col-xl-4">
-                        <div class="dk-card h-100 landing-overview">
-                            <div class="card-body p-4">
-                                <h6 class="dk-card__title mb-4">Data Agregat Kependudukan Terbaru</h6>
+            <div class="row g-4 align-items-stretch landing-layout">
+                <div class="col-12 col-lg-5 col-xl-4">
+                    <div class="dk-card h-100 landing-overview">
+                        <div class="card-body p-4">
+                            <h6 class="dk-card__title mb-4">Data Agregat Kependudukan Terbaru</h6>
 
-                                <div class="landing-wilayah-section">
-                                    <h6 class="text-uppercase text-xs text-muted mb-3">Wilayah</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm dk-table">
-                                            <tbody>
-                                                <tr>
-                                                    <td class="fw-semibold">Nama Wilayah</td>
-                                                    <td class="text-end">Madiun</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="fw-semibold">Jumlah Daerah</td>
-                                                    <td class="text-end">{{ number_format($districtCount) }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="fw-semibold">Jumlah Desa/Kel</td>
-                                                    <td class="text-end">{{ number_format($villageCount) }}</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                            <div class="landing-wilayah-section">
+                                <h6 class="text-uppercase text-xs text-muted mb-3">Wilayah</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm dk-table">
+                                        <tbody>
+                                            <tr>
+                                                <td class="fw-semibold">Nama Wilayah</td>
+                                                <td class="text-end">Madiun</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">Jumlah Daerah</td>
+                                                <td class="text-end">{{ number_format($districtCount) }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-semibold">Jumlah Desa/Kel</td>
+                                                <td class="text-end">{{ number_format($villageCount) }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
+                            </div>
 
-                                {{-- Ringkasan jumlah penduduk berdasarkan kategori utama --}}
-                                <div class="mb-4">
-                                    <h6 class="text-uppercase text-xs text-muted mb-3">Jumlah Penduduk</h6>
-                                    <div class="row g-3 landing-metric-grid">
-                                        @php
-                                            // Hitung nilai agregat serta persentase yang dipakai untuk visualisasi progress bar
-                                            $totalPop = $totals['population'] ?? 0;
-                                            $malePop = $totals['male'] ?? 0;
-                                            $femalePop = $totals['female'] ?? 0;
-                                            $wajibKtpTotal = $wajibKtp['total'] ?? 0;
-                                            $malePercent = $totalPop > 0 ? ($malePop / $totalPop) * 100 : 0;
-                                            $femalePercent = $totalPop > 0 ? ($femalePop / $totalPop) * 100 : 0;
-                                            $wajibKtpPercent = $totalPop > 0 ? ($wajibKtpTotal / $totalPop) * 100 : 0;
-                                        @endphp
+                            {{-- Ringkasan jumlah penduduk berdasarkan kategori utama --}}
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-xs text-muted mb-3">Jumlah Penduduk</h6>
+                                <div class="row g-3 landing-metric-grid">
+                                    @php
+                                        // Hitung nilai agregat serta persentase yang dipakai untuk visualisasi progress bar
+                                        $totalPop = $totals['population'] ?? 0;
+                                        $malePop = $totals['male'] ?? 0;
+                                        $femalePop = $totals['female'] ?? 0;
+                                        $wajibKtpTotal = $wajibKtp['total'] ?? 0;
+                                        $malePercent = $totalPop > 0 ? ($malePop / $totalPop) * 100 : 0;
+                                        $femalePercent = $totalPop > 0 ? ($femalePop / $totalPop) * 100 : 0;
+                                        $wajibKtpPercent = $totalPop > 0 ? ($wajibKtpTotal / $totalPop) * 100 : 0;
+                                    @endphp
 
-                                        <div class="col-12 landing-metric-item">
-                                            <div class="landing-metric-card landing-metric-card--primary">
-                                                <div class="landing-metric-icon">
-                                                    <img src="{{ asset('img/penduduk.png') }}" alt="Total Penduduk" class="landing-metric-icon__img">
-                                                </div>
-                                                <div class="dk-metric__label text-white-50 mb-1">Total Penduduk</div>
-                                                <div class="dk-metric text-white mb-2">{{ number_format($totalPop) }}</div>
-                                                <div class="landing-metric-progress">
-                                                    <div class="landing-metric-progress-bar" style="--landing-progress: 100%;"></div>
-                                                </div>
+                                    <div class="col-12 landing-metric-item">
+                                        <div class="landing-metric-card landing-metric-card--primary">
+                                            <div class="landing-metric-icon">
+                                                <img src="{{ asset('img/penduduk.png') }}" alt="Total Penduduk" class="landing-metric-icon__img">
+                                            </div>
+                                            <div class="dk-metric__label text-white-50 mb-1">Total Penduduk</div>
+                                            <div class="dk-metric text-white mb-2">{{ number_format($totalPop) }}</div>
+                                            <div class="landing-metric-progress">
+                                                <div class="landing-metric-progress-bar" style="--landing-progress: 100%;"></div>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div class="col-12 col-sm-6 landing-metric-item">
-                                            <div class="landing-metric-card landing-metric-card--male">
-                                                <div class="landing-metric-icon">
-                                                    <img src="{{ asset('img/l.png') }}" alt="Penduduk Laki-laki" class="landing-metric-icon__img">
-                                                </div>
-                                                <div class="dk-metric__label mb-1">Laki-laki</div>
-                                                <div class="dk-metric dk-metric--sm mb-2">{{ number_format($malePop) }}</div>
-                                                <div class="landing-metric-progress">
-                                                    <div class="landing-metric-progress-bar" style="--landing-progress: {{ $malePercent }}%;"></div>
-                                                </div>
-                                                <div class="landing-metric-percentage">
-                                                    <i class="fas fa-chart-line me-1"></i>{{ number_format($malePercent, 1) }}%
-                                                </div>
+                                    <div class="col-12 col-sm-6 landing-metric-item">
+                                        <div class="landing-metric-card landing-metric-card--male">
+                                            <div class="landing-metric-icon">
+                                                <img src="{{ asset('img/l.png') }}" alt="Penduduk Laki-laki" class="landing-metric-icon__img">
+                                            </div>
+                                            <div class="dk-metric__label mb-1">Laki-laki</div>
+                                            <div class="dk-metric dk-metric--sm mb-2">{{ number_format($malePop) }}</div>
+                                            <div class="landing-metric-progress">
+                                                <div class="landing-metric-progress-bar" style="--landing-progress: {{ $malePercent }}%;"></div>
+                                            </div>
+                                            <div class="landing-metric-percentage">
+                                                <i class="fas fa-chart-line me-1"></i>{{ number_format($malePercent, 1) }}%
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div class="col-12 col-sm-6 landing-metric-item">
-                                            <div class="landing-metric-card landing-metric-card--female">
-                                                <div class="landing-metric-icon">
-                                                    <img src="{{ asset('img/p.png') }}" alt="Penduduk Perempuan" class="landing-metric-icon__img">
-                                                </div>
-                                                <div class="dk-metric__label mb-1">Perempuan</div>
-                                                <div class="dk-metric dk-metric--sm mb-2">{{ number_format($femalePop) }}</div>
-                                                <div class="landing-metric-progress">
-                                                    <div class="landing-metric-progress-bar" style="--landing-progress: {{ $femalePercent }}%;"></div>
-                                                </div>
-                                                <div class="landing-metric-percentage">
-                                                    <i class="fas fa-chart-line me-1"></i>{{ number_format($femalePercent, 1) }}%
-                                                </div>
+                                    <div class="col-12 col-sm-6 landing-metric-item">
+                                        <div class="landing-metric-card landing-metric-card--female">
+                                            <div class="landing-metric-icon">
+                                                <img src="{{ asset('img/p.png') }}" alt="Penduduk Perempuan" class="landing-metric-icon__img">
+                                            </div>
+                                            <div class="dk-metric__label mb-1">Perempuan</div>
+                                            <div class="dk-metric dk-metric--sm mb-2">{{ number_format($femalePop) }}</div>
+                                            <div class="landing-metric-progress">
+                                                <div class="landing-metric-progress-bar" style="--landing-progress: {{ $femalePercent }}%;"></div>
+                                            </div>
+                                            <div class="landing-metric-percentage">
+                                                <i class="fas fa-chart-line me-1"></i>{{ number_format($femalePercent, 1) }}%
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div class="col-12 landing-metric-item">
-                                            <div class="landing-metric-card landing-metric-card--ktp">
-                                                <div class="landing-metric-icon">
-                                                    <img src="{{ asset('img/ktp.png') }}" alt="Wajib KTP" class="landing-metric-icon__img">
-                                                </div>
-                                                <div class="dk-metric__label mb-1">Wajib KTP (&ge; 17 tahun)</div>
-                                                <div class="dk-metric dk-metric--sm mb-2">{{ number_format($wajibKtpTotal) }}</div>
-                                                <div class="landing-metric-progress">
-                                                    <div class="landing-metric-progress-bar" style="--landing-progress: {{ $wajibKtpPercent }}%;"></div>
-                                                </div>
-                                                <div class="landing-metric-percentage">
-                                                    <i class="fas fa-chart-pie me-1"></i>{{ number_format($wajibKtpPercent, 1) }}%
-                                                </div>
-                                                <small class="text-muted d-block mt-2">
-                                                    <i class="fas fa-mars me-1"></i> L: {{ number_format($wajibKtp['male'] ?? 0) }} &bull;
-                                                    <i class="fas fa-venus ms-2 me-1"></i> P: {{ number_format($wajibKtp['female'] ?? 0) }}
-                                                </small>
+                                    <div class="col-12 landing-metric-item">
+                                        <div class="landing-metric-card landing-metric-card--ktp">
+                                            <div class="landing-metric-icon">
+                                                <img src="{{ asset('img/ktp.png') }}" alt="Wajib KTP" class="landing-metric-icon__img">
                                             </div>
+                                            <div class="dk-metric__label mb-1">Wajib KTP (&ge; 17 tahun)</div>
+                                            <div class="dk-metric dk-metric--sm mb-2">{{ number_format($wajibKtpTotal) }}</div>
+                                            <div class="landing-metric-progress">
+                                                <div class="landing-metric-progress-bar" style="--landing-progress: {{ $wajibKtpPercent }}%;"></div>
+                                            </div>
+                                            <div class="landing-metric-percentage">
+                                                <i class="fas fa-chart-pie me-1"></i>{{ number_format($wajibKtpPercent, 1) }}%
+                                            </div>
+                                            <small class="text-muted d-block mt-2">
+                                                <i class="fas fa-mars me-1"></i> L: {{ number_format($wajibKtp['male'] ?? 0) }} &bull;
+                                                <i class="fas fa-venus ms-2 me-1"></i> P: {{ number_format($wajibKtp['female'] ?? 0) }}
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="col-12 col-lg-7 col-xl-8">
-                        <div class="dk-card h-100 landing-map-card">
-                            <div class="card-body p-0 d-flex flex-column h-100">
-                                <div class="landing-map-card__header d-flex flex-column flex-lg-row align-items-lg-start gap-3">
-                                    <h6 class="dk-card__title mb-0">Peta Persebaran Penduduk Kabupaten Madiun</h6>
-                                    @if(!empty($districtOptions) && $districtOptions->count())
-                                        <div class="ms-lg-auto w-100 w-lg-auto landing-map-card__filter">
-                                            <label for="landing-district-filter" class="form-label text-xs text-muted mb-1">Kecamatan</label>
-                                            <select id="landing-district-filter" class="form-select form-select-sm">
-                                                <option value="">SEMUA</option>
-                                                @foreach($districtOptions as $district)
-                                                    <option value="{{ $district->code }}" data-slug="{{ \Illuminate\Support\Str::slug($district->name) }}">
-                                                        {{ $district->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    @endif
+                <div class="col-12 col-lg-7 col-xl-8">
+                    <div class="dk-card h-100 landing-map-card">
+                        <div class="card-body p-0 d-flex flex-column h-100">
+                            <div class="landing-map-card__header d-flex flex-column flex-lg-row align-items-lg-start gap-3">
+                                <h6 class="dk-card__title mb-0">Peta Persebaran Penduduk Kabupaten Madiun</h6>
+                                @if(!empty($districtOptions) && $districtOptions->count())
+                                    <div class="ms-lg-auto w-100 w-lg-auto landing-map-card__filter">
+                                        <label for="landing-district-filter" class="form-label text-xs text-muted mb-1">Kecamatan</label>
+                                        <select id="landing-district-filter" class="form-select form-select-sm">
+                                            <option value="">SEMUA</option>
+                                            @foreach($districtOptions as $district)
+                                                <option value="{{ $district->code }}" data-slug="{{ \Illuminate\Support\Str::slug($district->name) }}">
+                                                    {{ $district->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endif
+                            </div>
+                            {{-- Area kanan berisi peta interaktif beserta loader bawaan --}}
+                            <div class="landing-map-card__map d-flex flex-grow-1 position-relative">
+                                <div id="landing-map-loader" class="landing-loading landing-map-loader position-absolute w-100 h-100">
+                                    <div class="text-center">
+                                        <div class="landing-loading-spinner mx-auto mb-3"></div>
+                                        <div class="text-muted small">Memuat peta...</div>
+                                    </div>
                                 </div>
-                                {{-- Area kanan berisi peta interaktif beserta loader bawaan --}}
-                                <div class="landing-map-card__map d-flex flex-grow-1 position-relative">
-                                    <div id="landing-map-loader" class="landing-loading landing-map-loader position-absolute w-100 h-100">
-                                        <div class="text-center">
-                                            <div class="landing-loading-spinner mx-auto mb-3"></div>
-                                            <div class="text-muted small">Memuat peta...</div>
-                                        </div>
-                                    </div>
-                                    <div class="dk-map flex-grow-1">
-                                        <div id="landing-map"></div>
-                                    </div>
+                                <div class="dk-map flex-grow-1">
+                                    <div id="landing-map"></div>
                                 </div>
                             </div>
                         </div>

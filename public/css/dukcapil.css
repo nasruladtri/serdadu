@@ -542,7 +542,7 @@ body.bg-body {
   .dk-table th {
     white-space: nowrap;
   }
-}
+} 
 
 .dk-table-scroll {
   max-height: 420px;
@@ -711,7 +711,7 @@ body.bg-body {
   background: #ffffff;
   border-radius: 16px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  padding: 1rem 1.5rem 1.5rem;
+  padding: 1.5rem 1.5rem 1.5rem;
 }
 .dk-tab-content .table-responsive {
   border: 1px solid #e2e8f0;
@@ -853,11 +853,111 @@ body.bg-body {
   }
 
   .dk-content {
-    padding: 1.25rem 1.25rem 2.25rem;
+    padding: 1.1rem clamp(0.85rem, 3vw + 0.35rem, 1.4rem) 2rem;
   }
 
   .dk-filter-village .form-select {
     min-width: 100%;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .dk-content {
+    padding-top: 0.95rem;
+    padding-bottom: 1.75rem;
+    padding-left: 0.1rem;
+    padding-right: 0.1rem;
+  }
+
+  .dk-card {
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+    border-radius: 12px;
+  }
+
+  .dk-card .card-body {
+    padding: 1rem 0.35rem 1.2rem;
+  }
+
+  .dk-table-heading {
+    padding: 0.75rem 0.35rem;
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+  }
+
+  .dk-table-heading__badge,
+  .dk-table-heading__dropdown {
+    width: 100%;
+  }
+
+  .dk-table-heading__actions {
+    justify-content: flex-start;
+  }
+
+  .dk-table-heading__chip {
+    display: inline-flex;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .dk-card .card-body > .table-responsive,
+  .dk-card .card-body > .dk-table-scroll {
+    margin-left: -0.35rem;
+    margin-right: -0.35rem;
+    width: calc(100% + 0.7rem);
+  }
+
+  .dk-card .card-body > .table-responsive .dk-table,
+  .dk-card .card-body > .dk-table-scroll .dk-table {
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    width: 100%;
+    table-layout: auto;
+  }
+
+  .dk-table {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .dk-table td, .dk-table th {
+    padding: 0.9rem clamp(1.1rem, 5vw + 0.7rem, 1.5rem);
+    font-size: 0.95rem;
+  }
+
+  .dk-table th:first-child,
+  .dk-table td:first-child {
+    width: 50px !important;
+    max-width: 50px;
+    min-width: 50px;
+    padding: 0.9rem 0.5rem;
+    text-align: center;
+  }
+
+  .dk-table td:not(:first-child) {
+    min-width: 90px;
+  }
+
+  /* Apply to all dk-table instances, including those outside card */
+  .table-responsive .dk-table,
+  .dk-table-scroll .dk-table,
+  .dk-table {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .table-responsive .dk-table th:first-child,
+  .table-responsive .dk-table td:first-child,
+  .dk-table-scroll .dk-table th:first-child,
+  .dk-table-scroll .dk-table td:first-child,
+  .dk-table th:first-child,
+  .dk-table td:first-child {
+    width: 50px !important;
+    max-width: 50px;
+    min-width: 50px;
+    padding: 0.9rem 0.5rem !important;
+    text-align: center;
   }
 }
 
@@ -1041,14 +1141,56 @@ body.bg-body {
 
   /* Improve table readability on mobile: add breathing room */
   .dk-table td, .dk-table th {
-    padding: 0.6rem 0.8rem;
-    font-size: 0.85rem;
+    padding: 0.75rem clamp(0.85rem, 3vw + 0.5rem, 1.15rem);
+    font-size: 0.9rem;
+  }
+
+  .dk-table th {
+    min-width: fit-content;
+    white-space: nowrap;
+  }
+
+  /* Apply to all dk-table instances, including those outside card */
+  .table-responsive .dk-table,
+  .dk-table-scroll .dk-table,
+  .dk-table {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .table-responsive .dk-table th:first-child,
+  .table-responsive .dk-table td:first-child,
+  .dk-table-scroll .dk-table th:first-child,
+  .dk-table-scroll .dk-table td:first-child,
+  .dk-table th:first-child,
+  .dk-table td:first-child {
+    width: 55px !important;
+    max-width: 55px;
+    min-width: 55px;
+    padding: 0.75rem 0.6rem !important;
+    text-align: center;
+  }
+
+  .dk-table td:not(:first-child) {
+    min-width: 80px;
   }
 
   .dk-table-scroll {
     max-height: none;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .dk-card .card-body > .table-responsive,
+  .dk-card .card-body > .dk-table-scroll {
+    margin-left: clamp(-0.75rem, -3vw, -0.5rem);
+    margin-right: clamp(-0.75rem, -3vw, -0.5rem);
+    width: calc(100% + clamp(1.5rem, 6vw, 1rem));
+  }
+
+  .dk-card .card-body > .table-responsive .dk-table,
+  .dk-card .card-body > .dk-table-scroll .dk-table {
+    width: 100%;
   }
 
   .dk-tabs {

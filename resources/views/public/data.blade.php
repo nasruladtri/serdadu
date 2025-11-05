@@ -134,312 +134,310 @@
         @endphp
 
         <div class="dk-card mt-4">
-            <div class="card-body p-4">
-                {{-- Navigasi tab pada layar desktop untuk berpindah antar kategori data --}}
-                <ul class="nav nav-pills dk-tabs d-none" id="aggregateTabs" role="tablist">
-                    @foreach ($tabs as $key => $label)
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="tab-{{ $key }}-tab"
-                                data-bs-toggle="tab" data-bs-target="#tab-{{ $key }}" type="button" role="tab"
-                                aria-controls="tab-{{ $key }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}">
-                                {{ $label }}
-                            </button>
-                        </li>
-                    @endforeach
-                </ul>
+            {{-- Navigasi tab pada layar desktop untuk berpindah antar kategori data --}}
+            <ul class="nav nav-pills dk-tabs d-none" id="aggregateTabs" role="tablist">
+                @foreach ($tabs as $key => $label)
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="tab-{{ $key }}-tab"
+                            data-bs-toggle="tab" data-bs-target="#tab-{{ $key }}" type="button" role="tab"
+                            aria-controls="tab-{{ $key }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}">
+                            {{ $label }}
+                        </button>
+                    </li>
+                @endforeach
+            </ul>
 
-                <div class="tab-content dk-tab-content mt-3" id="aggregateTabsContent">
-                    {{-- Tab ringkasan berdasarkan jenis kelamin --}}
-                    <div class="tab-pane fade show active dk-tab-pane" id="tab-gender" role="tabpanel"
-                        aria-labelledby="tab-gender-tab">
-                        @include('public.partials.table-heading', [
-                            'title' => $tabs['gender'],
-                            'areaDescriptor' => $areaDescriptor,
-                            'periodLabel' => $periodLabel,
-                        ])
-                        <div class="table-responsive">
-                            <table class="table table-sm dk-table mb-0">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 64px">No</th>
-                                        <th>{{ $areaColumn }}</th>
-                                        <th class="text-end">L</th>
-                                        <th class="text-end">P</th>
-                                        <th class="text-end">Jumlah</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($areaRows as $index => $row)
-                                        @php
-                                            $isHighlighted = !empty($row['highlight']);
-                                        @endphp
-                                        <tr class="{{ $isHighlighted ? 'table-active' : '' }}">
-                                            <td>{{ $index + 1 }}</td>
-                                            <td>{{ $row['name'] }}</td>
-                                            <td class="text-end">{{ number_format($row['male']) }}</td>
-                                            <td class="text-end">{{ number_format($row['female']) }}</td>
-                                            <td class="text-end fw-semibold">{{ number_format($row['total']) }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center text-muted">Data jenis kelamin belum tersedia.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                                @if (!empty($areaRows))
-                                    <tfoot>
-                                        <tr>
-                                            <th colspan="2">Jumlah Keseluruhan</th>
-                                            <th class="text-end">{{ number_format($areaTotals['male'] ?? 0) }}</th>
-                                            <th class="text-end">{{ number_format($areaTotals['female'] ?? 0) }}</th>
-                                            <th class="text-end">{{ number_format($areaTotals['total'] ?? 0) }}</th>
-                                        </tr>
-                                    </tfoot>
-                                @endif
-                            </table>
-                        </div>
-                    </div>
-
-                    {{-- Tab ringkasan berdasarkan kelompok umur --}}
-                    <div class="tab-pane fade dk-tab-pane" id="tab-age" role="tabpanel"
-                        aria-labelledby="tab-age-tab">
-                        @include('public.partials.table-heading', [
-                            'title' => $tabs['age'],
-                            'areaDescriptor' => $areaDescriptor,
-                            'periodLabel' => $periodLabel,
-                        ])
-                        <div class="table-responsive dk-table-scroll">
-                            <table class="table table-sm dk-table mb-0">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 64px">No</th>
-                                        <th>Kelompok</th>
-                                        <th class="text-end">L</th>
-                                        <th class="text-end">P</th>
-                                        <th class="text-end">Jumlah</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($ageGroups as $index => $row)
-                                        <tr>
-                                            <td>{{ $loop->iteration }}</td>
-                                            <td>{{ $row['label'] }}</td>
-                                            <td class="text-end">{{ number_format($row['male']) }}</td>
-                                            <td class="text-end">{{ number_format($row['female']) }}</td>
-                                            <td class="text-end fw-semibold">{{ number_format($row['total']) }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center text-muted">Data kelompok umur belum tersedia.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                                @if (!empty($ageGroups))
+            <div class="tab-content dk-tab-content mt-0" id="aggregateTabsContent">
+                {{-- Tab ringkasan berdasarkan jenis kelamin --}}
+                <div class="tab-pane fade show active dk-tab-pane" id="tab-gender" role="tabpanel"
+                    aria-labelledby="tab-gender-tab">
+                    @include('public.partials.table-heading', [
+                        'title' => $tabs['gender'],
+                        'areaDescriptor' => $areaDescriptor,
+                        'periodLabel' => $periodLabel,
+                    ])
+                    <div class="table-responsive">
+                        <table class="table table-sm dk-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 64px">No</th>
+                                    <th>{{ $areaColumn }}</th>
+                                    <th class="text-end">L</th>
+                                    <th class="text-end">P</th>
+                                    <th class="text-end">Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($areaRows as $index => $row)
                                     @php
-                                        $ageMale = array_sum(array_column($ageGroups, 'male'));
-                                        $ageFemale = array_sum(array_column($ageGroups, 'female'));
-                                        $ageTotal = array_sum(array_column($ageGroups, 'total'));
+                                        $isHighlighted = !empty($row['highlight']);
                                     @endphp
-                                    <tfoot>
-                                        <tr>
-                                            <th colspan="2">Jumlah Keseluruhan</th>
-                                            <th class="text-end">{{ number_format($ageMale) }}</th>
-                                            <th class="text-end">{{ number_format($ageFemale) }}</th>
-                                            <th class="text-end">{{ number_format($ageTotal) }}</th>
-                                        </tr>
-                                    </tfoot>
-                                @endif
-                            </table>
-                        </div>
-                    </div>
-
-                    {{-- Tab matriks pendidikan penduduk --}}
-                    <div class="tab-pane fade dk-tab-pane" id="tab-education" role="tabpanel"
-                        aria-labelledby="tab-education-tab">
-                        @include('public.partials.table-heading', [
-                            'title' => $tabs['education'],
-                            'areaDescriptor' => $areaDescriptor,
-                            'periodLabel' => $periodLabel,
-                        ])
-                        <div class="table-responsive dk-table-scroll">
-                            @include('public.partials.matrix-table', [
-                                'matrix' => $educationMatrix,
-                                'emptyMessage' => 'Data pendidikan belum tersedia.'
-                            ])
-                        </div>
-                    </div>
-
-                    {{-- Tab data pekerjaan terbanyak --}}
-                    <div class="tab-pane fade dk-tab-pane" id="tab-occupation" role="tabpanel"
-                        aria-labelledby="tab-occupation-tab">
-                        @include('public.partials.table-heading', [
-                            'title' => $tabs['occupation'],
-                            'areaDescriptor' => $areaDescriptor,
-                            'periodLabel' => $periodLabel,
-                        ])
-                        <div class="table-responsive dk-table-scroll">
-                            <table class="table table-sm dk-table mb-0">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 64px">No</th>
-                                        <th>Pekerjaan</th>
-                                        <th class="text-end">L</th>
-                                        <th class="text-end">P</th>
-                                        <th class="text-end">Jumlah</th>
+                                    <tr class="{{ $isHighlighted ? 'table-active' : '' }}">
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $row['name'] }}</td>
+                                        <td class="text-end">{{ number_format($row['male']) }}</td>
+                                        <td class="text-end">{{ number_format($row['female']) }}</td>
+                                        <td class="text-end fw-semibold">{{ number_format($row['total']) }}</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($topOccupations as $item)
-                                        <tr>
-                                            <td>{{ $loop->iteration }}</td>
-                                            <td>{{ $item['label'] }}</td>
-                                            <td class="text-end">{{ number_format($item['male']) }}</td>
-                                            <td class="text-end">{{ number_format($item['female']) }}</td>
-                                            <td class="text-end fw-semibold">{{ number_format($item['total']) }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center text-muted">Data pekerjaan belum tersedia.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                                @if (!empty($topOccupations))
-                                    @php
-                                        $jobMale = array_sum(array_column($topOccupations, 'male'));
-                                        $jobFemale = array_sum(array_column($topOccupations, 'female'));
-                                        $jobTotal = array_sum(array_column($topOccupations, 'total'));
-                                    @endphp
-                                    <tfoot>
-                                        <tr>
-                                            <th colspan="2">Jumlah Keseluruhan</th>
-                                            <th class="text-end">{{ number_format($jobMale) }}</th>
-                                            <th class="text-end">{{ number_format($jobFemale) }}</th>
-                                            <th class="text-end">{{ number_format($jobTotal) }}</th>
-                                        </tr>
-                                    </tfoot>
-                                @endif
-                            </table>
-                        </div>
-                    </div>
-
-                    {{-- Tab distribusi umur tunggal (setiap usia) --}}
-                    <div class="tab-pane fade dk-tab-pane" id="tab-single-age" role="tabpanel"
-                        aria-labelledby="tab-single-age-tab">
-                        @include('public.partials.table-heading', [
-                            'title' => $tabs['single-age'],
-                            'areaDescriptor' => $areaDescriptor,
-                            'periodLabel' => $periodLabel,
-                        ])
-                        <div class="table-responsive dk-table-scroll">
-                            <table class="table table-sm dk-table mb-0">
-                                <thead>
+                                @empty
                                     <tr>
-                                        <th style="width: 64px">No</th>
-                                        <th>Usia</th>
-                                        <th class="text-end">L</th>
-                                        <th class="text-end">P</th>
-                                        <th class="text-end">Jumlah</th>
+                                        <td colspan="5" class="text-center text-muted">Data jenis kelamin belum tersedia.</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($singleAges as $row)
-                                        <tr>
-                                            <td>{{ $loop->iteration }}</td>
-                                            <td>{{ $row['label'] }}</td>
-                                            <td class="text-end">{{ number_format($row['male']) }}</td>
-                                            <td class="text-end">{{ number_format($row['female']) }}</td>
-                                            <td class="text-end fw-semibold">{{ number_format($row['total']) }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center text-muted">Data umur tunggal belum tersedia.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                                @if (!empty($singleAges))
-                                    @php
-                                    $singleMale = array_sum(array_column($singleAges, 'male'));
-                                    $singleFemale = array_sum(array_column($singleAges, 'female'));
-                                    $singleTotal = array_sum(array_column($singleAges, 'total'));
-                                    @endphp
-                                    <tfoot>
-                                        <tr>
-                                            <th colspan="2">Jumlah Keseluruhan</th>
-                                            <th class="text-end">{{ number_format($singleMale) }}</th>
-                                            <th class="text-end">{{ number_format($singleFemale) }}</th>
-                                            <th class="text-end">{{ number_format($singleTotal) }}</th>
-                                        </tr>
-                                    </tfoot>
-                                @endif
-                            </table>
-                        </div>
-                    </div>
-
-                    {{-- Tab matriks penduduk wajib KTP --}}
-                    <div class="tab-pane fade dk-tab-pane" id="tab-wajib-ktp" role="tabpanel"
-                        aria-labelledby="tab-wajib-ktp-tab">
-                        @include('public.partials.table-heading', [
-                            'title' => $tabs['wajib-ktp'],
-                            'areaDescriptor' => $areaDescriptor,
-                            'periodLabel' => $periodLabel,
-                        ])
-                        <div class="table-responsive dk-table-scroll">
-                            @include('public.partials.matrix-table', [
-                                'matrix' => $wajibKtpMatrix,
-                                'emptyMessage' => 'Data wajib KTP belum tersedia.'
-                            ])
-                        </div>
-                    </div>
-
-                    {{-- Tab matriks status perkawinan --}}
-                    <div class="tab-pane fade dk-tab-pane" id="tab-marital" role="tabpanel"
-                        aria-labelledby="tab-marital-tab">
-                        @include('public.partials.table-heading', [
-                            'title' => $tabs['marital'],
-                            'areaDescriptor' => $areaDescriptor,
-                            'periodLabel' => $periodLabel,
-                        ])
-                        <div class="table-responsive dk-table-scroll">
-                            @include('public.partials.matrix-table', [
-                                'matrix' => $maritalMatrix,
-                                'emptyMessage' => 'Data status perkawinan belum tersedia.'
-                            ])
-                        </div>
-                    </div>
-
-                    {{-- Tab matriks kepala keluarga --}}
-                    <div class="tab-pane fade dk-tab-pane" id="tab-household" role="tabpanel"
-                        aria-labelledby="tab-household-tab">
-                        @include('public.partials.table-heading', [
-                            'title' => $tabs['household'],
-                            'areaDescriptor' => $areaDescriptor,
-                            'periodLabel' => $periodLabel,
-                        ])
-                        <div class="table-responsive dk-table-scroll">
-                            @include('public.partials.matrix-table', [
-                                'matrix' => $headHouseholdMatrix,
-                                'emptyMessage' => 'Data kepala keluarga belum tersedia.'
-                            ])
-                        </div>
-                    </div>
-
-                    {{-- Tab matriks agama penduduk --}}
-                    <div class="tab-pane fade dk-tab-pane" id="tab-religion" role="tabpanel"
-                        aria-labelledby="tab-religion-tab">
-                        @include('public.partials.table-heading', [
-                            'title' => $tabs['religion'],
-                            'areaDescriptor' => $areaDescriptor,
-                            'periodLabel' => $periodLabel,
-                        ])
-                        <div class="table-responsive dk-table-scroll">
-                            @include('public.partials.matrix-table', [
-                                'matrix' => $religionMatrix,
-                                'emptyMessage' => 'Data agama belum tersedia.'
-                            ])
-                        </div>
+                                @endforelse
+                            </tbody>
+                            @if (!empty($areaRows))
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="2">Jumlah Keseluruhan</th>
+                                        <th class="text-end">{{ number_format($areaTotals['male'] ?? 0) }}</th>
+                                        <th class="text-end">{{ number_format($areaTotals['female'] ?? 0) }}</th>
+                                        <th class="text-end">{{ number_format($areaTotals['total'] ?? 0) }}</th>
+                                    </tr>
+                                </tfoot>
+                            @endif
+                        </table>
                     </div>
                 </div>
-            </div>
+
+                {{-- Tab ringkasan berdasarkan kelompok umur --}}
+                <div class="tab-pane fade dk-tab-pane" id="tab-age" role="tabpanel"
+                    aria-labelledby="tab-age-tab">
+                    @include('public.partials.table-heading', [
+                        'title' => $tabs['age'],
+                        'areaDescriptor' => $areaDescriptor,
+                        'periodLabel' => $periodLabel,
+                    ])
+                    <div class="table-responsive dk-table-scroll">
+                        <table class="table table-sm dk-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 64px">No</th>
+                                    <th>Kelompok</th>
+                                    <th class="text-end">L</th>
+                                    <th class="text-end">P</th>
+                                    <th class="text-end">Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($ageGroups as $index => $row)
+                                    <tr>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $row['label'] }}</td>
+                                        <td class="text-end">{{ number_format($row['male']) }}</td>
+                                        <td class="text-end">{{ number_format($row['female']) }}</td>
+                                        <td class="text-end fw-semibold">{{ number_format($row['total']) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">Data kelompok umur belum tersedia.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            @if (!empty($ageGroups))
+                                @php
+                                    $ageMale = array_sum(array_column($ageGroups, 'male'));
+                                    $ageFemale = array_sum(array_column($ageGroups, 'female'));
+                                    $ageTotal = array_sum(array_column($ageGroups, 'total'));
+                                @endphp
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="2">Jumlah Keseluruhan</th>
+                                        <th class="text-end">{{ number_format($ageMale) }}</th>
+                                        <th class="text-end">{{ number_format($ageFemale) }}</th>
+                                        <th class="text-end">{{ number_format($ageTotal) }}</th>
+                                    </tr>
+                                </tfoot>
+                            @endif
+                        </table>
+                    </div>
+                </div>
+
+                {{-- Tab matriks pendidikan penduduk --}}
+                <div class="tab-pane fade dk-tab-pane" id="tab-education" role="tabpanel"
+                    aria-labelledby="tab-education-tab">
+                    @include('public.partials.table-heading', [
+                        'title' => $tabs['education'],
+                        'areaDescriptor' => $areaDescriptor,
+                        'periodLabel' => $periodLabel,
+                    ])
+                    <div class="table-responsive dk-table-scroll">
+                        @include('public.partials.matrix-table', [
+                            'matrix' => $educationMatrix,
+                            'emptyMessage' => 'Data pendidikan belum tersedia.'
+                        ])
+                    </div>
+                </div>
+
+                {{-- Tab data pekerjaan terbanyak --}}
+                <div class="tab-pane fade dk-tab-pane" id="tab-occupation" role="tabpanel"
+                    aria-labelledby="tab-occupation-tab">
+                    @include('public.partials.table-heading', [
+                        'title' => $tabs['occupation'],
+                        'areaDescriptor' => $areaDescriptor,
+                        'periodLabel' => $periodLabel,
+                    ])
+                    <div class="table-responsive dk-table-scroll">
+                        <table class="table table-sm dk-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 64px">No</th>
+                                    <th>Pekerjaan</th>
+                                    <th class="text-end">L</th>
+                                    <th class="text-end">P</th>
+                                    <th class="text-end">Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($topOccupations as $item)
+                                    <tr>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $item['label'] }}</td>
+                                        <td class="text-end">{{ number_format($item['male']) }}</td>
+                                        <td class="text-end">{{ number_format($item['female']) }}</td>
+                                        <td class="text-end fw-semibold">{{ number_format($item['total']) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">Data pekerjaan belum tersedia.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            @if (!empty($topOccupations))
+                                @php
+                                    $jobMale = array_sum(array_column($topOccupations, 'male'));
+                                    $jobFemale = array_sum(array_column($topOccupations, 'female'));
+                                    $jobTotal = array_sum(array_column($topOccupations, 'total'));
+                                @endphp
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="2">Jumlah Keseluruhan</th>
+                                        <th class="text-end">{{ number_format($jobMale) }}</th>
+                                        <th class="text-end">{{ number_format($jobFemale) }}</th>
+                                        <th class="text-end">{{ number_format($jobTotal) }}</th>
+                                    </tr>
+                                </tfoot>
+                            @endif
+                        </table>
+                    </div>
+                </div>
+
+                {{-- Tab distribusi umur tunggal (setiap usia) --}}
+                <div class="tab-pane fade dk-tab-pane" id="tab-single-age" role="tabpanel"
+                    aria-labelledby="tab-single-age-tab">
+                    @include('public.partials.table-heading', [
+                        'title' => $tabs['single-age'],
+                        'areaDescriptor' => $areaDescriptor,
+                        'periodLabel' => $periodLabel,
+                    ])
+                    <div class="table-responsive dk-table-scroll">
+                        <table class="table table-sm dk-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 64px">No</th>
+                                    <th>Usia</th>
+                                    <th class="text-end">L</th>
+                                    <th class="text-end">P</th>
+                                    <th class="text-end">Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($singleAges as $row)
+                                    <tr>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $row['label'] }}</td>
+                                        <td class="text-end">{{ number_format($row['male']) }}</td>
+                                        <td class="text-end">{{ number_format($row['female']) }}</td>
+                                        <td class="text-end fw-semibold">{{ number_format($row['total']) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">Data umur tunggal belum tersedia.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            @if (!empty($singleAges))
+                                @php
+                                $singleMale = array_sum(array_column($singleAges, 'male'));
+                                $singleFemale = array_sum(array_column($singleAges, 'female'));
+                                $singleTotal = array_sum(array_column($singleAges, 'total'));
+                                @endphp
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="2">Jumlah Keseluruhan</th>
+                                        <th class="text-end">{{ number_format($singleMale) }}</th>
+                                        <th class="text-end">{{ number_format($singleFemale) }}</th>
+                                        <th class="text-end">{{ number_format($singleTotal) }}</th>
+                                    </tr>
+                                </tfoot>
+                            @endif
+                        </table>
+                    </div>
+                </div>
+
+                {{-- Tab matriks penduduk wajib KTP --}}
+                <div class="tab-pane fade dk-tab-pane" id="tab-wajib-ktp" role="tabpanel"
+                    aria-labelledby="tab-wajib-ktp-tab">
+                    @include('public.partials.table-heading', [
+                        'title' => $tabs['wajib-ktp'],
+                        'areaDescriptor' => $areaDescriptor,
+                        'periodLabel' => $periodLabel,
+                    ])
+                    <div class="table-responsive dk-table-scroll">
+                        @include('public.partials.matrix-table', [
+                            'matrix' => $wajibKtpMatrix,
+                            'emptyMessage' => 'Data wajib KTP belum tersedia.'
+                        ])
+                    </div>
+                </div>
+
+                {{-- Tab matriks status perkawinan --}}
+                <div class="tab-pane fade dk-tab-pane" id="tab-marital" role="tabpanel"
+                    aria-labelledby="tab-marital-tab">
+                    @include('public.partials.table-heading', [
+                        'title' => $tabs['marital'],
+                        'areaDescriptor' => $areaDescriptor,
+                        'periodLabel' => $periodLabel,
+                    ])
+                    <div class="table-responsive dk-table-scroll">
+                        @include('public.partials.matrix-table', [
+                            'matrix' => $maritalMatrix,
+                            'emptyMessage' => 'Data status perkawinan belum tersedia.'
+                        ])
+                    </div>
+                </div>
+
+                {{-- Tab matriks kepala keluarga --}}
+                <div class="tab-pane fade dk-tab-pane" id="tab-household" role="tabpanel"
+                    aria-labelledby="tab-household-tab">
+                    @include('public.partials.table-heading', [
+                        'title' => $tabs['household'],
+                        'areaDescriptor' => $areaDescriptor,
+                        'periodLabel' => $periodLabel,
+                    ])
+                    <div class="table-responsive dk-table-scroll">
+                        @include('public.partials.matrix-table', [
+                            'matrix' => $headHouseholdMatrix,
+                            'emptyMessage' => 'Data kepala keluarga belum tersedia.'
+                        ])
+                    </div>
+                </div>
+
+                {{-- Tab matriks agama penduduk --}}
+                <div class="tab-pane fade dk-tab-pane" id="tab-religion" role="tabpanel"
+                    aria-labelledby="tab-religion-tab">
+                    @include('public.partials.table-heading', [
+                        'title' => $tabs['religion'],
+                        'areaDescriptor' => $areaDescriptor,
+                        'periodLabel' => $periodLabel,
+                    ])
+                    <div class="table-responsive dk-table-scroll">
+                        @include('public.partials.matrix-table', [
+                            'matrix' => $religionMatrix,
+                            'emptyMessage' => 'Data agama belum tersedia.'
+                        ])
+                    </div>
+                </div>
+                </div>
         </div>
     @endif
 @endsection

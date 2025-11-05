@@ -2,15 +2,22 @@
     --landing-topbar-offset: 0px;
 }
 
+/* Utility wrapper agar konten bisa melebar penuh ketika diperlukan */
+.landing-full-bleed {
+    margin-right: calc(-1 * var(--dk-content-padding-x));
+    margin-left: calc(-1 * var(--dk-content-padding-x));
+    padding-right: var(--dk-content-padding-x);
+    padding-left: var(--dk-content-padding-x);
+    width: auto;
+}
+
 .landing-fullscreen {
     display: flex;
     flex-direction: column;
     justify-content: center;
     min-height: calc(100dvh - var(--landing-topbar-offset, 0px));
     margin-top: calc(-1 * var(--dk-content-padding-y));
-    margin-right: calc(-1 * var(--dk-content-padding-x));
     margin-bottom: calc(-1 * (var(--dk-content-padding-y) + 1rem));
-    margin-left: calc(-1 * var(--dk-content-padding-x));
     padding: var(--dk-content-padding-y) var(--dk-content-padding-x);
 }
 
@@ -467,7 +474,7 @@
     }
 
     .landing-overview .card-body {
-        padding: clamp(1.35rem, 2vw + 1rem, 1.75rem);
+        padding: 1.1rem clamp(0.85rem, 3vw + 0.35rem, 1.4rem) 2rem;
     }
 
     .landing-layout .dk-card__title {
@@ -501,7 +508,7 @@
 
 @media (max-width: 575.98px) {
     .landing-overview .card-body {
-        padding: 1.15rem;
+        padding: 1rem 0.35rem 1.2rem;
     }
 
     .landing-layout .dk-card__title {
@@ -535,32 +542,50 @@
         font-size: 0.88rem;
     }
 
+    .landing-fullscreen {
+        padding-left: clamp(0.55rem, 3vw + 0.25rem, 1.25rem);
+        padding-right: clamp(0.55rem, 3vw + 0.25rem, 1.25rem);
+        padding-top: calc(var(--dk-content-padding-y) + 0.25rem);
+        padding-bottom: calc(var(--dk-content-padding-y) + 1.25rem);
+    }
+
+    .landing-metric-grid {
+        --bs-gutter-x: 1.1rem;
+        --bs-gutter-y: 1.1rem;
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.1rem;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .landing-metric-grid .landing-metric-item {
+        flex: 0 0 auto;
+        max-width: none;
+        width: 100%;
+    }
+
     .landing-metric-card {
-        padding: 1rem;
+        padding: clamp(1.05rem, 3vw + 0.75rem, 1.3rem);
     }
 
     .landing-metric-icon {
-        width: 32px;
-        height: 32px;
-        font-size: 1rem;
+        width: 34px;
+        height: 34px;
+        font-size: 1.05rem;
         margin-bottom: 0.6rem;
     }
 
     .dk-metric {
-        font-size: clamp(1.1rem, 2vw + 0.9rem, 1.4rem);
+        font-size: clamp(1.15rem, 2.2vw + 0.95rem, 1.45rem);
     }
 
     .dk-metric--sm {
-        font-size: 1.05rem;
+        font-size: 1.08rem;
     }
 
     .landing-metric-percentage {
-        font-size: 0.7rem;
-    }
-
-    .landing-metric-grid .landing-metric-item {
-        flex: 0 0 50%;
-        max-width: 50%;
+        font-size: 0.72rem;
     }
 }
 
