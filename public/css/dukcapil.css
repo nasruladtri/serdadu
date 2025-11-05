@@ -545,9 +545,13 @@ body.bg-body {
 } 
 
 .dk-table-scroll {
-  max-height: 420px;
-  overflow-y: auto;
+  max-height: none;
+  overflow-y: visible;
   border-radius: 12px;
+}
+
+.dk-table-scroll.has-scroll {
+  overflow-y: auto;
 }
 
 .dk-highlight {
@@ -1176,9 +1180,12 @@ body.bg-body {
   }
 
   .dk-table-scroll {
-    max-height: none;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+  
+  .dk-table-scroll.has-scroll {
+    overflow-y: auto;
   }
 
   .dk-card .card-body > .table-responsive,

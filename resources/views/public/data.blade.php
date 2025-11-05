@@ -156,7 +156,7 @@
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
                     ])
-                    <div class="table-responsive">
+                    <div class="table-responsive dk-table-scroll">
                         <table class="table table-sm dk-table mb-0">
                             <thead>
                                 <tr>
@@ -494,6 +494,66 @@
                             dropdown.value = targetId;
                         }
                     });
+                });
+            });
+
+            // Fungsi untuk mengatur scrollbar tabel berdasarkan jumlah baris
+            function setupTableScroll() {
+                var tableContainers = document.querySelectorAll('.dk-tab-content .dk-table-scroll');
+                
+                tableContainers.forEach(function(container) {
+                    var table = container.querySelector('.dk-table');
+                    if (!table) return;
+                    
+                    var tbody = table.querySelector('tbody');
+                    if (!tbody) return;
+                    
+                    // Hitung semua baris data (tidak termasuk baris kosong/empty state)
+                    var rows = tbody.querySelectorAll('tr');
+                    var dataRows = Array.from(rows).filter(function(row) {
+                        var cells = row.querySelectorAll('td');
+                        if (cells.length === 0) return false;
+                        // Skip baris dengan class text-center text-muted (empty state)
+                        var firstCell = cells[0];
+                        var isEmptyState = firstCell.classList.contains('text-center') && firstCell.classList.contains('text-muted');
+                        return !isEmptyState;
+                    });
+                    
+                    var totalRows = dataRows.length;
+                    
+                    // Jika lebih dari 17 baris, aktifkan scrollbar
+                    if (totalRows > 17) {
+                        // Hitung tinggi untuk 17 baris
+                        if (dataRows.length > 0) {
+                            var firstRow = dataRows[0];
+                            var rowHeight = firstRow.offsetHeight || 50; // fallback 50px jika tidak bisa dihitung
+                            
+                            var thead = table.querySelector('thead');
+                            var tfoot = table.querySelector('tfoot');
+                            var headerHeight = thead ? thead.offsetHeight : 0;
+                            var footerHeight = tfoot ? tfoot.offsetHeight : 0;
+                            
+                            // Tinggi untuk 17 baris + header + footer + sedikit padding
+                            var maxHeight = (rowHeight * 17) + headerHeight + footerHeight + 10;
+                            
+                            container.style.maxHeight = maxHeight + 'px';
+                            container.classList.add('has-scroll');
+                        }
+                    } else {
+                        container.style.maxHeight = 'none';
+                        container.classList.remove('has-scroll');
+                    }
+                });
+            }
+
+            // Jalankan saat halaman dimuat
+            setupTableScroll();
+
+            // Jalankan ulang saat tab berubah
+            tabButtons.forEach(function (button) {
+                button.addEventListener('shown.bs.tab', function () {
+                    // Tunggu sedikit agar DOM sudah ter-render
+                    setTimeout(setupTableScroll, 100);
                 });
             });
         });
