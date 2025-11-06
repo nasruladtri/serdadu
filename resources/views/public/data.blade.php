@@ -548,12 +548,62 @@
 
             // Jalankan saat halaman dimuat
             setupTableScroll();
+            
+            // Inisialisasi URL fullscreen button saat halaman dimuat
+            var activeTabTrigger = document.querySelector('#aggregateTabs button.nav-link.active');
+            if (activeTabTrigger) {
+                var targetId = activeTabTrigger.getAttribute('data-bs-target');
+                if (targetId) {
+                    var category = targetId.replace('#tab-', '');
+                    var fullscreenButtons = document.querySelectorAll('.js-fullscreen-btn');
+                    fullscreenButtons.forEach(function(btn) {
+                        var baseUrl = btn.getAttribute('data-base-url');
+                        if (baseUrl) {
+                            var url = new URL(baseUrl, window.location.origin);
+                            url.searchParams.set('category', category);
+                            btn.href = url.toString();
+                        }
+                    });
+                }
+            }
 
             // Jalankan ulang saat tab berubah
             tabButtons.forEach(function (button) {
                 button.addEventListener('shown.bs.tab', function () {
                     // Tunggu sedikit agar DOM sudah ter-render
                     setTimeout(setupTableScroll, 100);
+                    
+                    // Update URL fullscreen button
+                    var targetId = this.getAttribute('data-bs-target');
+                    if (targetId) {
+                        var category = targetId.replace('#tab-', '');
+                        var fullscreenButtons = document.querySelectorAll('.js-fullscreen-btn');
+                        fullscreenButtons.forEach(function(btn) {
+                            var baseUrl = btn.getAttribute('data-base-url');
+                            if (baseUrl) {
+                                var url = new URL(baseUrl, window.location.origin);
+                                url.searchParams.set('category', category);
+                                btn.href = url.toString();
+                            }
+                        });
+                    }
+                });
+            });
+            
+            // Update fullscreen button saat dropdown berubah
+            dropdowns.forEach(function (dropdown) {
+                dropdown.addEventListener('change', function () {
+                    var targetId = this.value;
+                    var category = targetId.replace('tab-', '');
+                    var fullscreenButtons = document.querySelectorAll('.js-fullscreen-btn');
+                    fullscreenButtons.forEach(function(btn) {
+                        var baseUrl = btn.getAttribute('data-base-url');
+                        if (baseUrl) {
+                            var url = new URL(baseUrl, window.location.origin);
+                            url.searchParams.set('category', category);
+                            btn.href = url.toString();
+                        }
+                    });
                 });
             });
         });

@@ -84,8 +84,8 @@
             </a>
         </nav>
         {{-- Informasi hak cipta dan versi aplikasi pada bagian bawah sidebar --}}
-        <div class="dk-sidebar__footer text-center">
-            <span class="dk-sidebar__meta" data-sidebar-meta-full>Copyright © 2025 Serdadu Dukcapil Kab. Madiun. All rights reserved.</span>
+        <div class="dk-sidebar__footer">
+            <span class="dk-sidebar__meta" data-sidebar-meta-full>Copyright © 2025 <a href="{{ url('/') }}" class="dk-sidebar__link" target="_blank" rel="noopener noreferrer">Serdadu</a> <a href="https://dukcapil.madiunkab.go.id" class="dk-sidebar__link" target="_blank" rel="noopener noreferrer">Dukcapil Kab. Madiun</a>. All rights reserved.</span>
             <span class="dk-sidebar__meta" data-sidebar-meta-full>Versi 0.1.2</span>
             <span class="dk-sidebar__meta" data-sidebar-meta-compact>&copy;</span>
             <span class="dk-sidebar__meta" data-sidebar-meta-compact>Versi 0.1.2</span>
@@ -174,7 +174,7 @@
                 </a>
             </nav>
             <div class="dk-offcanvas__footer">
-                <span class="dk-offcanvas__meta">Copyright © 2025 Serdadu Dukcapil Kab. Madiun. All rights reserved.</span>
+                <span class="dk-offcanvas__meta">Copyright © 2025 <a href="{{ url('/') }}" class="dk-offcanvas__link" target="_blank" rel="noopener noreferrer">Serdadu</a> <a href="https://dukcapil.madiunkab.go.id" class="dk-offcanvas__link" target="_blank" rel="noopener noreferrer">Dukcapil Kab. Madiun</a>. All rights reserved.</span>
                 <span class="dk-offcanvas__meta">Versi 0.1.2</span>
             </div>
         </div>

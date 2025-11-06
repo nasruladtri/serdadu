@@ -133,6 +133,71 @@ class PublicDashboardController extends Controller
         ]);
     }
 
+    public function fullscreen(Request $request)
+    {
+        [
+            'periods' => $periods,
+            'period' => $period,
+            'districts' => $districts,
+            'villages' => $villages,
+            'selectedDistrict' => $selectedDistrict,
+            'selectedVillage' => $selectedVillage,
+            'filters' => $filters,
+            'years' => $years,
+            'semesterOptions' => $availableSemesters,
+            'selectedYear' => $selectedYear,
+            'selectedSemester' => $selectedSemester,
+        ] = $this->prepareFilterContext($request);
+
+        $category = $request->get('category', 'gender');
+
+        $gender = $period ? $this->genderSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0];
+        $wajibKtp = $period ? $this->wajibKtpSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0];
+        $ageGroups = $period ? $this->ageGroupSummary($period, $filters) : [];
+        $singleAges = $period ? $this->singleAgeSummary($period, $filters) : [];
+        $education = $period ? $this->educationSummary($period, $filters) : [];
+        $topOccupations = $period ? $this->occupationHighlights($period, $filters) : [];
+        $marital = $period ? $this->maritalStatusSummary($period, $filters) : [];
+        $headHouseholds = $period ? $this->headOfHouseholdSummary($period, $filters) : [];
+        $religions = $period ? $this->religionSummary($period, $filters) : [];
+        $areaTable = $this->areaPopulationTable($period, $filters);
+        $educationMatrix = $this->educationMatrix($period, $filters);
+        $wajibKtpMatrix = $this->wajibKtpMatrix($period, $filters);
+        $maritalMatrix = $this->maritalMatrix($period, $filters);
+        $headHouseholdMatrix = $this->headHouseholdMatrix($period, $filters);
+        $religionMatrix = $this->religionMatrix($period, $filters);
+
+        return view('public.data-fullscreen', [
+            'title' => 'Data Agregat - Fullscreen',
+            'period' => $period,
+            'periods' => $periods,
+            'years' => $years,
+            'semesterOptions' => $availableSemesters,
+            'selectedYear' => $selectedYear,
+            'selectedSemester' => $selectedSemester,
+            'districts' => $districts,
+            'villages' => $villages,
+            'selectedDistrict' => $selectedDistrict,
+            'selectedVillage' => $selectedVillage,
+            'gender' => $gender,
+            'wajibKtp' => $wajibKtp,
+            'ageGroups' => $ageGroups,
+            'singleAges' => $singleAges,
+            'education' => $education,
+            'topOccupations' => $topOccupations,
+            'marital' => $marital,
+            'headHouseholds' => $headHouseholds,
+            'religions' => $religions,
+            'areaTable' => $areaTable,
+            'educationMatrix' => $educationMatrix,
+            'wajibKtpMatrix' => $wajibKtpMatrix,
+            'maritalMatrix' => $maritalMatrix,
+            'headHouseholdMatrix' => $headHouseholdMatrix,
+            'religionMatrix' => $religionMatrix,
+            'category' => $category,
+        ]);
+    }
+
     public function charts(Request $request)
     {
         [

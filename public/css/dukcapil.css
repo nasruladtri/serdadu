@@ -77,8 +77,8 @@ body.bg-body {
   height: 100vh;
   width: var(--dk-sidebar-width);
   padding: 1.5rem;
-  background: linear-gradient(180deg, #007151 0%, #007151 100%);
-  color: #f8fafc;
+  background: #186f38;
+  color: #186f38;
   display: flex;
   flex-direction: column;
   transition: width 0.18s ease, box-shadow 0.22s ease;
@@ -140,6 +140,7 @@ body.bg-body {
   text-transform: uppercase;
   letter-spacing: 0.02em;
   line-height: 1.1;
+  color: #ffffff;
 }
 
 .dk-brand-subtitle {
@@ -210,9 +211,9 @@ body.bg-body {
 
 .dk-nav-link:hover,
 .dk-nav-link.active {
-  background: rgba(14, 165, 233, 0.2);
+  background: rgba(52, 152, 82, 0.2);
   color: #ffffff;
-  box-shadow: 0 10px 24px rgba(14, 165, 233, 0.15);
+  box-shadow: 0 10px 24px rgba(52, 152, 82, 0.15);
 }
 
 .dk-nav-link:hover .dk-nav-link__label,
@@ -226,10 +227,23 @@ body.bg-body {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .dk-sidebar__footer .dk-sidebar__meta {
   color: rgba(226, 232, 240, 0.85);
+}
+
+.dk-sidebar__footer .dk-sidebar__link {
+  color: rgba(226, 232, 240, 0.92);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.dk-sidebar__footer .dk-sidebar__link:hover,
+.dk-sidebar__footer .dk-sidebar__link:focus-visible {
+  color: #ffffff;
 }
 
 .dk-sidebar__footer [data-sidebar-meta-compact] {
@@ -381,8 +395,8 @@ body.bg-body {
 }
 .dk-sidebar--collapsed .dk-nav-link:hover,
 .dk-sidebar--collapsed .dk-nav-link.active {
-  background: rgba(14, 165, 233, 0.26);
-  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.22);
+  background: rgba(52, 152, 82, 0.26);
+  box-shadow: 0 6px 16px rgba(52, 152, 82, 0.22);
   transform: none;
 }
 .dk-main--expanded {
@@ -711,6 +725,24 @@ body.bg-body {
   letter-spacing: 0.08em;
 }
 
+.dk-table-heading__fullscreen {
+  display: flex;
+  align-items: center;
+}
+
+.dk-table-heading__fullscreen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.dk-table-heading__fullscreen-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 113, 81, 0.2);
+}
+
 .dk-tab-content .dk-tab-pane {
   background: #ffffff;
   border-radius: 16px;
@@ -753,7 +785,7 @@ body.bg-body {
 }
 .dk-offcanvas {
   --bs-offcanvas-width: min(360px, 88vw);
-  background: linear-gradient(180deg, #007151 0%, #007151 100%);
+  background: #186f38;
   border-top-right-radius: 24px;
   border-bottom-right-radius: 24px;
   border-top-left-radius: 0;
@@ -831,14 +863,26 @@ body.bg-body {
   padding-top: 1.25rem;
   border-top: 1px solid rgba(226, 232, 240, 0.12);
   font-size: 0.75rem;
-  text-align: center;
+  text-align: left;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   color: rgba(226, 232, 240, 0.78);
+  align-items: flex-start;
 }
 .dk-offcanvas__footer .dk-offcanvas__meta {
   color: inherit;
+}
+
+.dk-offcanvas__footer .dk-offcanvas__link {
+  color: rgba(226, 232, 240, 0.92);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.dk-offcanvas__footer .dk-offcanvas__link:hover,
+.dk-offcanvas__footer .dk-offcanvas__link:focus-visible {
+  color: #ffffff;
 }
 .dk-offcanvas .dk-nav-link {
   border-radius: 16px;
@@ -851,10 +895,10 @@ body.bg-body {
 }
 .dk-offcanvas .dk-nav-link:hover,
 .dk-offcanvas .dk-nav-link.active {
-  background: rgba(14, 165, 233, 0.2);
+  background: rgba(52, 152, 82, 0.2);
   color: #ffffff;
   transform: none;
-  box-shadow: 0 10px 24px rgba(14, 165, 233, 0.15);
+  box-shadow: 0 10px 24px rgba(52, 152, 82, 0.15);
 }
 
 @media (max-width: 991.98px) {
@@ -1006,7 +1050,7 @@ body.bg-body {
     gap: 10px;
     height: 64px;
     padding: 0 18px;
-    background: linear-gradient(90deg, #007151 0%, #008e63 100%);
+    background: #004d00;
     border-bottom: none;
     z-index: 1050;
     color: #f8fafc;
@@ -1038,6 +1082,7 @@ body.bg-body {
     font-size: 0.95rem;
     letter-spacing: 0.02em;
     text-transform: uppercase;
+    color: #ffffff;
   }
 
   .dk-topbar__brand-subtitle {
@@ -1092,7 +1137,7 @@ body.bg-body {
     gap: 10px;
     height: 64px;
     padding: 0 18px;
-    background: linear-gradient(90deg, #007151 0%, #008e63 100%);
+    background: #004d00;
     border-bottom: none;
     z-index: 1050;
     color: #f8fafc;
@@ -1124,6 +1169,7 @@ body.bg-body {
     font-size: 0.95rem;
     letter-spacing: 0.02em;
     text-transform: uppercase;
+    color: #ffffff;
   }
 
   .dk-topbar__brand-subtitle {

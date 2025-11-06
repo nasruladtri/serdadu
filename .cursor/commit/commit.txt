@@ -14,3 +14,10 @@ feat: tambahkan informasi hak cipta & versi pada sidebar mobile, posisikan di pa
 fix: samakan tata letak kartu agregat di landing mobile dengan tampilan desktop
 fix: rapatkan jarak antar kartu agregat pada landing mobile
 fix: hilangkan garis vertikal tabel ringkasan wilayah pada landing mobile
+fix: rata kiri footer sidebar/offcanvas dan tautkan ke situs dukcapil resmi
+fix: jadikan label Serdadu di footer sebagai tautan ke beranda aplikasi
+fix: buka tautan footer di tab baru dan hilangkan garis bawah link
+fix: pindahkan label Serdadu ke samping Copyright di footer
+feat: tambahkan opsi fullscreen untuk melihat tabel di halaman baru
+fix: tambahkan keterangan kategori di header fullscreen dan hilangkan scrollbar vertikal
+fix: ubah warna sidebar menjadi #186f38, topbar menjadi #004d00, hover sidebar menjadi #349852, hilangkan gradient, dan ubah warna teks Serdadu menjadi putih

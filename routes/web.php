@@ -7,6 +7,7 @@ use App\Http\Controllers\PublicDashboardController;
 
 Route::get('/', [PublicDashboardController::class, 'landing'])->name('public.landing');
 Route::get('/data', [PublicDashboardController::class, 'data'])->name('public.data');
+Route::get('/data/fullscreen', [PublicDashboardController::class, 'fullscreen'])->name('public.data.fullscreen');
 Route::get('/grafik', [PublicDashboardController::class, 'charts'])->name('public.charts');
 
 Route::get('/dashboard', function () {
