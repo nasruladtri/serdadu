@@ -83,13 +83,13 @@
                                             <div class="landing-metric-icon">
                                                 <img src="{{ asset('img/l.png') }}" alt="Penduduk Laki-laki" class="landing-metric-icon__img">
                                             </div>
-                                            <div class="dk-metric__label mb-1">Laki-laki</div>
-                                            <div class="dk-metric dk-metric--sm mb-2">{{ number_format($malePop) }}</div>
+                                            <div class="dk-metric__label text-white-50 mb-1">Laki-laki</div>
+                                            <div class="dk-metric dk-metric--sm text-white mb-2">{{ number_format($malePop) }}</div>
+                                            <div class="landing-metric-percentage text-white">
+                                                <i class="fas fa-chart-line me-1"></i>{{ number_format($malePercent, 1) }}%
+                                            </div>
                                             <div class="landing-metric-progress">
                                                 <div class="landing-metric-progress-bar" style="--landing-progress: {{ $malePercent }}%;"></div>
-                                            </div>
-                                            <div class="landing-metric-percentage">
-                                                <i class="fas fa-chart-line me-1"></i>{{ number_format($malePercent, 1) }}%
                                             </div>
                                         </div>
                                     </div>
@@ -99,34 +99,30 @@
                                             <div class="landing-metric-icon">
                                                 <img src="{{ asset('img/p.png') }}" alt="Penduduk Perempuan" class="landing-metric-icon__img">
                                             </div>
-                                            <div class="dk-metric__label mb-1">Perempuan</div>
-                                            <div class="dk-metric dk-metric--sm mb-2">{{ number_format($femalePop) }}</div>
+                                            <div class="dk-metric__label text-white-50 mb-1">Perempuan</div>
+                                            <div class="dk-metric dk-metric--sm text-white mb-2">{{ number_format($femalePop) }}</div>
+                                            <div class="landing-metric-percentage text-white">
+                                                <i class="fas fa-chart-line me-1"></i>{{ number_format($femalePercent, 1) }}%
+                                            </div>
                                             <div class="landing-metric-progress">
                                                 <div class="landing-metric-progress-bar" style="--landing-progress: {{ $femalePercent }}%;"></div>
-                                            </div>
-                                            <div class="landing-metric-percentage">
-                                                <i class="fas fa-chart-line me-1"></i>{{ number_format($femalePercent, 1) }}%
                                             </div>
                                         </div>
                                     </div>
 
                                     <div class="col-12 landing-metric-item">
-                                        <div class="landing-metric-card landing-metric-card--ktp">
+                                        <div class="landing-metric-card landing-metric-card--primary">
                                             <div class="landing-metric-icon">
                                                 <img src="{{ asset('img/ktp.png') }}" alt="Wajib KTP" class="landing-metric-icon__img">
                                             </div>
-                                            <div class="dk-metric__label mb-1">Wajib KTP (&ge; 17 tahun)</div>
-                                            <div class="dk-metric dk-metric--sm mb-2">{{ number_format($wajibKtpTotal) }}</div>
+                                            <div class="dk-metric__label text-white-50 mb-1">Wajib KTP (&ge; 17 tahun)</div>
+                                            <div class="dk-metric dk-metric--sm text-white mb-2">{{ number_format($wajibKtpTotal) }}</div>
+                                            <div class="landing-metric-percentage text-white">
+                                                <i class="fas fa-chart-pie me-1"></i>{{ number_format($wajibKtpPercent, 1) }}%
+                                            </div>
                                             <div class="landing-metric-progress">
                                                 <div class="landing-metric-progress-bar" style="--landing-progress: {{ $wajibKtpPercent }}%;"></div>
                                             </div>
-                                            <div class="landing-metric-percentage">
-                                                <i class="fas fa-chart-pie me-1"></i>{{ number_format($wajibKtpPercent, 1) }}%
-                                            </div>
-                                            <small class="text-muted d-block mt-2">
-                                                <i class="fas fa-mars me-1"></i> L: {{ number_format($wajibKtp['male'] ?? 0) }} &bull;
-                                                <i class="fas fa-venus ms-2 me-1"></i> P: {{ number_format($wajibKtp['female'] ?? 0) }}
-                                            </small>
                                         </div>
                                     </div>
                                 </div>
