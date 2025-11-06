@@ -13,3 +13,4 @@ refactor: hapus wrapper card-body dari bagian tabel data agregat, perbaiki inden
 feat: tambahkan informasi hak cipta & versi pada sidebar mobile, posisikan di paling bawah, geser tombol menu ke kanan, dan tampilkan brand di topbar mobile
 fix: samakan tata letak kartu agregat di landing mobile dengan tampilan desktop
 fix: rapatkan jarak antar kartu agregat pada landing mobile
+fix: hilangkan garis vertikal tabel ringkasan wilayah pada landing mobile

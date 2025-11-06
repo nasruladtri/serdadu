@@ -120,6 +120,16 @@
     border-bottom: none;
 }
 
+.landing-wilayah-section .dk-table {
+    border: none;
+    border-radius: 12px;
+}
+
+.landing-wilayah-section .dk-table th,
+.landing-wilayah-section .dk-table td {
+    border-right: none;
+}
+
 .landing-metric-grid .landing-metric-item {
     display: flex;
 }
