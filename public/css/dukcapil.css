@@ -65,7 +65,7 @@ body.bg-body {
   font-family: "Poppins", "Inter", sans-serif;
   min-height: 100vh;
   min-height: 100dvh;
-  color: #007151;
+  color: #004d00;
   overflow-x: hidden;
   margin: 0;
 }
@@ -78,7 +78,7 @@ body.bg-body {
   width: var(--dk-sidebar-width);
   padding: 1.5rem;
   background: #186f38;
-  color: #186f38;
+  color: #004d00;
   display: flex;
   flex-direction: column;
   transition: width 0.18s ease, box-shadow 0.22s ease;
@@ -291,7 +291,7 @@ body.bg-body {
 .dk-card__title {
   font-size: clamp(0.9rem, 0.3vw + 0.85rem, 1.05rem);
   font-weight: 600;
-  color: #007151;
+  color: #004d00;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -299,7 +299,7 @@ body.bg-body {
 .dk-metric {
   font-size: clamp(1.3rem, 1vw + 1.05rem, 1.85rem);
   font-weight: 700;
-  color: #007151;
+  color: #004d00;
 }
 
 .dk-metric__label {
@@ -318,7 +318,7 @@ body.bg-body {
 .dk-section-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #007151;
+  color: #004d00;
 }
 
 .dk-table {  border-collapse: separate;
@@ -633,7 +633,7 @@ body.bg-body {
   font-size: 0.9rem;
   border: 1px solid transparent;
   background: #e2e8f0;
-  color: #007151;
+  color: #004d00;
   box-shadow: 0 18px 36px rgba(37, 99, 235, 0.18);
   transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   min-height: 48px;
@@ -643,17 +643,17 @@ body.bg-body {
   border-color: rgba(56, 189, 248, 0.75);
   background: linear-gradient(135deg, rgba(14, 165, 233, 0.14) 0%, rgba(37, 99, 235, 0.14) 100%);
   box-shadow: 0 22px 44px rgba(37, 99, 235, 0.25);
-  color: #007151;
+  color: #004d00;
 }
 
 .dk-tabs-dropdown__select option {
-  color: #007151;
+  color: #004d00;
 }
 
 
 .dk-tabs .nav-link {
   border-radius: 999px;
-  color: #007151;
+  color: #004d00;
   font-weight: 500;
   background: #e2e8f0;
   padding: 0.45rem 0.75rem;
@@ -673,7 +673,7 @@ body.bg-body {
 
 .dk-tabs .nav-link:hover {
   background: #cbd5f5;
-  color: #007151;
+  color: #004d00;
 }
 
 .dk-tabs .nav-link.active {
@@ -805,7 +805,7 @@ body.bg-body {
 .dk-offcanvas .offcanvas-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #007151;
+  color: #004d00;
 }
 .dk-offcanvas-brand {
   display: flex;
@@ -1113,8 +1113,8 @@ body.bg-body {
   .dk-topbar__menu img {
     width: 18px;
     height: 18px;
-    opacity: 0.9;
-    filter: invert(1) grayscale(0) brightness(1.2);
+    opacity: 1;
+    filter: brightness(0) invert(1);
   }
 /* End global topbar */
 
@@ -1200,8 +1200,8 @@ body.bg-body {
   .dk-topbar__menu img {
     width: 18px;
     height: 18px;
-    opacity: 0.9;
-    filter: invert(1) grayscale(0) brightness(1.2);
+    opacity: 1;
+    filter: brightness(0) invert(1);
   }
 }
 
@@ -1213,7 +1213,7 @@ body.bg-body {
 
   body.bg-body {
     background-color: #e2e8f0; /* same as .dk-main background */
-    color: #007151;
+    color: #004d00;
   }
 
   .dk-offcanvas-fab {

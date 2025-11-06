@@ -20,4 +20,4 @@ fix: buka tautan footer di tab baru dan hilangkan garis bawah link
 fix: pindahkan label Serdadu ke samping Copyright di footer
 feat: tambahkan opsi fullscreen untuk melihat tabel di halaman baru
 fix: tambahkan keterangan kategori di header fullscreen dan hilangkan scrollbar vertikal
-fix: ubah warna sidebar menjadi #186f38, topbar menjadi #004d00, hover sidebar menjadi #349852, hilangkan gradient, dan ubah warna teks Serdadu menjadi putih
+fix: ubah warna sidebar menjadi #186f38, topbar menjadi #004d00, hover sidebar menjadi #349852, hilangkan gradient, ubah warna teks Serdadu menjadi putih, dan ubah warna ikon menu hamburger menjadi putih
