@@ -94,6 +94,14 @@
 
     {{-- Topbar untuk tombol menu pada tampilan responsif --}}
     <header class="dk-topbar">
+        <div class="dk-topbar__brand">
+            <img src="{{ asset('vendor/corporate-ui/img/kabupaten-madiun.png') }}" alt="Kabupaten Madiun"
+                class="dk-topbar__brand-logo">
+            <div class="dk-topbar__brand-text">
+                <span class="dk-topbar__brand-title">Serdadu</span>
+                <span class="dk-topbar__brand-subtitle">Sistem Rekap Data Terpadu</span>
+            </div>
+        </div>
         <button class="dk-topbar__menu" type="button" data-offcanvas-toggle aria-controls="sidebarOffcanvas"
             aria-expanded="false" aria-label="Buka navigasi">
             <img src="{{ asset('img/menu.png') }}" alt="Menu">
@@ -165,6 +173,10 @@
                     <span class="dk-nav-link__label">Terms</span>
                 </a>
             </nav>
+            <div class="dk-offcanvas__footer">
+                <span class="dk-offcanvas__meta">Copyright © 2025 Serdadu Dukcapil Kab. Madiun. All rights reserved.</span>
+                <span class="dk-offcanvas__meta">Versi 0.1.2</span>
+            </div>
         </div>
     </div>
 

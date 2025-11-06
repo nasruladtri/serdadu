@@ -818,9 +818,27 @@ body.bg-body {
 }
 .dk-offcanvas .offcanvas-body {
   padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: 100%;
 }
 .dk-offcanvas .dk-sidebar__nav {
   gap: 0.85rem;
+}
+.dk-offcanvas__footer {
+  margin-top: auto;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.12);
+  font-size: 0.75rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: rgba(226, 232, 240, 0.78);
+}
+.dk-offcanvas__footer .dk-offcanvas__meta {
+  color: inherit;
 }
 .dk-offcanvas .dk-nav-link {
   border-radius: 16px;
@@ -984,48 +1002,74 @@ body.bg-body {
     right: 0;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
-    height: 48px;
-    padding: 0 14px;
-    background: #ffffff;
-    border-bottom: 1px solid #e5e7eb;
+    height: 64px;
+    padding: 0 18px;
+    background: linear-gradient(90deg, #007151 0%, #008e63 100%);
+    border-bottom: none;
     z-index: 1050;
+    color: #f8fafc;
+  }
+
+  .dk-topbar__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .dk-topbar__brand-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px;
+  }
+
+  .dk-topbar__brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+
+  .dk-topbar__brand-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .dk-topbar__brand-subtitle {
+    font-size: 0.72rem;
+    opacity: 0.8;
   }
 
   .dk-topbar__menu {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
     border: none;
-    background: transparent;
+    background: rgba(248, 250, 252, 0.14);
     padding: 0;
+    margin-left: auto;
+    transition: background 0.18s ease;
   }
 
   .dk-topbar__menu:hover,
   .dk-topbar__menu:focus-visible {
-    background: #f5f6fa;
+    background: rgba(248, 250, 252, 0.24);
     outline: none;
   }
 
   .dk-topbar__menu img {
-    width: 20px;
-    height: 20px;
-    opacity: 1;
-    filter: grayscale(100%) brightness(0.45);
-  }
-
-  .dk-topbar__brand {
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .dk-topbar__title {
-    font-weight: 600;
-    color: #007151;
-    font-size: 0.95rem;
+    width: 18px;
+    height: 18px;
+    opacity: 0.9;
+    filter: invert(1) grayscale(0) brightness(1.2);
   }
 /* End global topbar */
 
@@ -1044,47 +1088,74 @@ body.bg-body {
     right: 0;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
-    height: 48px;
-    padding: 0 14px;
-    background: #ffffff;
-    border-bottom: 1px solid #e5e7eb;
+    height: 64px;
+    padding: 0 18px;
+    background: linear-gradient(90deg, #007151 0%, #008e63 100%);
+    border-bottom: none;
     z-index: 1050;
+    color: #f8fafc;
+  }
+
+  .dk-topbar__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .dk-topbar__brand-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px;
+  }
+
+  .dk-topbar__brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+
+  .dk-topbar__brand-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .dk-topbar__brand-subtitle {
+    font-size: 0.72rem;
+    opacity: 0.8;
   }
 
   .dk-topbar__menu {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
     border: none;
-    background: transparent;
+    background: rgba(248, 250, 252, 0.14);
     padding: 0;
+    margin-left: auto;
+    transition: background 0.18s ease;
   }
 
   .dk-topbar__menu:hover,
   .dk-topbar__menu:focus-visible {
-    background: #f5f6fa;
+    background: rgba(248, 250, 252, 0.24);
     outline: none;
   }
 
   .dk-topbar__menu img {
     width: 18px;
     height: 18px;
-    opacity: 0.8;
-  }
-
-  .dk-topbar__brand {
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .dk-topbar__title {
-    font-weight: 600;
-    color: #007151;
-    font-size: 0.95rem;
+    opacity: 0.9;
+    filter: invert(1) grayscale(0) brightness(1.2);
   }
 }
 

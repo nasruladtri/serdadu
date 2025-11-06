@@ -144,7 +144,7 @@
                                     <div class="ms-lg-auto w-100 w-lg-auto landing-map-card__filter">
                                         <label for="landing-district-filter" class="form-label text-xs text-muted mb-1">Kecamatan</label>
                                         <select id="landing-district-filter" class="form-select form-select-sm">
-                                            <option value="">SEMUA</option>
+                                            <option value="">Semua Kecamatan</option>
                                             @foreach($districtOptions as $district)
                                                 <option value="{{ $district->code }}" data-slug="{{ \Illuminate\Support\Str::slug($district->name) }}">
                                                     {{ \Illuminate\Support\Str::title($district->name) }}

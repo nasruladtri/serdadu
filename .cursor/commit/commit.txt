@@ -10,3 +10,4 @@ feat: tambahkan dropdown kategori grafik dan sinkronisasi tampilan - 2025-11-04 
 feat: modernisasi halaman landing, data, dan grafik publik dengan gaya modular serta filter kecamatan - 2025-11-04 23:45:00
 refactor: hapus wrapper landing-fullscreen dari halaman landing, pertahankan konten statistik dan peta - 2025-01-27 10:30:00
 refactor: hapus wrapper card-body dari bagian tabel data agregat, perbaiki indentasi semua tab - 2025-01-27 10:45:00
+feat: tambahkan informasi hak cipta & versi pada sidebar mobile, posisikan di paling bawah, geser tombol menu ke kanan, dan tampilkan brand di topbar mobile
