@@ -1,1 +1,0 @@
-Persiapan deployment: Membuat file .gitkeep di semua folder storage untuk memastikan struktur folder ter-commit ke GitHub, memperbarui .gitignore dengan aturan untuk bootstrap cache dan resources temp, serta membuat dokumentasi lengkap untuk deployment ke VPS Ubuntu
