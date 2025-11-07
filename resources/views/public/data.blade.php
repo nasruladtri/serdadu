@@ -17,20 +17,20 @@
 
     {{-- Kartu filter untuk memilih wilayah dan periode data agregat yang ditampilkan --}}
     <div class="dk-card mb-4">
-        <div class="card-body p-4">
-            <div class="row g-3 align-items-lg-end">
-                <div class="col-xl-3 col-lg-4">
-                    <h6 class="dk-card__title mb-1">Filter Wilayah & Periode</h6>
-                    <p class="text-xs text-muted mb-0">
+        <div class="p-4">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+                <div class="lg:col-span-3">
+                    <h6 class="dk-card__title mb-1">Wilayah & Periode</h6>
+                    <p class="text-xs text-gray-500 mb-0">
                         Pilih tahun, semester, kecamatan, atau desa/kelurahan untuk menampilkan data spesifik.
                     </p>
                 </div>
-                <form method="GET" class="col-xl-9 col-lg-8">
+                <form method="GET" class="lg:col-span-9">
                     {{-- Set filter wilayah dan periode; setiap perubahan auto submit agar data langsung diperbarui --}}
-                    <div class="row g-3 align-items-md-end">
-                        <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-                            <label class="form-label text-uppercase text-xs text-muted">Tahun</label>
-                            <select class="form-select" name="year" onchange="this.form.submit()">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 items-end">
+                        <div class="sm:col-span-1 md:col-span-1 lg:col-span-1">
+                            <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Tahun</label>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" name="year" onchange="this.form.submit()">
                                 <option value="">Terbaru</option>
                                 @foreach ($years as $year)
                                     <option value="{{ $year }}" {{ (int) ($selectedYear ?? 0) === $year ? 'selected' : '' }}>
@@ -39,9 +39,9 @@
                             @endforeach
                             </select>
                         </div>
-                        <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-                            <label class="form-label text-uppercase text-xs text-muted">Semester</label>
-                            <select class="form-select" name="semester" onchange="this.form.submit()">
+                        <div class="sm:col-span-1 md:col-span-1 lg:col-span-1">
+                            <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Semester</label>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" name="semester" onchange="this.form.submit()">
                                 <option value="">Terbaru</option>
                                 @forelse ($semesterOptions as $option)
                                     <option value="{{ $option }}" {{ (int) ($selectedSemester ?? 0) === $option ? 'selected' : '' }}>
@@ -52,9 +52,9 @@
                                 @endforelse
                             </select>
                         </div>
-                        <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-                            <label class="form-label text-uppercase text-xs text-muted">Kecamatan</label>
-                            <select class="form-select" name="district_id" onchange="this.form.submit()">
+                        <div class="sm:col-span-1 md:col-span-1 lg:col-span-1">
+                            <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Kecamatan</label>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" name="district_id" onchange="this.form.submit()">
                                 <option value="">Semua Kecamatan</option>
                                 @foreach ($districts as $district)
                                     <option value="{{ $district->id }}" {{ (int) $selectedDistrict === $district->id ? 'selected' : '' }}>
@@ -63,9 +63,9 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-12 col-sm-6 col-md-4 col-lg-2 dk-filter-village">
-                            <label class="form-label text-uppercase text-xs text-muted">Desa/Kelurahan</label>
-                            <select class="form-select" name="village_id" onchange="this.form.submit()" {{ $villages->isEmpty() ? 'disabled' : '' }}>
+                        <div class="sm:col-span-1 md:col-span-1 lg:col-span-1 dk-filter-village">
+                            <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Desa/Kelurahan</label>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" name="village_id" onchange="this.form.submit()" {{ $villages->isEmpty() ? 'disabled' : '' }}>
                                 <option value="">Semua Desa/Kelurahan</option>
                                 @foreach ($villages as $village)
                                     <option value="{{ $village->id }}" {{ (int) $selectedVillage === $village->id ? 'selected' : '' }}>
@@ -74,26 +74,10 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-12 col-sm-12 col-md-8 col-lg-4">
-                            <label class="form-label text-uppercase text-xs text-muted" for="aggregate-category-select">Kategori</label>
-                            <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch">
-                                <select id="aggregate-category-select" class="form-select js-aggregate-tabs-select flex-fill"
-                                    aria-label="Pilih kategori data" {{ !$period ? 'disabled' : '' }}>
-                                    @foreach ($tabs as $key => $label)
-                                        @php
-                                            $optionValue = 'tab-' . $key;
-                                        @endphp
-                                        <option value="{{ $optionValue }}" {{ $loop->first ? 'selected' : '' }}>
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <div class="d-grid d-sm-inline-flex">
-                                    <a href="{{ route('public.data') }}" class="btn btn-outline-secondary flex-shrink-0 d-inline-flex align-items-center justify-content-center px-4 h-100">
-                                        Reset
-                                    </a>
-                                </div>
-                            </div>
+                        <div class="sm:col-span-1 md:col-span-1 lg:col-span-1">
+                            <a href="{{ route('public.data') }}" class="inline-flex items-center justify-center w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Reset
+                            </a>
                         </div>
                     </div>
                 </form>
@@ -103,8 +87,8 @@
 
     {{-- Tampilkan pesan jika belum ada dataset yang dipilih atau diunggah --}}
     @if (!$period)
-        <div class="alert alert-warning border-0 dk-card">
-            <strong>Data belum tersedia.</strong> Unggah dataset terlebih dahulu untuk menampilkan ringkasan agregat.
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 dk-card">
+            <strong class="text-yellow-800">Data belum tersedia.</strong> <span class="text-yellow-700">Unggah dataset terlebih dahulu untuk menampilkan ringkasan agregat.</span>
         </div>
     @else
         {{-- Inisialisasi variabel bantu untuk menyusun informasi tabel dan label tampilan --}}
@@ -112,6 +96,9 @@
             $areaRows = $areaTable['rows'] ?? [];
             $areaTotals = $areaTable['totals'] ?? ['male' => 0, 'female' => 0, 'total' => 0];
             $areaColumn = $areaTable['column'] ?? 'Wilayah';
+            if ($areaColumn === 'SEMUA' || $areaColumn === 'Wilayah') {
+                $areaColumn = 'Kecamatan';
+            }
             $districtName = $selectedDistrict ? optional($districts->firstWhere('id', (int) $selectedDistrict))->name : null;
             $villageName = $selectedVillage ? optional($villages->firstWhere('id', (int) $selectedVillage))->name : null;
             $kabupatenName = config('app.region_name', 'Kabupaten Madiun');
@@ -120,9 +107,10 @@
                 $areaSegments[] = 'Kecamatan ' . \Illuminate\Support\Str::title($districtName);
                 $areaSegments[] = $villageName ? ('Desa/Kelurahan ' . \Illuminate\Support\Str::title($villageName)) : 'Semua Desa/Kelurahan';
             } else {
+                $areaSegments[] = 'Semua Kecamatan';
                 $areaSegments[] = 'Semua Desa/Kelurahan';
             }
-            $areaDescriptor = implode(' • ', array_filter($areaSegments));
+            $areaDescriptor = implode(' > ', array_filter($areaSegments));
             $periodLabelParts = [];
             if (!empty($period['semester'])) {
                 $periodLabelParts[] = 'Semester ' . $period['semester'];
@@ -135,11 +123,11 @@
 
         <div class="dk-card mt-4">
             {{-- Navigasi tab pada layar desktop untuk berpindah antar kategori data --}}
-            <ul class="nav nav-pills dk-tabs d-none" id="aggregateTabs" role="tablist">
+            <ul class="dk-tabs" id="aggregateTabs" role="tablist">
                 @foreach ($tabs as $key => $label)
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="tab-{{ $key }}-tab"
-                            data-bs-toggle="tab" data-bs-target="#tab-{{ $key }}" type="button" role="tab"
+                    <li role="presentation">
+                        <button class="dk-tab-button {{ $loop->first ? 'active' : '' }}" id="tab-{{ $key }}-tab"
+                            data-tab-target="#tab-{{ $key }}" type="button" role="tab"
                             aria-controls="tab-{{ $key }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}">
                             {{ $label }}
                         </button>
@@ -147,24 +135,24 @@
                 @endforeach
             </ul>
 
-            <div class="tab-content dk-tab-content mt-0" id="aggregateTabsContent">
+            <div class="dk-tab-content mt-0" id="aggregateTabsContent">
                 {{-- Tab ringkasan berdasarkan jenis kelamin --}}
-                <div class="tab-pane fade show active dk-tab-pane" id="tab-gender" role="tabpanel"
+                <div class="dk-tab-pane show active" id="tab-gender" role="tabpanel"
                     aria-labelledby="tab-gender-tab">
                     @include('public.partials.table-heading', [
                         'title' => $tabs['gender'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
                     ])
-                    <div class="table-responsive dk-table-scroll">
-                        <table class="table table-sm dk-table mb-0">
+                    <div class="overflow-x-auto dk-table-scroll">
+                        <table class="w-full text-sm dk-table mb-0">
                             <thead>
                                 <tr>
                                     <th style="width: 64px">No</th>
                                     <th>{{ $areaColumn }}</th>
-                                    <th class="text-end">L</th>
-                                    <th class="text-end">P</th>
-                                    <th class="text-end">Jumlah</th>
+                                    <th class="text-right">L</th>
+                                    <th class="text-right">P</th>
+                                    <th class="text-right">Jumlah</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -172,16 +160,16 @@
                                     @php
                                         $isHighlighted = !empty($row['highlight']);
                                     @endphp
-                                    <tr class="{{ $isHighlighted ? 'table-active' : '' }}">
+                                    <tr class="{{ $isHighlighted ? 'bg-gray-100' : '' }}">
                                         <td>{{ $index + 1 }}</td>
                                         <td>{{ \Illuminate\Support\Str::title($row['name']) }}</td>
-                                        <td class="text-end">{{ number_format($row['male']) }}</td>
-                                        <td class="text-end">{{ number_format($row['female']) }}</td>
-                                        <td class="text-end fw-semibold">{{ number_format($row['total']) }}</td>
+                                        <td class="text-right">{{ number_format($row['male']) }}</td>
+                                        <td class="text-right">{{ number_format($row['female']) }}</td>
+                                        <td class="text-right font-semibold">{{ number_format($row['total']) }}</td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">Data jenis kelamin belum tersedia.</td>
+                                        <td colspan="5" class="text-center text-gray-500">Data jenis kelamin belum tersedia.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -189,9 +177,9 @@
                                 <tfoot>
                                     <tr>
                                         <th colspan="2">Jumlah Keseluruhan</th>
-                                        <th class="text-end">{{ number_format($areaTotals['male'] ?? 0) }}</th>
-                                        <th class="text-end">{{ number_format($areaTotals['female'] ?? 0) }}</th>
-                                        <th class="text-end">{{ number_format($areaTotals['total'] ?? 0) }}</th>
+                                        <th class="text-right">{{ number_format($areaTotals['male'] ?? 0) }}</th>
+                                        <th class="text-right">{{ number_format($areaTotals['female'] ?? 0) }}</th>
+                                        <th class="text-right">{{ number_format($areaTotals['total'] ?? 0) }}</th>
                                     </tr>
                                 </tfoot>
                             @endif
@@ -200,22 +188,22 @@
                 </div>
 
                 {{-- Tab ringkasan berdasarkan kelompok umur --}}
-                <div class="tab-pane fade dk-tab-pane" id="tab-age" role="tabpanel"
+                <div class="dk-tab-pane hidden" id="tab-age" role="tabpanel"
                     aria-labelledby="tab-age-tab">
                     @include('public.partials.table-heading', [
                         'title' => $tabs['age'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
                     ])
-                    <div class="table-responsive dk-table-scroll">
-                        <table class="table table-sm dk-table mb-0">
+                    <div class="overflow-x-auto dk-table-scroll">
+                        <table class="w-full text-sm dk-table mb-0">
                             <thead>
                                 <tr>
                                     <th style="width: 64px">No</th>
                                     <th>Kelompok</th>
-                                    <th class="text-end">L</th>
-                                    <th class="text-end">P</th>
-                                    <th class="text-end">Jumlah</th>
+                                    <th class="text-right">L</th>
+                                    <th class="text-right">P</th>
+                                    <th class="text-right">Jumlah</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -223,13 +211,13 @@
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $row['label'] }}</td>
-                                        <td class="text-end">{{ number_format($row['male']) }}</td>
-                                        <td class="text-end">{{ number_format($row['female']) }}</td>
-                                        <td class="text-end fw-semibold">{{ number_format($row['total']) }}</td>
+                                        <td class="text-right">{{ number_format($row['male']) }}</td>
+                                        <td class="text-right">{{ number_format($row['female']) }}</td>
+                                        <td class="text-right font-semibold">{{ number_format($row['total']) }}</td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">Data kelompok umur belum tersedia.</td>
+                                        <td colspan="5" class="text-center text-gray-500">Data kelompok umur belum tersedia.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -242,9 +230,9 @@
                                 <tfoot>
                                     <tr>
                                         <th colspan="2">Jumlah Keseluruhan</th>
-                                        <th class="text-end">{{ number_format($ageMale) }}</th>
-                                        <th class="text-end">{{ number_format($ageFemale) }}</th>
-                                        <th class="text-end">{{ number_format($ageTotal) }}</th>
+                                        <th class="text-right">{{ number_format($ageMale) }}</th>
+                                        <th class="text-right">{{ number_format($ageFemale) }}</th>
+                                        <th class="text-right">{{ number_format($ageTotal) }}</th>
                                     </tr>
                                 </tfoot>
                             @endif
@@ -253,14 +241,14 @@
                 </div>
 
                 {{-- Tab matriks pendidikan penduduk --}}
-                <div class="tab-pane fade dk-tab-pane" id="tab-education" role="tabpanel"
+                <div class="dk-tab-pane hidden" id="tab-education" role="tabpanel"
                     aria-labelledby="tab-education-tab">
                     @include('public.partials.table-heading', [
                         'title' => $tabs['education'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
                     ])
-                    <div class="table-responsive dk-table-scroll">
+                    <div class="overflow-x-auto dk-table-scroll">
                         @include('public.partials.matrix-table', [
                             'matrix' => $educationMatrix,
                             'emptyMessage' => 'Data pendidikan belum tersedia.'
@@ -269,22 +257,22 @@
                 </div>
 
                 {{-- Tab data pekerjaan terbanyak --}}
-                <div class="tab-pane fade dk-tab-pane" id="tab-occupation" role="tabpanel"
+                <div class="dk-tab-pane hidden" id="tab-occupation" role="tabpanel"
                     aria-labelledby="tab-occupation-tab">
                     @include('public.partials.table-heading', [
                         'title' => $tabs['occupation'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
                     ])
-                    <div class="table-responsive dk-table-scroll">
-                        <table class="table table-sm dk-table mb-0">
+                    <div class="overflow-x-auto dk-table-scroll">
+                        <table class="w-full text-sm dk-table mb-0">
                             <thead>
                                 <tr>
                                     <th style="width: 64px">No</th>
                                     <th>Pekerjaan</th>
-                                    <th class="text-end">L</th>
-                                    <th class="text-end">P</th>
-                                    <th class="text-end">Jumlah</th>
+                                    <th class="text-right">L</th>
+                                    <th class="text-right">P</th>
+                                    <th class="text-right">Jumlah</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -292,13 +280,13 @@
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $item['label'] }}</td>
-                                        <td class="text-end">{{ number_format($item['male']) }}</td>
-                                        <td class="text-end">{{ number_format($item['female']) }}</td>
-                                        <td class="text-end fw-semibold">{{ number_format($item['total']) }}</td>
+                                        <td class="text-right">{{ number_format($item['male']) }}</td>
+                                        <td class="text-right">{{ number_format($item['female']) }}</td>
+                                        <td class="text-right font-semibold">{{ number_format($item['total']) }}</td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">Data pekerjaan belum tersedia.</td>
+                                        <td colspan="5" class="text-center text-gray-500">Data pekerjaan belum tersedia.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -311,9 +299,9 @@
                                 <tfoot>
                                     <tr>
                                         <th colspan="2">Jumlah Keseluruhan</th>
-                                        <th class="text-end">{{ number_format($jobMale) }}</th>
-                                        <th class="text-end">{{ number_format($jobFemale) }}</th>
-                                        <th class="text-end">{{ number_format($jobTotal) }}</th>
+                                        <th class="text-right">{{ number_format($jobMale) }}</th>
+                                        <th class="text-right">{{ number_format($jobFemale) }}</th>
+                                        <th class="text-right">{{ number_format($jobTotal) }}</th>
                                     </tr>
                                 </tfoot>
                             @endif
@@ -322,22 +310,22 @@
                 </div>
 
                 {{-- Tab distribusi umur tunggal (setiap usia) --}}
-                <div class="tab-pane fade dk-tab-pane" id="tab-single-age" role="tabpanel"
+                <div class="dk-tab-pane hidden" id="tab-single-age" role="tabpanel"
                     aria-labelledby="tab-single-age-tab">
                     @include('public.partials.table-heading', [
                         'title' => $tabs['single-age'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
                     ])
-                    <div class="table-responsive dk-table-scroll">
-                        <table class="table table-sm dk-table mb-0">
+                    <div class="overflow-x-auto dk-table-scroll">
+                        <table class="w-full text-sm dk-table mb-0">
                             <thead>
                                 <tr>
                                     <th style="width: 64px">No</th>
                                     <th>Usia</th>
-                                    <th class="text-end">L</th>
-                                    <th class="text-end">P</th>
-                                    <th class="text-end">Jumlah</th>
+                                    <th class="text-right">L</th>
+                                    <th class="text-right">P</th>
+                                    <th class="text-right">Jumlah</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -345,13 +333,13 @@
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $row['label'] }}</td>
-                                        <td class="text-end">{{ number_format($row['male']) }}</td>
-                                        <td class="text-end">{{ number_format($row['female']) }}</td>
-                                        <td class="text-end fw-semibold">{{ number_format($row['total']) }}</td>
+                                        <td class="text-right">{{ number_format($row['male']) }}</td>
+                                        <td class="text-right">{{ number_format($row['female']) }}</td>
+                                        <td class="text-right font-semibold">{{ number_format($row['total']) }}</td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">Data umur tunggal belum tersedia.</td>
+                                        <td colspan="5" class="text-center text-gray-500">Data umur tunggal belum tersedia.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -364,9 +352,9 @@
                                 <tfoot>
                                     <tr>
                                         <th colspan="2">Jumlah Keseluruhan</th>
-                                        <th class="text-end">{{ number_format($singleMale) }}</th>
-                                        <th class="text-end">{{ number_format($singleFemale) }}</th>
-                                        <th class="text-end">{{ number_format($singleTotal) }}</th>
+                                        <th class="text-right">{{ number_format($singleMale) }}</th>
+                                        <th class="text-right">{{ number_format($singleFemale) }}</th>
+                                        <th class="text-right">{{ number_format($singleTotal) }}</th>
                                     </tr>
                                 </tfoot>
                             @endif
@@ -375,14 +363,14 @@
                 </div>
 
                 {{-- Tab matriks penduduk wajib KTP --}}
-                <div class="tab-pane fade dk-tab-pane" id="tab-wajib-ktp" role="tabpanel"
+                <div class="dk-tab-pane hidden" id="tab-wajib-ktp" role="tabpanel"
                     aria-labelledby="tab-wajib-ktp-tab">
                     @include('public.partials.table-heading', [
                         'title' => $tabs['wajib-ktp'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
                     ])
-                    <div class="table-responsive dk-table-scroll">
+                    <div class="overflow-x-auto dk-table-scroll">
                         @include('public.partials.matrix-table', [
                             'matrix' => $wajibKtpMatrix,
                             'emptyMessage' => 'Data wajib KTP belum tersedia.'
@@ -391,14 +379,14 @@
                 </div>
 
                 {{-- Tab matriks status perkawinan --}}
-                <div class="tab-pane fade dk-tab-pane" id="tab-marital" role="tabpanel"
+                <div class="dk-tab-pane hidden" id="tab-marital" role="tabpanel"
                     aria-labelledby="tab-marital-tab">
                     @include('public.partials.table-heading', [
                         'title' => $tabs['marital'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
                     ])
-                    <div class="table-responsive dk-table-scroll">
+                    <div class="overflow-x-auto dk-table-scroll">
                         @include('public.partials.matrix-table', [
                             'matrix' => $maritalMatrix,
                             'emptyMessage' => 'Data status perkawinan belum tersedia.'
@@ -407,14 +395,14 @@
                 </div>
 
                 {{-- Tab matriks kepala keluarga --}}
-                <div class="tab-pane fade dk-tab-pane" id="tab-household" role="tabpanel"
+                <div class="dk-tab-pane hidden" id="tab-household" role="tabpanel"
                     aria-labelledby="tab-household-tab">
                     @include('public.partials.table-heading', [
                         'title' => $tabs['household'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
                     ])
-                    <div class="table-responsive dk-table-scroll">
+                    <div class="overflow-x-auto dk-table-scroll">
                         @include('public.partials.matrix-table', [
                             'matrix' => $headHouseholdMatrix,
                             'emptyMessage' => 'Data kepala keluarga belum tersedia.'
@@ -423,14 +411,14 @@
                 </div>
 
                 {{-- Tab matriks agama penduduk --}}
-                <div class="tab-pane fade dk-tab-pane" id="tab-religion" role="tabpanel"
+                <div class="dk-tab-pane hidden" id="tab-religion" role="tabpanel"
                     aria-labelledby="tab-religion-tab">
                     @include('public.partials.table-heading', [
                         'title' => $tabs['religion'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
                     ])
-                    <div class="table-responsive dk-table-scroll">
+                    <div class="overflow-x-auto dk-table-scroll">
                         @include('public.partials.matrix-table', [
                             'matrix' => $religionMatrix,
                             'emptyMessage' => 'Data agama belum tersedia.'
@@ -443,57 +431,103 @@
 @endsection
 
 @push('scripts')
-    {{-- Sinkronisasi antara dropdown kategori dan tab Bootstrap --}}
+    {{-- Sinkronisasi antara dropdown kategori dan tab --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Ambil elemen dropdown kategori dan tombol tab Bootstrap
-            var dropdowns = document.querySelectorAll('.js-aggregate-tabs-select');
-            var tabButtons = document.querySelectorAll('#aggregateTabs button[data-bs-toggle="tab"]');
-
-            if (!dropdowns.length || !tabButtons.length) {
-                return;
-            }
-
-            // Samakan nilai dropdown dengan tab aktif saat halaman dimuat
-            var activeTabTrigger = document.querySelector('#aggregateTabs button.nav-link.active');
-            if (activeTabTrigger) {
-                var initialTarget = activeTabTrigger.getAttribute('data-bs-target');
-                if (initialTarget) {
-                    var initialId = initialTarget.replace('#', '');
-                    dropdowns.forEach(function (dropdown) {
-                        if (dropdown.value !== initialId) {
-                            dropdown.value = initialId;
-                        }
+            // Baca parameter category dari URL saat halaman dimuat
+            var urlParams = new URLSearchParams(window.location.search);
+            var categoryParam = urlParams.get('category');
+            
+            // Jika ada parameter category, aktifkan tab yang sesuai
+            if (categoryParam) {
+                var targetTabId = '#tab-' + categoryParam;
+                var targetTab = document.querySelector(targetTabId);
+                if (targetTab) {
+                    // Update tab button
+                    document.querySelectorAll('#aggregateTabs button').forEach(function(btn) {
+                        btn.classList.remove('active');
+                        btn.setAttribute('aria-selected', 'false');
                     });
+                    var activeButton = document.querySelector('#aggregateTabs button[data-tab-target="' + targetTabId + '"]');
+                    if (activeButton) {
+                        activeButton.classList.add('active');
+                        activeButton.setAttribute('aria-selected', 'true');
+                    }
+                    
+                    // Update tab pane
+                    document.querySelectorAll('.dk-tab-pane').forEach(function(pane) {
+                        pane.classList.add('hidden');
+                        pane.classList.remove('show', 'active');
+                    });
+                    targetTab.classList.remove('hidden');
+                    targetTab.classList.add('show', 'active');
+                }
+            }
+            
+            // Helper function untuk show tab
+            function showTab(targetId) {
+                // Hide all tab panes
+                document.querySelectorAll('.dk-tab-pane').forEach(function(pane) {
+                    pane.classList.add('hidden');
+                    pane.classList.remove('show', 'active');
+                });
+                
+                // Show target tab pane
+                var targetPane = document.querySelector(targetId);
+                if (targetPane) {
+                    targetPane.classList.remove('hidden');
+                    targetPane.classList.add('show', 'active');
+                }
+                
+                // Update tab buttons
+                document.querySelectorAll('#aggregateTabs button').forEach(function(btn) {
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-selected', 'false');
+                });
+                
+                var activeButton = document.querySelector('#aggregateTabs button[data-tab-target="' + targetId + '"]');
+                if (activeButton) {
+                    activeButton.classList.add('active');
+                    activeButton.setAttribute('aria-selected', 'true');
                 }
             }
 
-            // Ketika memilih opsi di dropdown kategori, tampilkan tab yang sesuai
-            dropdowns.forEach(function (dropdown) {
-                dropdown.addEventListener('change', function () {
-                    var targetId = this.value;
-                    var tabTrigger = document.querySelector('#aggregateTabs button[data-bs-target="#' + targetId + '"]');
+            // Ambil elemen tombol tab
+            var tabButtons = document.querySelectorAll('#aggregateTabs button[data-tab-target]');
 
-                    if (tabTrigger && typeof bootstrap !== 'undefined') {
-                        bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
-                    }
-                });
-            });
-
-            // Sinkronkan nilai setiap dropdown saat tab Bootstrap berpindah secara manual
+            // Event listener untuk tombol tab
             tabButtons.forEach(function (button) {
-                button.addEventListener('shown.bs.tab', function (event) {
-                    var targetSelector = event.target.getAttribute('data-bs-target');
+                button.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    var targetSelector = this.getAttribute('data-tab-target');
                     if (!targetSelector) {
                         return;
                     }
 
-                    var targetId = targetSelector.replace('#', '');
-                    dropdowns.forEach(function (dropdown) {
-                        if (dropdown.value !== targetId) {
-                            dropdown.value = targetId;
-                        }
-                    });
+                    showTab(targetSelector);
+                    
+                    // Update URL dengan parameter category
+                    var category = targetSelector.replace('#tab-', '');
+                    var url = new URL(window.location.href);
+                    url.searchParams.set('category', category);
+                    window.history.pushState({}, '', url.toString());
+                    
+                    // Update breadcrumb jika ada
+                    var breadcrumbCategoryText = document.querySelector('.breadcrumb-category-text');
+                    if (breadcrumbCategoryText) {
+                        var categoryLabels = {
+                            'gender': 'Jenis Kelamin',
+                            'age': 'Kelompok Umur',
+                            'single-age': 'Umur Tunggal',
+                            'education': 'Pendidikan',
+                            'occupation': 'Pekerjaan',
+                            'marital': 'Status Perkawinan',
+                            'household': 'Kepala Keluarga',
+                            'religion': 'Agama',
+                            'wajib-ktp': 'Wajib KTP'
+                        };
+                        breadcrumbCategoryText.textContent = categoryLabels[category] || 'Jenis Kelamin';
+                    }
                 });
             });
 
@@ -546,15 +580,26 @@
                 });
             }
 
-            // Jalankan saat halaman dimuat
-            setupTableScroll();
-            
             // Inisialisasi URL fullscreen button saat halaman dimuat
-            var activeTabTrigger = document.querySelector('#aggregateTabs button.nav-link.active');
-            if (activeTabTrigger) {
-                var targetId = activeTabTrigger.getAttribute('data-bs-target');
-                if (targetId) {
-                    var category = targetId.replace('#tab-', '');
+            var activeTabPane = document.querySelector('.dk-tab-pane.active');
+            if (activeTabPane) {
+                var category = activeTabPane.id.replace('tab-', '');
+                var fullscreenButtons = document.querySelectorAll('.js-fullscreen-btn');
+                fullscreenButtons.forEach(function(btn) {
+                    var baseUrl = btn.getAttribute('data-base-url');
+                    if (baseUrl) {
+                        var url = new URL(baseUrl, window.location.origin);
+                        url.searchParams.set('category', category);
+                        btn.href = url.toString();
+                    }
+                });
+            }
+
+            // Function untuk update fullscreen button URL
+            function updateFullscreenButtons() {
+                var activePane = document.querySelector('.dk-tab-pane.active');
+                if (activePane) {
+                    var category = activePane.id.replace('tab-', '');
                     var fullscreenButtons = document.querySelectorAll('.js-fullscreen-btn');
                     fullscreenButtons.forEach(function(btn) {
                         var baseUrl = btn.getAttribute('data-base-url');
@@ -567,45 +612,21 @@
                 }
             }
 
-            // Jalankan ulang saat tab berubah
-            tabButtons.forEach(function (button) {
-                button.addEventListener('shown.bs.tab', function () {
-                    // Tunggu sedikit agar DOM sudah ter-render
-                    setTimeout(setupTableScroll, 100);
-                    
-                    // Update URL fullscreen button
-                    var targetId = this.getAttribute('data-bs-target');
-                    if (targetId) {
-                        var category = targetId.replace('#tab-', '');
-                        var fullscreenButtons = document.querySelectorAll('.js-fullscreen-btn');
-                        fullscreenButtons.forEach(function(btn) {
-                            var baseUrl = btn.getAttribute('data-base-url');
-                            if (baseUrl) {
-                                var url = new URL(baseUrl, window.location.origin);
-                                url.searchParams.set('category', category);
-                                btn.href = url.toString();
-                            }
-                        });
-                    }
-                });
-            });
+            // Wrap showTab untuk menambahkan side effects
+            var originalShowTab = showTab;
+            showTab = function(targetId) {
+                originalShowTab(targetId);
+                // Tunggu sedikit agar DOM sudah ter-render
+                setTimeout(function() {
+                    setupTableScroll();
+                    updateFullscreenButtons();
+                }, 100);
+            };
             
-            // Update fullscreen button saat dropdown berubah
-            dropdowns.forEach(function (dropdown) {
-                dropdown.addEventListener('change', function () {
-                    var targetId = this.value;
-                    var category = targetId.replace('tab-', '');
-                    var fullscreenButtons = document.querySelectorAll('.js-fullscreen-btn');
-                    fullscreenButtons.forEach(function(btn) {
-                        var baseUrl = btn.getAttribute('data-base-url');
-                        if (baseUrl) {
-                            var url = new URL(baseUrl, window.location.origin);
-                            url.searchParams.set('category', category);
-                            btn.href = url.toString();
-                        }
-                    });
-                });
-            });
+            // Jalankan setupTableScroll saat halaman dimuat
+            setupTableScroll();
+            
+            // Update fullscreen button saat dropdown berubah (sudah ditangani di showTab)
         });
     </script>
 @endpush

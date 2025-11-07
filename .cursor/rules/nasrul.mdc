@@ -4,7 +4,7 @@ alwaysApply: true
 
 Gunakan stack berikut saat memberikan saran atau menulis kode:
 - Backend: `laravel/framework` (^11.31)
-- Frontend/build tooling: Vite dengan Tailwind CSS, Alpine.js, Axios, PostCSS, dan Laravel Vite plugin
+- Frontend/build tooling: Vite dengan Tailwind CSS v 4, Alpine.js, Axios, dan Laravel Vite plugin
 
 Catatan proyek:
 - Situs ditujukan untuk informasi publik oleh Dinas Kependudukan dan Pencatatan Sipil

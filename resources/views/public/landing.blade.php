@@ -1,128 +1,166 @@
 @extends('layouts.dukcapil', ['title' => 'Beranda'])
 
 @push('styles')
-    {{-- Berkas gaya dasar Leaflet untuk elemen kontrol peta --}}
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    {{-- Berkas CSS khusus halaman landing agar tidak lagi tercampur di dalam Blade --}}
-    <link rel="stylesheet" href="{{ asset('css/landing.css') . '?v=' . filemtime(public_path('css/landing.css')) }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin=""/>
+    <style>
+        #landing-map { height: 100%; min-height: 600px; width: 100%; z-index: 1; }
+        .leaflet-popup-content-wrapper { border-radius: 8px; }
+        .metric-card {
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+        .metric-card-primary { --gradient-start: #007151; --gradient-end: #00a876; }
+        .metric-card-male { --gradient-start: #3b82f6; --gradient-end: #2563eb; }
+        .metric-card-female { --gradient-start: #ec4899; --gradient-end: #db2777; }
+        .progress-bar {
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 0.75rem;
+        }
+        .progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+    </style>
 @endpush
 
 @section('content')
-    {{-- Kontainer utama halaman landing untuk pengunjung publik --}}
-    <div class="landing-page">
+    <div class="space-y-6">
         @if (!$period)
-            {{-- Tampilkan pengingat apabila dataset belum pernah diunggah --}}
-            <div class="alert alert-warning border-0 dk-card">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="fas fa-exclamation-triangle"></i>
+            <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-lg shadow-sm">
+                <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
                     <div>
-                        <strong>Data belum tersedia.</strong> Silakan unggah dataset terlebih dahulu melalui halaman admin.
+                        <h3 class="text-sm font-semibold text-amber-800 mb-1">Data belum tersedia</h3>
+                        <p class="text-sm text-amber-700">Silakan unggah dataset terlebih dahulu melalui halaman admin.</p>
                     </div>
                 </div>
             </div>
         @else
-            {{-- Konten statistik dan peta hanya dirender ketika data terbaru tersedia --}}
-            <div class="row g-4 align-items-stretch landing-layout">
-                <div class="col-12 col-lg-5 col-xl-4">
-                    <div class="dk-card h-100 landing-overview">
-                        <div class="card-body p-4">
-                            <h6 class="dk-card__title mb-4">Data Agregat Kependudukan Terbaru</h6>
+            @php
+                $totalPop = $totals['population'] ?? 0;
+                $malePop = $totals['male'] ?? 0;
+                $femalePop = $totals['female'] ?? 0;
+                $wajibKtpTotal = $wajibKtp['total'] ?? 0;
+                $malePercent = $totalPop > 0 ? ($malePop / $totalPop) * 100 : 0;
+                $femalePercent = $totalPop > 0 ? ($femalePop / $totalPop) * 100 : 0;
+                $wajibKtpPercent = $totalPop > 0 ? ($wajibKtpTotal / $totalPop) * 100 : 0;
+            @endphp
 
-                            <div class="landing-wilayah-section">
-                                <h6 class="text-uppercase text-xs text-muted mb-3">Wilayah</h6>
-                                <div class="table-responsive">
-                                    <table class="table table-sm dk-table">
-                                        <tbody>
-                                            <tr>
-                                                <td class="fw-semibold">Nama Wilayah</td>
-                                                <td class="text-end">Madiun</td>
-                                            </tr>
-                                            <tr>
-                                                <td class="fw-semibold">Jumlah Daerah</td>
-                                                <td class="text-end">{{ number_format($districtCount) }}</td>
-                                            </tr>
-                                            <tr>
-                                                <td class="fw-semibold">Jumlah Desa/Kel</td>
-                                                <td class="text-end">{{ number_format($villageCount) }}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                <!-- Statistics Panel -->
+                <div class="lg:col-span-5 xl:col-span-4 flex flex-col">
+                    <!-- Overview Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex-1">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-6">Data Agregat Kependudukan Terbaru</h2>
+                        
+                        <!-- Wilayah Info -->
+                        <div class="mb-6">
+                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Wilayah</h3>
+                            <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-700">Nama Wilayah</span>
+                                    <span class="text-sm text-gray-900 font-semibold">Madiun</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-700">Jumlah Daerah</span>
+                                    <span class="text-sm text-gray-900 font-semibold">{{ number_format($districtCount) }}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-700">Jumlah Desa/Kel</span>
+                                    <span class="text-sm text-gray-900 font-semibold">{{ number_format($villageCount) }}</span>
                                 </div>
                             </div>
+                        </div>
 
-                            {{-- Ringkasan jumlah penduduk berdasarkan kategori utama --}}
-                            <div class="mb-4">
-                                <h6 class="text-uppercase text-xs text-muted mb-3">Jumlah Penduduk</h6>
-                                <div class="row g-3 landing-metric-grid">
-                                    @php
-                                        // Hitung nilai agregat serta persentase yang dipakai untuk visualisasi progress bar
-                                        $totalPop = $totals['population'] ?? 0;
-                                        $malePop = $totals['male'] ?? 0;
-                                        $femalePop = $totals['female'] ?? 0;
-                                        $wajibKtpTotal = $wajibKtp['total'] ?? 0;
-                                        $malePercent = $totalPop > 0 ? ($malePop / $totalPop) * 100 : 0;
-                                        $femalePercent = $totalPop > 0 ? ($femalePop / $totalPop) * 100 : 0;
-                                        $wajibKtpPercent = $totalPop > 0 ? ($wajibKtpTotal / $totalPop) * 100 : 0;
-                                    @endphp
-
-                                    <div class="col-12 landing-metric-item">
-                                        <div class="landing-metric-card landing-metric-card--primary">
-                                            <div class="landing-metric-icon">
-                                                <img src="{{ asset('img/penduduk.png') }}" alt="Total Penduduk" class="landing-metric-icon__img">
-                                            </div>
-                                            <div class="dk-metric__label text-white-50 mb-1">Total Penduduk</div>
-                                            <div class="dk-metric text-white mb-2">{{ number_format($totalPop) }}</div>
-                                            <div class="landing-metric-progress">
-                                                <div class="landing-metric-progress-bar" style="--landing-progress: 100%;"></div>
+                        <!-- Metrics Grid -->
+                        <div>
+                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Jumlah Penduduk</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <!-- Total Penduduk -->
+                                <div class="col-span-full">
+                                    <div class="metric-card metric-card-primary">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="flex items-center gap-2">
+                                                <img src="{{ asset('img/penduduk.png') }}" alt="Total Penduduk" class="w-8 h-8">
+                                                <span class="text-sm font-medium text-white/90">Total Penduduk</span>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div class="col-6 landing-metric-item">
-                                        <div class="landing-metric-card landing-metric-card--male">
-                                            <div class="landing-metric-icon">
-                                                <img src="{{ asset('img/l.png') }}" alt="Penduduk Laki-laki" class="landing-metric-icon__img">
-                                            </div>
-                                            <div class="dk-metric__label text-white-50 mb-1">Laki-laki</div>
-                                            <div class="dk-metric dk-metric--sm text-white mb-2">{{ number_format($malePop) }}</div>
-                                            <div class="landing-metric-percentage text-white">
-                                                <i class="fas fa-chart-line me-1"></i>{{ number_format($malePercent, 1) }}%
-                                            </div>
-                                            <div class="landing-metric-progress">
-                                                <div class="landing-metric-progress-bar" style="--landing-progress: {{ $malePercent }}%;"></div>
-                                            </div>
+                                        <div class="text-2xl font-bold mb-1">{{ number_format($totalPop) }}</div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 100%"></div>
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div class="col-6 landing-metric-item">
-                                        <div class="landing-metric-card landing-metric-card--female">
-                                            <div class="landing-metric-icon">
-                                                <img src="{{ asset('img/p.png') }}" alt="Penduduk Perempuan" class="landing-metric-icon__img">
-                                            </div>
-                                            <div class="dk-metric__label text-white-50 mb-1">Perempuan</div>
-                                            <div class="dk-metric dk-metric--sm text-white mb-2">{{ number_format($femalePop) }}</div>
-                                            <div class="landing-metric-percentage text-white">
-                                                <i class="fas fa-chart-line me-1"></i>{{ number_format($femalePercent, 1) }}%
-                                            </div>
-                                            <div class="landing-metric-progress">
-                                                <div class="landing-metric-progress-bar" style="--landing-progress: {{ $femalePercent }}%;"></div>
+                                <!-- Laki-laki -->
+                                <div>
+                                    <div class="metric-card metric-card-male">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="flex items-center gap-2">
+                                                <img src="{{ asset('img/l.png') }}" alt="Laki-laki" class="w-6 h-6">
+                                                <span class="text-xs font-medium text-white/90">Laki-laki</span>
                                             </div>
                                         </div>
+                                        <div class="text-xl font-bold mb-1">{{ number_format($malePop) }}</div>
+                                        <div class="text-xs text-white/80 mb-2">{{ number_format($malePercent, 1) }}%</div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: {{ $malePercent }}%"></div>
+                                        </div>
                                     </div>
+                                </div>
 
-                                    <div class="col-12 landing-metric-item">
-                                        <div class="landing-metric-card landing-metric-card--primary">
-                                            <div class="landing-metric-icon">
-                                                <img src="{{ asset('img/ktp.png') }}" alt="Wajib KTP" class="landing-metric-icon__img">
+                                <!-- Perempuan -->
+                                <div>
+                                    <div class="metric-card metric-card-female">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="flex items-center gap-2">
+                                                <img src="{{ asset('img/p.png') }}" alt="Perempuan" class="w-6 h-6">
+                                                <span class="text-xs font-medium text-white/90">Perempuan</span>
                                             </div>
-                                            <div class="dk-metric__label text-white-50 mb-1">Wajib KTP (&ge; 17 tahun)</div>
-                                            <div class="dk-metric dk-metric--sm text-white mb-2">{{ number_format($wajibKtpTotal) }}</div>
-                                            <div class="landing-metric-percentage text-white">
-                                                <i class="fas fa-chart-pie me-1"></i>{{ number_format($wajibKtpPercent, 1) }}%
+                                        </div>
+                                        <div class="text-xl font-bold mb-1">{{ number_format($femalePop) }}</div>
+                                        <div class="text-xs text-white/80 mb-2">{{ number_format($femalePercent, 1) }}%</div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: {{ $femalePercent }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Wajib KTP -->
+                                <div class="col-span-full">
+                                    <div class="metric-card metric-card-primary">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="flex items-center gap-2">
+                                                <img src="{{ asset('img/ktp.png') }}" alt="Wajib KTP" class="w-6 h-6">
+                                                <span class="text-xs font-medium text-white/90">Wajib KTP (≥ 17 tahun)</span>
                                             </div>
-                                            <div class="landing-metric-progress">
-                                                <div class="landing-metric-progress-bar" style="--landing-progress: {{ $wajibKtpPercent }}%;"></div>
-                                            </div>
+                                        </div>
+                                        <div class="text-xl font-bold mb-1">{{ number_format($wajibKtpTotal) }}</div>
+                                        <div class="text-xs text-white/80 mb-2">{{ number_format($wajibKtpPercent, 1) }}%</div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: {{ $wajibKtpPercent }}%"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -131,52 +169,64 @@
                     </div>
                 </div>
 
-                <div class="col-12 col-lg-7 col-xl-8">
-                    <div class="dk-card h-100 landing-map-card">
-                        <div class="card-body p-0 d-flex flex-column h-100">
-                            <div class="landing-map-card__header d-flex flex-column flex-lg-row align-items-lg-start gap-3">
-                                <h6 class="dk-card__title mb-0">Peta Persebaran Penduduk Kabupaten Madiun</h6>
-                                @if(!empty($districtOptions) && $districtOptions->count())
-                                    <div class="ms-lg-auto w-100 w-lg-auto landing-map-card__filter">
-                                        <label for="landing-district-filter" class="form-label text-xs text-muted mb-1">Kecamatan</label>
-                                        <select id="landing-district-filter" class="form-select form-select-sm">
-                                            <option value="">Semua Kecamatan</option>
-                                            @foreach($districtOptions as $district)
-                                                <option value="{{ $district->code }}" data-slug="{{ \Illuminate\Support\Str::slug($district->name) }}">
-                                                    {{ \Illuminate\Support\Str::title($district->name) }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                @endif
-                            </div>
-                            {{-- Area kanan berisi peta interaktif beserta loader bawaan --}}
-                            <div class="landing-map-card__map d-flex flex-grow-1 position-relative">
-                                <div id="landing-map-loader" class="landing-loading landing-map-loader position-absolute w-100 h-100">
-                                    <div class="text-center">
-                                        <div class="landing-loading-spinner mx-auto mb-3"></div>
-                                        <div class="text-muted small">Memuat peta...</div>
-                                    </div>
+                <!-- Map Panel -->
+                <div class="lg:col-span-7 xl:col-span-8 flex flex-col">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
+                        <div class="p-6 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-900 mb-6">Peta Persebaran Penduduk Kabupaten Madiun</h2>
+                            @if (!empty($districtOptions) && $districtOptions->count())
+                                <div class="lg:w-auto w-full">
+                                    <label for="landing-district-filter" class="block text-xs font-medium text-gray-700 mb-1.5">Kecamatan</label>
+                                    <select 
+                                        id="landing-district-filter" 
+                                        class="w-full lg:w-64 text-sm border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                                    >
+                                        <option value="">Semua Kecamatan</option>
+                                        @foreach($districtOptions as $district)
+                                            <option value="{{ $district->code }}" data-slug="{{ \Illuminate\Support\Str::slug($district->name) }}">
+                                                {{ \Illuminate\Support\Str::title($district->name) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                <div class="dk-map flex-grow-1">
-                                    <div id="landing-map"></div>
+                            @endif
+                        </div>
+                        <div class="relative flex-1">
+                            <div id="landing-map-loader" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center">
+                                <div class="text-center">
+                                    <div class="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+                                    <div class="text-sm text-gray-600 font-medium">Memuat peta...</div>
                                 </div>
                             </div>
+                            <div id="landing-map" class="w-full h-full"></div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Laju Pertumbuhan Penduduk Section -->
+            @if (!empty($populationGrowth['labels']) && count($populationGrowth['labels']) > 0)
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-6">Laju Pertumbuhan Penduduk</h2>
+                    <div class="chart-container" style="height: 400px; position: relative;">
+                        <canvas id="population-growth-chart"></canvas>
+                    </div>
+                </div>
+            @endif
         @endif
     </div>
 @endsection
 
-
 @push('scripts')
-    {{-- Skrip peta interaktif yang mengikat data demografis ke layer Leaflet --}}
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin=""></script>
     <script src="{{ asset('map/Peta Madiun/kab.js') }}"></script>
     <script src="{{ asset('map/Peta Madiun/kec.js') }}"></script>
     <script src="{{ asset('map/Peta Madiun/kel.js') }}"></script>
+    @if (!empty($populationGrowth['labels']) && count($populationGrowth['labels']) > 0)
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    @endif
 
     @php
         $mapStats = $mapStats ?? [
@@ -187,12 +237,8 @@
 
     <script>
         (function () {
-            // Ambil statistik yang sudah diproses di backend sebagai sumber data peta
-            var mapStats = @json($mapStats);
+            const mapStats = @json($mapStats);
 
-            /**
-             * Pastikan setiap bagian statistik mempunyai struktur default agar aman diakses.
-             */
             function ensureStats(section) {
                 section = section || {};
                 return {
@@ -201,110 +247,87 @@
                 };
             }
 
-            // Bentuk indeks pencarian cepat untuk kecamatan dan desa/kelurahan
-            var districtStatsIndex = ensureStats(mapStats.districts);
-            var villageStatsIndex = ensureStats(mapStats.villages);
+            const districtStatsIndex = ensureStats(mapStats.districts);
+            const villageStatsIndex = ensureStats(mapStats.villages);
 
-            // Siapkan beberapa opsi tile layer agar pengguna bisa memilih tampilan peta
-            var carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            // Tile layers
+            const carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 maxZoom: 19,
                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
             });
-            var cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            const cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 maxZoom: 19,
                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
             });
-            var cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            const cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 maxZoom: 19,
                 attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
             });
-            var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; OpenStreetMap contributors',
             });
-            var googleSat = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+            const googleSat = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
-                subdomains:['mt0','mt1','mt2','mt3'],
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 attribution: 'Imagery &copy; Google'
             });
 
-            // Inisialisasi peta dengan fokus ke Kabupaten Madiun
-            var map = L.map('landing-map', {
+            // Initialize map
+            const map = L.map('landing-map', {
                 center: [-7.629, 111.515],
                 zoom: 11,
                 layers: [cartoVoyager],
             });
-            var TARGET_VIEW_WIDTH_KM = 15;
+            const TARGET_VIEW_WIDTH_KM = 15;
 
-            // Hilangkan indikator loading ketika peta siap digunakan
             map.whenReady(function() {
-                var loader = document.getElementById('landing-map-loader');
+                const loader = document.getElementById('landing-map-loader');
                 if (loader) {
                     loader.style.opacity = '0';
                     loader.style.transition = 'opacity 0.3s ease';
-                    setTimeout(function() {
+                    setTimeout(() => {
                         loader.style.display = 'none';
                     }, 300);
                 }
             });
 
-            // Buat pane khusus agar batas administratif memiliki urutan tumpukan yang konsisten
+            // Create panes
             map.createPane('kelPane');
             map.getPane('kelPane').style.zIndex = 470;
-
             map.createPane('kecPane');
             map.getPane('kecPane').style.zIndex = 460;
-
             map.createPane('kabPane');
             map.getPane('kabPane').style.zIndex = 480;
             map.getPane('kabPane').style.pointerEvents = 'none';
-
             map.createPane('hoverPane');
             map.getPane('hoverPane').style.zIndex = 600;
             map.getPane('hoverPane').style.pointerEvents = 'none';
-
             map.createPane('labelPane');
             map.getPane('labelPane').style.zIndex = 650;
             map.getPane('labelPane').style.pointerEvents = 'none';
 
             L.control.scale({ imperial: false, maxWidth: 160 }).addTo(map);
 
-            /**
-             * Gaya garis batas kabupaten.
-             */
             function styleKab() {
                 return { color: '#c0392b', weight: 2, fillOpacity: 0, fill: false };
             }
 
-            /**
-             * Gaya garis batas kecamatan.
-             */
             function styleKec() {
                 return { color: '#63d199', weight: 1.7, fillColor: '#63d199', fillOpacity: 0 };
             }
 
-            /**
-             * Gaya garis batas desa/kelurahan.
-             */
             function styleKel() {
                 return { color: '#00b4d8', weight: 1.3, fillColor: '#48cae4', fillOpacity: 0 };
             }
 
-            /**
-             * Format angka agar ramah dibaca dengan pemisah ribuan lokal.
-             */
             function formatNumber(value) {
-                var num = Number(value);
+                const num = Number(value);
                 return Number.isFinite(num) ? num.toLocaleString('id-ID') : '-';
             }
 
-            /**
-             * Escape nilai teks agar aman dimasukkan ke HTML popup.
-             */
             function escapeHtml(value) {
-                if (value === null || value === undefined) {
-                    return '';
-                }
+                if (value === null || value === undefined) return '';
                 return String(value)
                     .replace(/&/g, '&amp;')
                     .replace(/</g, '&lt;')
@@ -313,20 +336,18 @@
                     .replace(/'/g, '&#39;');
             }
 
-            /**
-             * Susun isi popup Leaflet dari judul dan daftar data kunci.
-             */
             function buildPopupContent(title, rows) {
-                var html = '<div class="dk-popup">';
+                let html = '<div class="p-2">';
                 if (title) {
-                    html += '<strong>' + title + '</strong>';
+                    html += '<strong class="block mb-2 text-gray-900">' + escapeHtml(title) + '</strong>';
                 }
                 if (rows && rows.length) {
-                    html += '<table class="dk-popup__table">';
-                    rows.forEach(function (row) {
-                        html += '<tr><td><strong>'
-                            + row.label + '</strong></td><td>'
-                            + row.value + '</td></tr>';
+                    html += '<table class="min-w-full text-sm">';
+                    rows.forEach(row => {
+                        html += '<tr class="border-b border-gray-200">';
+                        html += '<td class="py-1 pr-4 font-medium text-gray-700">' + escapeHtml(row.label) + '</td>';
+                        html += '<td class="py-1 text-gray-900">' + escapeHtml(row.value) + '</td>';
+                        html += '</tr>';
                     });
                     html += '</table>';
                 }
@@ -334,14 +355,9 @@
                 return html;
             }
 
-            /**
-             * Normalisasi nama kecamatan/desa menjadi slug sederhana.
-             */
             function normalizeName(value) {
-                if (value === null || value === undefined) {
-                    return null;
-                }
-                var text = String(value).toLowerCase();
+                if (value === null || value === undefined) return null;
+                let text = String(value).toLowerCase();
                 if (text.normalize) {
                     text = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 }
@@ -349,30 +365,20 @@
                 return text || null;
             }
 
-            /**
-             * Bentuk beberapa variasi slug untuk menoleransi perbedaan penulisan.
-             */
             function slugVariants(slug) {
-                if (!slug) {
-                    return [];
-                }
-                var variants = [slug];
-                var noDash = slug.replace(/-/g, '');
+                if (!slug) return [];
+                const variants = [slug];
+                const noDash = slug.replace(/-/g, '');
                 if (noDash && variants.indexOf(noDash) === -1) {
                     variants.push(noDash);
                 }
                 return variants;
             }
 
-            /**
-             * Hasilkan kemungkinan variasi kode wilayah agar pencocokan lebih fleksibel.
-             */
             function codeAliases(value) {
-                var digits = value === undefined || value === null ? '' : String(value).replace(/\D+/g, '');
-                if (!digits) {
-                    return [];
-                }
-                var aliases = [digits];
+                const digits = value === undefined || value === null ? '' : String(value).replace(/\D+/g, '');
+                if (!digits) return [];
+                const aliases = [digits];
                 if (digits.length >= 3) {
                     aliases.push(digits.slice(-3).padStart(3, '0'));
                 }
@@ -385,102 +391,68 @@
                 return Array.from(new Set(aliases));
             }
 
-            // Layer batas kabupaten selalu ada sebagai referensi utama
-            var kabLayer = window.kab ? L.geoJSON(window.kab, { style: styleKab, pane: 'kabPane' }).addTo(map) : L.layerGroup().addTo(map);
-            var kecLayer = null;
-            var kelLayer = null;
+            let kabLayer = window.kab ? L.geoJSON(window.kab, { style: styleKab, pane: 'kabPane' }).addTo(map) : L.layerGroup().addTo(map);
+            let kecLayer = null;
+            let kelLayer = null;
+            let hoverHighlightLayer = null;
+            const districtLabelLayer = L.layerGroup().addTo(map);
+            const villageLabelLayer = L.layerGroup().addTo(map);
 
-            /**
-             * Pastikan urutan layer mengikuti struktur administratif (desa di atas kecamatan, dst).
-             */
             function ensureLayerOrder() {
-                if (kelLayer && kelLayer.bringToFront) {
-                    kelLayer.bringToFront();
-                }
-                if (kecLayer && kecLayer.bringToFront) {
-                    kecLayer.bringToFront();
-                }
-                if (kabLayer && kabLayer.bringToFront) {
-                    kabLayer.bringToFront();
-                }
+                if (kelLayer && kelLayer.bringToFront) kelLayer.bringToFront();
+                if (kecLayer && kecLayer.bringToFront) kecLayer.bringToFront();
+                if (kabLayer && kabLayer.bringToFront) kabLayer.bringToFront();
             }
 
-            /**
-             * Lepas layer dari peta bila sedang tidak digunakan.
-             */
             function removeLayer(layer) {
                 if (layer && map.hasLayer(layer)) {
                     map.removeLayer(layer);
                 }
             }
 
-            /**
-             * Hitung centroid sederhana dari polygon agar label berada di posisi yang wajar.
-             */
             function computeRingCentroid(ring) {
-                if (!Array.isArray(ring) || ring.length < 3) {
-                    return null;
-                }
-                var twiceArea = 0;
-                var x = 0;
-                var y = 0;
-                for (var i = 0; i < ring.length - 1; i++) {
-                    var p1 = ring[i];
-                    var p2 = ring[i + 1];
-                    if (!p1 || !p2) {
-                        continue;
-                    }
-                    var f = (p1[0] * p2[1]) - (p2[0] * p1[1]);
+                if (!Array.isArray(ring) || ring.length < 3) return null;
+                let twiceArea = 0;
+                let x = 0;
+                let y = 0;
+                for (let i = 0; i < ring.length - 1; i++) {
+                    const p1 = ring[i];
+                    const p2 = ring[i + 1];
+                    if (!p1 || !p2) continue;
+                    const f = (p1[0] * p2[1]) - (p2[0] * p1[1]);
                     twiceArea += f;
                     x += (p1[0] + p2[0]) * f;
                     y += (p1[1] + p2[1]) * f;
                 }
-                if (!twiceArea) {
-                    return null;
-                }
-                var areaFactor = twiceArea * 3;
+                if (!twiceArea) return null;
+                const areaFactor = twiceArea * 3;
                 return [x / areaFactor, y / areaFactor];
             }
 
-            /**
-             * Dapatkan titik representatif sebuah fitur geojson.
-             */
             function computeFeatureCenter(feature) {
-                if (!feature || !feature.geometry) {
-                    return null;
-                }
-                var geom = feature.geometry;
-                var type = geom.type;
-                var coords = geom.coordinates;
-                if (!coords) {
-                    return null;
-                }
+                if (!feature || !feature.geometry) return null;
+                const geom = feature.geometry;
+                const type = geom.type;
+                const coords = geom.coordinates;
+                if (!coords) return null;
 
-                var result = null;
-                var bestArea = 0;
+                let result = null;
+                let bestArea = 0;
 
                 function accumulateCentroid(rings) {
-                    if (!Array.isArray(rings) || !rings.length) {
-                        return;
-                    }
-                    var outerRing = rings[0];
-                    if (!Array.isArray(outerRing) || outerRing.length < 4) {
-                        return;
-                    }
-                    var centroid = computeRingCentroid(outerRing);
-                    if (!centroid) {
-                        return;
-                    }
-                    var twiceArea = 0;
-                    for (var i = 0; i < outerRing.length - 1; i++) {
-                        var p1 = outerRing[i];
-                        var p2 = outerRing[i + 1];
+                    if (!Array.isArray(rings) || !rings.length) return;
+                    const outerRing = rings[0];
+                    if (!Array.isArray(outerRing) || outerRing.length < 4) return;
+                    const centroid = computeRingCentroid(outerRing);
+                    if (!centroid) return;
+                    let twiceArea = 0;
+                    for (let i = 0; i < outerRing.length - 1; i++) {
+                        const p1 = outerRing[i];
+                        const p2 = outerRing[i + 1];
                         twiceArea += (p1[0] * p2[1]) - (p2[0] * p1[1]);
                     }
-                    var area = Math.abs(twiceArea / 2);
-                    if (!area) {
-                        return;
-                    }
+                    const area = Math.abs(twiceArea / 2);
+                    if (!area) return;
                     if (area > bestArea) {
                         bestArea = area;
                         result = centroid;
@@ -490,7 +462,7 @@
                 if (type === 'Polygon') {
                     accumulateCentroid(coords);
                 } else if (type === 'MultiPolygon') {
-                    for (var i = 0; i < coords.length; i++) {
+                    for (let i = 0; i < coords.length; i++) {
                         accumulateCentroid(coords[i]);
                     }
                 }
@@ -500,66 +472,17 @@
                 }
 
                 try {
-                    var tempLayer = L.geoJSON(feature);
-                    var bounds = tempLayer.getBounds();
+                    const tempLayer = L.geoJSON(feature);
+                    const bounds = tempLayer.getBounds();
                     if (bounds && bounds.isValid()) {
                         return bounds.getCenter();
                     }
                 } catch (err) {
-                    // abaikan kesalahan pengambilan batas sementara
+                    // ignore
                 }
                 return null;
             }
 
-            /**
-             * Jaga agar lebar tampilan peta tidak terlalu sempit ketika pengguna fokus ke satu wilayah kecil.
-             */
-            function adjustZoomToTargetWidth(targetKm) {
-                if (!map || typeof map.getBounds !== 'function') {
-                    return;
-                }
-                var bounds = map.getBounds();
-                if (!bounds || !bounds.isValid()) {
-                    return;
-                }
-                var mapSize = map.getSize();
-                if (!mapSize || !mapSize.x) {
-                    return;
-                }
-                var targetMeters = Number(targetKm) * 1000;
-                if (!Number.isFinite(targetMeters) || targetMeters <= 0) {
-                    return;
-                }
-
-                var currentMeters = map.distance(bounds.getNorthWest(), bounds.getNorthEast());
-                if (!Number.isFinite(currentMeters) || currentMeters >= targetMeters) {
-                    return;
-                }
-
-                var lat = map.getCenter() && Number.isFinite(map.getCenter().lat) ? map.getCenter().lat : 0;
-                var cosLat = Math.cos(lat * Math.PI / 180);
-                var calculatedZoom = Math.log2((156543.03392 * cosLat * mapSize.x) / targetMeters);
-                if (!Number.isFinite(calculatedZoom)) {
-                    return;
-                }
-
-                var targetZoom = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), calculatedZoom));
-                if (targetZoom < map.getZoom()) {
-                    map.setZoom(targetZoom);
-                }
-            }
-
-            // Layer-layer tambahan untuk highlight dan label numerik pada peta
-            var hoverHighlightLayer = null;
-            var districtLabelLayer = L.layerGroup().addTo(map);
-            var villageLabelLayer = L.layerGroup().addTo(map);
-            var districtLegendEl = null;
-            var districtLegendTitleEl = null;
-            var districtLabelData = [];
-
-            /**
-             * Hilangkan highlight sementara agar interaksi berikutnya konsisten.
-             */
             function clearHoverHighlight() {
                 if (hoverHighlightLayer && map.hasLayer(hoverHighlightLayer)) {
                     map.removeLayer(hoverHighlightLayer);
@@ -567,374 +490,47 @@
                 hoverHighlightLayer = null;
             }
 
-            /**
-             * Siapkan data statis label kecamatan (nomor urut dan titik koordinat untuk marker).
-             */
-            function buildDistrictLabelData() {
-                if (!window.kec || !Array.isArray(window.kec.features)) {
-                    return [];
-                }
-                return window.kec.features.map(function (feature, index) {
-                    var props = feature && feature.properties ? feature.properties : {};
-                    var name = props.nm_kecamatan || ('Kecamatan ' + (index + 1));
-                    var center = computeFeatureCenter(feature);
-                    return {
-                        feature: feature,
-                        number: index + 1,
-                        name: name,
-                        center: center
-                    };
-                });
-            }
-
-            /**
-             * Render legenda kecamatan atau desa sesuai item yang diberikan.
-             */
-            function renderLegend(items, options) {
-                if (!districtLegendEl || !districtLegendTitleEl) {
-                    return;
-                }
-
-                options = options || {};
-                var titleText = options.title || 'Keterangan';
-                var prefix = typeof options.prefix === 'string' ? options.prefix.trim() : '';
-
-                districtLegendTitleEl.textContent = titleText;
-
-                if (!items || !items.length) {
-                    districtLegendEl.innerHTML = '<li class="dk-map-legend__item text-muted">Data belum tersedia</li>';
-                    districtLegendEl.scrollTop = 0;
-                    return;
-                }
-
-                var legendHtml = items.map(function (item) {
-                    var safeName = escapeHtml(item.name || '');
-                    var labelText = safeName;
-                    if (prefix) {
-                        labelText = prefix + ' ' + labelText;
-                    }
-                    return '<li class="dk-map-legend__item">' +
-                        '<span class="dk-map-legend__badge">' + escapeHtml(String(item.number)) + '</span>' +
-                        '<span>' + labelText + '</span>' +
-                        '</li>';
-                }).join('');
-
-                districtLegendEl.innerHTML = legendHtml;
-                districtLegendEl.scrollTop = 0;
-            }
-
-            /**
-             * Tempelkan label angka kecamatan sesuai filter yang aktif.
-             */
-            function renderDistrictLabels(selectionState) {
-                if (!districtLabelLayer) {
-                    return;
-                }
-                districtLabelLayer.clearLayers();
-
-                var filterFn = selectionState && typeof selectionState.filterFn === 'function'
-                    ? selectionState.filterFn
-                    : null;
-
-                districtLabelData.forEach(function (item) {
-                    if (!item.center) {
-                        return;
-                    }
-                    if (filterFn && !filterFn(item.feature)) {
-                        return;
-                    }
-                    L.marker(item.center, {
-                        icon: L.divIcon({
-                            className: 'leaflet-div-icon dk-district-label',
-                            html: '<span>' + item.number + '</span>',
-                            iconSize: [15, 15],
-                            iconAnchor: [20, 20]
-                        }),
-                        pane: 'labelPane',
-                        interactive: false
-                    }).addTo(districtLabelLayer);
-                });
-            }
-
-            districtLabelData = buildDistrictLabelData();
-
-            /**
-             * Render label numerik desa/kelurahan setelah difilter.
-             */
-            function renderVillageLabels(entries) {
-                if (!villageLabelLayer) {
-                    return;
-                }
-                villageLabelLayer.clearLayers();
-                if (!entries || !entries.length) {
-                    return;
-                }
-                entries.forEach(function (item) {
-                    if (!item.center) {
-                        return;
-                    }
-                    L.marker(item.center, {
-                        icon: L.divIcon({
-                            className: 'leaflet-div-icon dk-village-label',
-                            html: '<span>' + item.number + '</span>',
-                            iconSize: [15, 15],
-                            iconAnchor: [18, 18]
-                        }),
-                        pane: 'labelPane',
-                        interactive: false
-                    }).addTo(villageLabelLayer);
-                });
-            }
-
-            /**
-             * Kumpulkan daftar desa/kelurahan yang relevan dengan filter aktif.
-             */
-            function buildVillageLabelData(filterFn) {
-                if (!window.kel || !Array.isArray(window.kel.features)) {
-                    return [];
-                }
-
-                var entries = [];
-                window.kel.features.forEach(function (feature) {
-                    if (typeof filterFn === 'function' && !filterFn(feature)) {
-                        return;
-                    }
-                    var props = feature && feature.properties ? feature.properties : {};
-                    var name = props.nm_kelurahan || props.nm_desa || props.nama || props.nm_desa_kelurahan || 'Desa/Kelurahan';
-                    var code = props.kd_kelurahan || props.kode_desa || props.kode || props.code || '';
-                    var center = computeFeatureCenter(feature);
-                    entries.push({
-                        feature: feature,
-                        code: code ? String(code) : '',
-                        name: name,
-                        center: center
-                    });
-                });
-
-                entries.sort(function (a, b) {
-                    var codeA = (a.code || '').replace(/\D+/g, '');
-                    var codeB = (b.code || '').replace(/\D+/g, '');
-                    if (codeA && codeB && codeA !== codeB) {
-                        return codeA < codeB ? -1 : 1;
-                    }
-                    if (codeA && !codeB) {
-                        return -1;
-                    }
-                    if (!codeA && codeB) {
-                        return 1;
-                    }
-                    var nameA = (a.name || '').toLowerCase();
-                    var nameB = (b.name || '').toLowerCase();
-                    if (nameA < nameB) {
-                        return -1;
-                    }
-                    if (nameA > nameB) {
-                        return 1;
-                    }
-                    return 0;
-                });
-
-                entries.forEach(function (item, idx) {
-                    item.number = idx + 1;
-                });
-
-                return entries;
-            }
-
-            /**
-             * Buat layer geojson kecamatan dengan opsi filter opsional.
-             */
-            function createKecamatanLayer(filterFn) {
-                if (!window.kec) {
-                    return L.layerGroup();
-                }
-
-                var options = {
-                    style: styleKec,
-                    onEachFeature: bindDistrictFeature,
-                    pane: 'kecPane'
-                };
-
-                if (typeof filterFn === 'function') {
-                    options.filter = filterFn;
-                }
-
-                return L.geoJSON(window.kec, options);
-            }
-
-            /**
-             * Buat layer geojson desa/kelurahan menyesuaikan kecamatan terpilih.
-             */
-            function createKelurahanLayer(districtState, filterFn) {
-                if (!window.kel) {
-                    return L.layerGroup();
-                }
-
-                var options = {
-                    style: styleKel,
-                    onEachFeature: bindVillageFeatureFactory(districtState),
-                    pane: 'kelPane'
-                };
-
-                if (typeof filterFn === 'function') {
-                    options.filter = filterFn;
-                }
-
-                return L.geoJSON(window.kel, options);
-            }
-
-            /**
-             * Tambahkan layer interaktif baru ke peta sekaligus atur ulang urutannya.
-             */
-            function addInteractiveLayers(layers) {
-                layers = Array.isArray(layers) ? layers : [layers];
-
-                layers.forEach(function (layer) {
-                    if (layer && layer.addTo) {
-                        layer.addTo(map);
-                    }
-                });
-
-                if (!map.hasLayer(kabLayer)) {
-                    kabLayer.addTo(map);
-                }
-
-                ensureLayerOrder();
-            }
-
-            /**
-             * Sesuaikan tampilan peta agar fokus ke layer utama yang sedang aktif.
-             */
-            function fitToLayers(primaryLayers) {
-                var layers = Array.isArray(primaryLayers) ? primaryLayers : [primaryLayers];
-                var bounds = null;
-
-                layers.some(function (layer) {
-                    if (!layer || !layer.getBounds) {
-                        return false;
-                    }
-                    var layerBounds = layer.getBounds();
-                    if (layerBounds && layerBounds.isValid()) {
-                        bounds = layerBounds;
-                        return true;
-                    }
-                    return false;
-                });
-
-                if (!bounds && kabLayer && kabLayer.getBounds) {
-                    var kabBounds = kabLayer.getBounds();
-                    if (kabBounds && kabBounds.isValid()) {
-                        bounds = kabBounds;
-                    }
-                }
-
-                if (bounds && bounds.isValid()) {
-                    map.fitBounds(bounds.pad(0.05));
-                    map.once('moveend', function () {
-                        adjustZoomToTargetWidth(TARGET_VIEW_WIDTH_KM);
-                    });
-                }
-            }
-
-            /**
-             * Beri efek highlight pada fitur yang disorot pengguna.
-             */
             function highlightFeature(layer, color, weight, fillOpacity) {
-                if (!layer) {
-                    return;
-                }
-
+                if (!layer) return;
                 clearHoverHighlight();
-
-                if (layer.bringToFront) {
-                    layer.bringToFront();
-                }
-
+                if (layer.bringToFront) layer.bringToFront();
                 if (typeof layer.toGeoJSON === 'function') {
-                    var geoJson = layer.toGeoJSON();
-                    var strokeWeight = typeof weight === 'number' ? weight : 2;
-                    var fillAlpha = typeof fillOpacity === 'number' ? fillOpacity : 0;
-
+                    const geoJson = layer.toGeoJSON();
+                    const strokeWeight = typeof weight === 'number' ? weight : 2;
+                    const fillAlpha = typeof fillOpacity === 'number' ? fillOpacity : 0;
                     hoverHighlightLayer = L.geoJSON(geoJson, {
-                        style: function () {
-                            return {
-                                color: color,
-                                weight: strokeWeight,
-                                opacity: 1,
-                                fillColor: color,
-                                fillOpacity: fillAlpha
-                            };
-                        },
+                        style: () => ({
+                            color: color,
+                            weight: strokeWeight,
+                            opacity: 1,
+                            fillColor: color,
+                            fillOpacity: fillAlpha
+                        }),
                         pane: 'hoverPane',
                         interactive: false
                     }).addTo(map);
                 }
-
                 ensureLayerOrder();
             }
 
-            /**
-             * Kembalikan gaya dasar sebuah fitur setelah interaksi selesai.
-             */
             function resetFeatureStyle(layer, styleFn) {
                 clearHoverHighlight();
-
-                if (!layer || !layer.setStyle || typeof styleFn !== 'function') {
-                    return;
-                }
-
-                var baseStyle = styleFn(layer.feature);
+                if (!layer || !layer.setStyle || typeof styleFn !== 'function') return;
+                const baseStyle = styleFn(layer.feature);
                 layer.setStyle(baseStyle);
                 ensureLayerOrder();
             }
 
-            /**
-             * Buat fungsi filter untuk memilih kecamatan berdasarkan kode maupun slug.
-             */
-            function buildDistrictFilter(selectedCode, selectedSlug) {
-                var codeVal = selectedCode ? String(selectedCode).trim() : '';
-                var slugVal = selectedSlug ? normalizeName(selectedSlug) : '';
-                if (!codeVal && !slugVal) {
-                    return function () {
-                        return true;
-                    };
-                }
-                var selectedAliases = codeAliases(codeVal);
-                var slugOptions = slugVariants(slugVal);
-                return function (feature) {
-                    var props = feature && feature.properties ? feature.properties : {};
-                    var featureAliases = codeAliases(props.kd_kecamatan);
-                    for (var i = 0; i < selectedAliases.length; i++) {
-                        if (featureAliases.indexOf(selectedAliases[i]) !== -1) {
-                            return true;
-                        }
-                    }
-                    if (slugOptions.length) {
-                        var featureSlug = normalizeName(props.nm_kecamatan);
-                        var featureVariants = slugVariants(featureSlug);
-                        for (var j = 0; j < slugOptions.length; j++) {
-                            if (featureVariants.indexOf(slugOptions[j]) !== -1) {
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                };
-            }
-
-            /**
-             * Cari statistik kecamatan sesuai properti geojson yang sedang diakses.
-             */
             function findDistrictStats(props) {
-                var aliases = codeAliases(props && props.kd_kecamatan);
-                for (var i = 0; i < aliases.length; i++) {
+                const aliases = codeAliases(props && props.kd_kecamatan);
+                for (let i = 0; i < aliases.length; i++) {
                     if (districtStatsIndex.by_code[aliases[i]]) {
                         return districtStatsIndex.by_code[aliases[i]];
                     }
                 }
-                var slug = normalizeName(props && props.nm_kecamatan);
-                var variants = slugVariants(slug);
-                for (var j = 0; j < variants.length; j++) {
+                const slug = normalizeName(props && props.nm_kecamatan);
+                const variants = slugVariants(slug);
+                for (let j = 0; j < variants.length; j++) {
                     if (districtStatsIndex.by_slug[variants[j]]) {
                         return districtStatsIndex.by_slug[variants[j]];
                     }
@@ -942,19 +538,16 @@
                 return null;
             }
 
-            /**
-             * Cari statistik desa/kelurahan berdasarkan kombinasi kode atau slug kecamatan dan desa.
-             */
             function findVillageStats(props, districtState) {
-                var stats = null;
-                var districtAliases = districtState && Array.isArray(districtState.codeAliases) && districtState.codeAliases.length
+                let stats = null;
+                const districtAliases = districtState && Array.isArray(districtState.codeAliases) && districtState.codeAliases.length
                     ? districtState.codeAliases
                     : codeAliases(props && props.kd_kecamatan);
-                var villageAliases = codeAliases(props && props.kd_kelurahan);
+                const villageAliases = codeAliases(props && props.kd_kelurahan);
 
-                districtAliases.some(function (dAlias) {
-                    return villageAliases.some(function (vAlias) {
-                        var key = dAlias + '-' + vAlias;
+                districtAliases.some(dAlias => {
+                    return villageAliases.some(vAlias => {
+                        const key = dAlias + '-' + vAlias;
                         if (villageStatsIndex.by_code[key]) {
                             stats = villageStatsIndex.by_code[key];
                             return true;
@@ -964,13 +557,13 @@
                 });
 
                 if (!stats) {
-                    var districtVariants = districtState && Array.isArray(districtState.slugVariants) && districtState.slugVariants.length
+                    const districtVariants = districtState && Array.isArray(districtState.slugVariants) && districtState.slugVariants.length
                         ? districtState.slugVariants
                         : slugVariants(normalizeName(props && props.nm_kecamatan));
-                    var villageVariants = slugVariants(normalizeName(props && props.nm_kelurahan));
-                    districtVariants.some(function (dSlug) {
-                        return villageVariants.some(function (vSlug) {
-                            var key = dSlug + '-' + vSlug;
+                    const villageVariants = slugVariants(normalizeName(props && props.nm_kelurahan));
+                    districtVariants.some(dSlug => {
+                        return villageVariants.some(vSlug => {
+                            const key = dSlug + '-' + vSlug;
                             if (villageStatsIndex.by_slug[key]) {
                                 stats = villageStatsIndex.by_slug[key];
                                 return true;
@@ -979,153 +572,14 @@
                         });
                     });
                 }
-
                 return stats;
             }
 
-            /**
-             * Bangun state kecamatan terpilih lengkap dengan alias kode dan slug.
-             */
-            function buildSelectedDistrictState(filterState) {
-                filterState = filterState || { code: '', slug: '' };
-                var hasSelection = Boolean(filterState.code || filterState.slug);
-
-                if (!hasSelection || !window.kec || !Array.isArray(window.kec.features)) {
-                    return null;
-                }
-
-                var filterFn = buildDistrictFilter(filterState.code, filterState.slug);
-                var aliasSet = {};
-                var slugSet = {};
-                var districtName = null;
-                var matchCount = 0;
-
-                window.kec.features.forEach(function (feature) {
-                    if (!filterFn(feature)) {
-                        return;
-                    }
-
-                    matchCount += 1;
-
-                    var props = feature && feature.properties ? feature.properties : {};
-
-                    codeAliases(props.kd_kecamatan).forEach(function (alias) {
-                        if (alias) {
-                            aliasSet[alias] = true;
-                        }
-                    });
-
-                    slugVariants(normalizeName(props.nm_kecamatan)).forEach(function (slug) {
-                        if (slug) {
-                            slugSet[slug] = true;
-                        }
-                    });
-
-                    if (!districtName && props.nm_kecamatan) {
-                        districtName = props.nm_kecamatan;
-                    }
-                });
-
-                if (!matchCount) {
-                    return null;
-                }
-
-                if (filterState.slug) {
-                    slugVariants(normalizeName(filterState.slug)).forEach(function (slug) {
-                        if (slug) {
-                            slugSet[slug] = true;
-                        }
-                    });
-                }
-
-                return {
-                    code: filterState.code || '',
-                    slug: filterState.slug || '',
-                    filterFn: filterFn,
-                    aliasSet: aliasSet,
-                    slugSet: Object.keys(slugSet).length ? slugSet : null,
-                    name: districtName
-                };
-            }
-
-            /**
-             * Tampilkan keseluruhan kabupaten ketika tidak ada filter kecamatan.
-             */
-            function renderKabupatenOverview() {
-                removeLayer(kecLayer);
-                removeLayer(kelLayer);
-
-                kecLayer = createKecamatanLayer(null);
-                kelLayer = null;
-
-                addInteractiveLayers(kecLayer);
-                fitToLayers(kecLayer);
-                renderDistrictLabels(null);
-                renderVillageLabels([]);
-                renderLegend(districtLabelData, { title: 'Keterangan Kecamatan', prefix: 'Kec.' });
-            }
-
-            /**
-             * Render tampilan detail ketika pengguna memilih kecamatan tertentu.
-             */
-            function renderSelectedDistrict(selectionState) {
-                removeLayer(kecLayer);
-                removeLayer(kelLayer);
-                districtLabelLayer.clearLayers();
-                renderVillageLabels([]);
-
-                var districtState = {
-                    codeAliases: Object.keys(selectionState.aliasSet || {}),
-                    slugVariants: selectionState.slugSet ? Object.keys(selectionState.slugSet) : [],
-                    name: selectionState.name
-                };
-
-                kecLayer = createKecamatanLayer(selectionState.filterFn);
-
-                var kelFilterFn = function (feature) {
-                    var props = feature && feature.properties ? feature.properties : {};
-                    var aliases = codeAliases(props.kd_kecamatan);
-                    for (var i = 0; i < aliases.length; i++) {
-                        if (selectionState.aliasSet[aliases[i]]) {
-                            return true;
-                        }
-                    }
-
-                    if (selectionState.slugSet) {
-                        var slug = normalizeName(props.nm_kecamatan);
-                        if (slug && selectionState.slugSet[slug]) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                };
-
-                kelLayer = createKelurahanLayer(districtState, kelFilterFn);
-
-                if (kelLayer && typeof kelLayer.getLayers === 'function' && kelLayer.getLayers().length === 0) {
-                    kelLayer = null;
-                }
-
-                addInteractiveLayers([kecLayer, kelLayer]);
-                fitToLayers([kelLayer, kecLayer]);
-                var villageLabelData = buildVillageLabelData(kelFilterFn);
-                renderVillageLabels(villageLabelData);
-                var legendTitle = 'Desa/Kelurahan';
-                if (districtState.name) {
-                    legendTitle += ' ' + districtState.name;
-                }
-                renderLegend(villageLabelData, { title: legendTitle, prefix: 'Desa/Kel.' });
-            }
-
-            /**
-             * Kaitkan popup dan interaksi mouse untuk setiap geojson kecamatan.
-             */
             function bindDistrictFeature(feature, layer) {
-                var props = feature && feature.properties ? feature.properties : {};
-                var stats = findDistrictStats(props);
-                var name = stats && stats.name ? stats.name : (props.nm_kecamatan || 'Kecamatan');
-                var rows = [];
+                const props = feature && feature.properties ? feature.properties : {};
+                const stats = findDistrictStats(props);
+                const name = stats && stats.name ? stats.name : (props.nm_kecamatan || 'Kecamatan');
+                const rows = [];
 
                 if (stats) {
                     rows.push({ label: 'L (Laki-laki)', value: formatNumber(stats.male) });
@@ -1140,40 +594,28 @@
                 }
 
                 layer.on({
-                    mouseover: function (e) {
-                        highlightFeature(e.target, e.target._hoverColor || '#00b4d8', 2, 0.18);
-                    },
-                    mouseout: function (e) {
-                        resetFeatureStyle(e.target, styleKec);
-                    },
-                    popupopen: function (e) {
-                        highlightFeature(e.target, e.target._hoverColor || '#00b4d8', 2.2, 0.2);
-                    },
-                    popupclose: function (e) {
-                        resetFeatureStyle(e.target, styleKec);
-                    }
+                    mouseover: (e) => highlightFeature(e.target, e.target._hoverColor || '#00b4d8', 2, 0.18),
+                    mouseout: (e) => resetFeatureStyle(e.target, styleKec),
+                    popupopen: (e) => highlightFeature(e.target, e.target._hoverColor || '#00b4d8', 2.2, 0.2),
+                    popupclose: (e) => resetFeatureStyle(e.target, styleKec)
                 });
 
                 layer.bindPopup(buildPopupContent('Kecamatan ' + name, rows));
             }
 
-            /**
-             * Buat handler popup serta highlight untuk fitur desa/kelurahan.
-             */
             function bindVillageFeatureFactory(districtState) {
-                return function (feature, layer) {
-                    var props = feature && feature.properties ? feature.properties : {};
-                    var stats = districtState ? findVillageStats(props, districtState) : null;
-                    var districtFallback = findDistrictStats(props);
+                return function(feature, layer) {
+                    const props = feature && feature.properties ? feature.properties : {};
+                    const stats = districtState ? findVillageStats(props, districtState) : null;
+                    const districtFallback = findDistrictStats(props);
 
-                    var districtName = (districtState && districtState.name) ||
+                    const districtName = (districtState && districtState.name) ||
                         (stats && stats.district_name) ||
                         (districtFallback && districtFallback.name) ||
-                        props.nm_kecamatan ||
-                        '-';
-                    var villageName = (stats && stats.name) || props.nm_kelurahan || 'Desa/Kelurahan';
+                        props.nm_kecamatan || '-';
+                    const villageName = (stats && stats.name) || props.nm_kelurahan || 'Desa/Kelurahan';
 
-                    var rows = [
+                    const rows = [
                         { label: 'Kecamatan', value: districtName }
                     ];
 
@@ -1190,32 +632,202 @@
                     }
 
                     layer.on({
-                        mouseover: function (e) {
-                            highlightFeature(e.target, e.target._hoverColor || '#00b4d8', 1.4, 0.2);
-                        },
-                        mouseout: function (e) {
-                            resetFeatureStyle(e.target, styleKel);
-                        },
-                        popupopen: function (e) {
-                            highlightFeature(e.target, e.target._hoverColor || '#00b4d8', 1.6, 0.24);
-                        },
-                        popupclose: function (e) {
-                            resetFeatureStyle(e.target, styleKel);
-                        }
+                        mouseover: (e) => highlightFeature(e.target, e.target._hoverColor || '#00b4d8', 1.4, 0.2),
+                        mouseout: (e) => resetFeatureStyle(e.target, styleKel),
+                        popupopen: (e) => highlightFeature(e.target, e.target._hoverColor || '#00b4d8', 1.6, 0.24),
+                        popupclose: (e) => resetFeatureStyle(e.target, styleKel)
                     });
 
                     layer.bindPopup(buildPopupContent('Desa/Kelurahan ' + villageName, rows));
                 };
             }
 
-            /**
-             * Render ulang layer peta sesuai pilihan kecamatan terbaru.
-             */
+            function buildDistrictFilter(selectedCode, selectedSlug) {
+                const codeVal = selectedCode ? String(selectedCode).trim() : '';
+                const slugVal = selectedSlug ? normalizeName(selectedSlug) : '';
+                if (!codeVal && !slugVal) {
+                    return () => true;
+                }
+                const selectedAliases = codeAliases(codeVal);
+                const slugOptions = slugVariants(slugVal);
+                return (feature) => {
+                    const props = feature && feature.properties ? feature.properties : {};
+                    const featureAliases = codeAliases(props.kd_kecamatan);
+                    for (let i = 0; i < selectedAliases.length; i++) {
+                        if (featureAliases.indexOf(selectedAliases[i]) !== -1) {
+                            return true;
+                        }
+                    }
+                    if (slugOptions.length) {
+                        const featureSlug = normalizeName(props.nm_kecamatan);
+                        const featureVariants = slugVariants(featureSlug);
+                        for (let j = 0; j < slugOptions.length; j++) {
+                            if (featureVariants.indexOf(slugOptions[j]) !== -1) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                };
+            }
+
+            function createKecamatanLayer(filterFn) {
+                if (!window.kec) return L.layerGroup();
+                const options = {
+                    style: styleKec,
+                    onEachFeature: bindDistrictFeature,
+                    pane: 'kecPane'
+                };
+                if (typeof filterFn === 'function') {
+                    options.filter = filterFn;
+                }
+                return L.geoJSON(window.kec, options);
+            }
+
+            function createKelurahanLayer(districtState, filterFn) {
+                if (!window.kel) return L.layerGroup();
+                const options = {
+                    style: styleKel,
+                    onEachFeature: bindVillageFeatureFactory(districtState),
+                    pane: 'kelPane'
+                };
+                if (typeof filterFn === 'function') {
+                    options.filter = filterFn;
+                }
+                return L.geoJSON(window.kel, options);
+            }
+
+            function addInteractiveLayers(layers) {
+                layers = Array.isArray(layers) ? layers : [layers];
+                layers.forEach(layer => {
+                    if (layer && layer.addTo) {
+                        layer.addTo(map);
+                    }
+                });
+                if (!map.hasLayer(kabLayer)) {
+                    kabLayer.addTo(map);
+                }
+                ensureLayerOrder();
+            }
+
+            function fitToLayers(primaryLayers) {
+                const layers = Array.isArray(primaryLayers) ? primaryLayers : [primaryLayers];
+                let bounds = null;
+                layers.some(layer => {
+                    if (!layer || !layer.getBounds) return false;
+                    const layerBounds = layer.getBounds();
+                    if (layerBounds && layerBounds.isValid()) {
+                        bounds = layerBounds;
+                        return true;
+                    }
+                    return false;
+                });
+                if (!bounds && kabLayer && kabLayer.getBounds) {
+                    const kabBounds = kabLayer.getBounds();
+                    if (kabBounds && kabBounds.isValid()) {
+                        bounds = kabBounds;
+                    }
+                }
+                if (bounds && bounds.isValid()) {
+                    map.fitBounds(bounds.pad(0.05));
+                }
+            }
+
+            function buildSelectedDistrictState(filterState) {
+                filterState = filterState || { code: '', slug: '' };
+                const hasSelection = Boolean(filterState.code || filterState.slug);
+                if (!hasSelection || !window.kec || !Array.isArray(window.kec.features)) {
+                    return null;
+                }
+                const filterFn = buildDistrictFilter(filterState.code, filterState.slug);
+                const aliasSet = {};
+                const slugSet = {};
+                let districtName = null;
+                let matchCount = 0;
+
+                window.kec.features.forEach(feature => {
+                    if (!filterFn(feature)) return;
+                    matchCount += 1;
+                    const props = feature && feature.properties ? feature.properties : {};
+                    codeAliases(props.kd_kecamatan).forEach(alias => {
+                        if (alias) aliasSet[alias] = true;
+                    });
+                    slugVariants(normalizeName(props.nm_kecamatan)).forEach(slug => {
+                        if (slug) slugSet[slug] = true;
+                    });
+                    if (!districtName && props.nm_kecamatan) {
+                        districtName = props.nm_kecamatan;
+                    }
+                });
+
+                if (!matchCount) return null;
+
+                if (filterState.slug) {
+                    slugVariants(normalizeName(filterState.slug)).forEach(slug => {
+                        if (slug) slugSet[slug] = true;
+                    });
+                }
+
+                return {
+                    code: filterState.code || '',
+                    slug: filterState.slug || '',
+                    filterFn: filterFn,
+                    aliasSet: aliasSet,
+                    slugSet: Object.keys(slugSet).length ? slugSet : null,
+                    name: districtName
+                };
+            }
+
+            function renderKabupatenOverview() {
+                removeLayer(kecLayer);
+                removeLayer(kelLayer);
+                kecLayer = createKecamatanLayer(null);
+                kelLayer = null;
+                addInteractiveLayers(kecLayer);
+                fitToLayers(kecLayer);
+            }
+
+            function renderSelectedDistrict(selectionState) {
+                removeLayer(kecLayer);
+                removeLayer(kelLayer);
+                districtLabelLayer.clearLayers();
+                villageLabelLayer.clearLayers();
+
+                const districtState = {
+                    codeAliases: Object.keys(selectionState.aliasSet || {}),
+                    slugVariants: selectionState.slugSet ? Object.keys(selectionState.slugSet) : [],
+                    name: selectionState.name
+                };
+
+                kecLayer = createKecamatanLayer(selectionState.filterFn);
+                const kelFilterFn = (feature) => {
+                    const props = feature && feature.properties ? feature.properties : {};
+                    const aliases = codeAliases(props.kd_kecamatan);
+                    for (let i = 0; i < aliases.length; i++) {
+                        if (selectionState.aliasSet[aliases[i]]) {
+                            return true;
+                        }
+                    }
+                    if (selectionState.slugSet) {
+                        const slug = normalizeName(props.nm_kecamatan);
+                        if (slug && selectionState.slugSet[slug]) {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+
+                kelLayer = createKelurahanLayer(districtState, kelFilterFn);
+                if (kelLayer && typeof kelLayer.getLayers === 'function' && kelLayer.getLayers().length === 0) {
+                    kelLayer = null;
+                }
+                addInteractiveLayers([kecLayer, kelLayer]);
+                fitToLayers([kelLayer, kecLayer]);
+            }
+
             function rebuildDistrictLayers(filterState) {
                 filterState = filterState || { code: '', slug: '' };
-
-                var selectionState = buildSelectedDistrictState(filterState);
-
+                const selectionState = buildSelectedDistrictState(filterState);
                 if (selectionState) {
                     renderSelectedDistrict(selectionState);
                 } else {
@@ -1223,23 +835,20 @@
                 }
             }
 
-            var districtFilterEl = document.getElementById('landing-district-filter');
-            var currentDistrictFilter = { code: '', slug: '' };
+            const districtFilterEl = document.getElementById('landing-district-filter');
+            let currentDistrictFilter = { code: '', slug: '' };
 
             if (districtFilterEl) {
-                // Ambil nilai awal filter saat halaman dimuat
-                var initialOption = districtFilterEl.selectedOptions && districtFilterEl.selectedOptions.length
+                const initialOption = districtFilterEl.selectedOptions && districtFilterEl.selectedOptions.length
                     ? districtFilterEl.selectedOptions[0]
                     : null;
-
                 currentDistrictFilter = {
                     code: districtFilterEl.value || '',
                     slug: initialOption ? (initialOption.getAttribute('data-slug') || '') : ''
                 };
 
-                // Ketika pengguna memilih kecamatan berbeda, rebuild layer peta
-                districtFilterEl.addEventListener('change', function () {
-                    var option = this.selectedOptions && this.selectedOptions.length ? this.selectedOptions[0] : null;
+                districtFilterEl.addEventListener('change', function() {
+                    const option = this.selectedOptions && this.selectedOptions.length ? this.selectedOptions[0] : null;
                     currentDistrictFilter = {
                         code: this.value || '',
                         slug: option ? (option.getAttribute('data-slug') || '') : ''
@@ -1248,7 +857,7 @@
                 });
             }
 
-            var baseLayers = {
+            const baseLayers = {
                 'Default': cartoVoyager,
                 'Light': carto,
                 'Dark': cartoDark,
@@ -1256,44 +865,175 @@
                 'Satellite': googleSat
             };
 
-            var layersControl = L.control.layers(baseLayers, {}, { collapsed: true, position: 'topright' }).addTo(map);
-            var layersControlContainer = layersControl && typeof layersControl.getContainer === 'function'
-                ? layersControl.getContainer()
-                : null;
+            L.control.layers(baseLayers, {}, { collapsed: true, position: 'topright' }).addTo(map);
 
-            if (layersControlContainer) {
-                // Sisipkan legenda kustom di dalam kontainer kontrol layer
-                var layersListEl = layersControlContainer.querySelector('.leaflet-control-layers-list') || layersControlContainer;
-                var legendContainer = L.DomUtil.create('div', 'dk-map-legend', layersListEl);
-                legendContainer.innerHTML =
-                    '<div class="dk-map-legend__title">Keterangan Kecamatan</div>' +
-                    '<ul class="dk-map-legend__list"></ul>' +
-                    '<div class="dk-legend-lines">' +
-                        '<div class="dk-map-legend__item dk-legend-line">' +
-                            '<span class="dk-legend-swatch dk-legend-swatch--kab"></span>' +
-                            '<span>Garis Batas Kabupaten</span>' +
-                        '</div>' +
-                        '<div class="dk-map-legend__item dk-legend-line">' +
-                            '<span class="dk-legend-swatch dk-legend-swatch--kec"></span>' +
-                            '<span>Garis Batas Kecamatan</span>' +
-                        '</div>' +
-                        '<div class="dk-map-legend__item dk-legend-line">' +
-                            '<span class="dk-legend-swatch dk-legend-swatch--kel"></span>' +
-                            '<span>Garis Batas Desa/Kelurahan</span>' +
-                        '</div>' +
-                    '</div>';
-                districtLegendTitleEl = legendContainer.querySelector('.dk-map-legend__title');
-                districtLegendEl = legendContainer.querySelector('.dk-map-legend__list');
-                L.DomEvent.disableClickPropagation(legendContainer);
-                L.DomEvent.disableScrollPropagation(legendContainer);
-            }
-
-            // Render legenda kecamatan saat pertama kali dimuat
-            renderLegend(districtLabelData, { title: 'Keterangan Kecamatan', prefix: 'Kec.' });
-
-            // Pastikan layer peta sesuai kondisi filter awal
             rebuildDistrictLayers(currentDistrictFilter);
         })();
+
+        @if (!empty($populationGrowth['labels']) && count($populationGrowth['labels']) > 0)
+        // Population Growth Chart
+        (function() {
+            const growthData = @json($populationGrowth);
+            const canvas = document.getElementById('population-growth-chart');
+            
+            if (!canvas || !growthData.labels || growthData.labels.length === 0) {
+                return;
+            }
+
+            const ctx = canvas.getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: growthData.labels,
+                    datasets: [
+                        {
+                            label: 'Jumlah Penduduk',
+                            data: growthData.data,
+                            borderColor: '#007151',
+                            backgroundColor: 'rgba(0, 113, 81, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y',
+                        },
+                        {
+                            label: 'Laju Pertumbuhan (%)',
+                            data: growthData.growthRates,
+                            borderColor: '#00a876',
+                            backgroundColor: 'rgba(0, 168, 118, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4,
+                            yAxisID: 'y1',
+                            borderDash: [5, 5],
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: {
+                                    size: 12,
+                                    family: "'Inter', 'Poppins', sans-serif"
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: {
+                                size: 13,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 12
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.datasetIndex === 0) {
+                                        label += new Intl.NumberFormat('id-ID').format(context.parsed.y);
+                                    } else {
+                                        label += context.parsed.y !== null 
+                                            ? context.parsed.y.toFixed(2) + '%' 
+                                            : '-';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11,
+                                    family: "'Inter', 'Poppins', sans-serif"
+                                },
+                                color: '#6b7280'
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11,
+                                    family: "'Inter', 'Poppins', sans-serif"
+                                },
+                                color: '#6b7280',
+                                callback: function(value) {
+                                    return new Intl.NumberFormat('id-ID').format(value);
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Jumlah Penduduk',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold',
+                                    family: "'Inter', 'Poppins', sans-serif"
+                                },
+                                color: '#374151'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11,
+                                    family: "'Inter', 'Poppins', sans-serif"
+                                },
+                                color: '#6b7280',
+                                callback: function(value) {
+                                    return value !== null ? value.toFixed(2) + '%' : '-';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Laju Pertumbuhan (%)',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold',
+                                    family: "'Inter', 'Poppins', sans-serif"
+                                },
+                                color: '#374151'
+                            }
+                        }
+                    }
+                }
+            });
+        })();
+        @endif
     </script>
 @endpush
-

@@ -1,364 +1,629 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
-    {{-- Pengaturan meta, judul halaman, serta pemuatan aset global untuk layout publik --}}
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ ($title ?? null) ? $title . ' · ' : '' }}{{ config('app.name', 'Dukcapil Madiun') }}</title>
-
-    <link rel="icon" type="image/png" href="{{ asset('vendor/corporate-ui/img/kabupaten-madiun.png') }}?v=1">
-    <link rel="shortcut icon" type="image/png" href="{{ asset('vendor/corporate-ui/img/kabupaten-madiun.png') }}?v=1">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap"
-        rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-        integrity="sha512-31on1Uwx1PcT6zG17Q6C7GdYr387cMGX5CujjJVOk+3O8VjMBYPWaFzx5b9mzfFh1YgUo10xXMYN9bB+FsSjVg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="{{ asset('css/dukcapil.css') . '?v=' . filemtime(public_path('css/dukcapil.css')) }}">
-    {{-- Slot untuk menambahkan stylesheet khusus dari halaman turunan --}}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', 'Serdadu') - Sistem Rekap Data Terpadu</title>
+    
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
+    
+    <style>
+        /* Icon color styling untuk sidebar navigation */
+        .sidebar-nav-icon {
+            filter: brightness(0) saturate(100%);
+            opacity: 0.7;
+            transition: all 0.2s ease;
+        }
+        
+        /* Icon hijau saat hover */
+        .sidebar-nav-link:hover .sidebar-nav-icon {
+            filter: brightness(0) saturate(100%) invert(27%) sepia(95%) saturate(1352%) hue-rotate(120deg) brightness(0.4);
+            opacity: 1;
+        }
+        
+        /* Icon putih saat active (dipilih) */
+        .sidebar-nav-link.active .sidebar-nav-icon {
+            filter: brightness(0) invert(1);
+            opacity: 1;
+        }
+    </style>
 </head>
 
-<body class="bg-body">
-    {{-- Sidebar utama untuk navigasi halaman publik Serdadu --}}
-    <aside class="dk-sidebar dk-sidebar--collapsed" data-sidebar>
-        <div class="dk-sidebar__brand mb-3">
-            <div class="dk-sidebar__logo">
-                <img src="{{ asset('vendor/corporate-ui/img/kabupaten-madiun.png') }}" alt="Logo"
-                    class="dk-logo-img">
+<body class="bg-gray-50 antialiased" data-sidebar-state>
+    <!-- Sidebar Desktop -->
+    <aside 
+        id="desktop-sidebar"
+        class="fixed top-0 left-0 z-40 h-screen transition-all duration-300 ease-in-out bg-white border-r border-gray-200 shadow-sm overflow-hidden flex-col hidden lg:flex w-64"
+        data-sidebar
+    >
+        <!-- Brand Section -->
+        <div class="flex items-center justify-center h-16 border-b border-gray-200 px-4" data-sidebar-brand>
+            <div class="flex items-center gap-3 min-w-0 flex-1 justify-center" data-sidebar-brand-content>
+                <img 
+                    src="{{ asset('img/kabupaten-madiun.png') }}" 
+                    alt="Logo" 
+                    class="w-10 h-10 flex-shrink-0 object-contain cursor-pointer hover:opacity-80 transition-opacity"
+                    data-sidebar-logo
+                    title="Klik untuk collapse/expand sidebar"
+                >
+                <div class="min-w-0" data-sidebar-text>
+                    <div class="font-semibold text-gray-900 truncate">Serdadu</div>
+                    <div class="text-xs text-gray-500 truncate">Sistem Rekap Data Terpadu</div>
             </div>
-            <div class="dk-sidebar__brand-text">
-                <span class="dk-brand-title">Serdadu</span>
-                <span class="dk-brand-subtitle">Sistem Rekap Data Terpadu</span>
             </div>
         </div>
-        <div class="dk-sidebar__toggle">
-            <button id="sidebarToggle" class="dk-sidebar-fab" type="button" aria-label="Sembunyikan sidebar">
-                <span class="dk-sidebar-fab__icon">
-                    <img src="{{ asset('img/arrow.png') }}" alt="Toggle sidebar">
-                </span>
-                <span class="dk-sidebar-fab__label text-xs" data-label>Sembunyikan</span>
-            </button>
-        </div>
-        {{-- Daftar tautan menu utama pada sidebar desktop --}}
-        <nav class="dk-sidebar__nav">
-            <a href="{{ route('public.landing') }}"
-                class="dk-nav-link {{ request()->routeIs('public.landing') ? 'active' : '' }}">
-                <span class="dk-nav-link__icon">
-                    <img src="{{ asset('img/home.png') }}" alt="" class="dk-nav-link__image" loading="lazy" decoding="async">
-                </span>
-                <span class="dk-nav-link__label">Home</span>
-            </a>
-            <a href="{{ route('public.data') }}"
-                class="dk-nav-link {{ request()->routeIs('public.data') ? 'active' : '' }}">
-                <span class="dk-nav-link__icon">
-                    <img src="{{ asset('img/table.png') }}" alt="" class="dk-nav-link__image" loading="lazy" decoding="async">
-                </span>
-                <span class="dk-nav-link__label">Tabel</span>
-            </a>
-            <a href="{{ route('public.charts') }}"
-                class="dk-nav-link {{ request()->routeIs('public.charts') ? 'active' : '' }}">
-                <span class="dk-nav-link__icon">
-                    <img src="{{ asset('img/bar-stats.png') }}" alt="" class="dk-nav-link__image" loading="lazy" decoding="async">
-                </span>
-                <span class="dk-nav-link__label">Grafik</span>
-            </a>
-            <a href="{{ url('/compare') }}"
-                class="dk-nav-link {{ request()->is('compare') ? 'active' : '' }}">
-                <span class="dk-nav-link__icon">
-                    <img src="{{ asset('img/compare.png') }}" alt="" class="dk-nav-link__image" loading="lazy" decoding="async">
-                </span>
-                <span class="dk-nav-link__label">Compare</span>
-            </a>
-            <a href="{{ url('/terms') }}"
-                class="dk-nav-link {{ request()->is('terms') ? 'active' : '' }}">
-                <span class="dk-nav-link__icon">
-                    <img src="{{ asset('img/terms.png') }}" alt="" class="dk-nav-link__image" loading="lazy" decoding="async">
-                </span>
-                <span class="dk-nav-link__label">Terms</span>
-            </a>
+
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto px-4 py-4" data-sidebar-nav>
+            <div class="space-y-1">
+                <a 
+                    href="{{ route('public.landing') }}"
+                    class="sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.landing') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
+                    title="Home"
+                    data-sidebar-nav-item
+                >
+                    <img src="{{ asset('img/home.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
+                    <span class="whitespace-nowrap" data-sidebar-nav-text>Home</span>
+                </a>
+                
+                <a 
+                    href="{{ route('public.data') }}"
+                    class="sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.data') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
+                    title="Tabel"
+                    data-sidebar-nav-item
+                >
+                    <img src="{{ asset('img/table.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
+                    <span class="whitespace-nowrap" data-sidebar-nav-text>Tabel</span>
+                </a>
+                
+                <a 
+                    href="{{ route('public.charts') }}"
+                    class="sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.charts') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
+                    title="Grafik"
+                    data-sidebar-nav-item
+                >
+                    <img src="{{ asset('img/bar-stats.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
+                    <span class="whitespace-nowrap" data-sidebar-nav-text>Grafik</span>
+                </a>
+                
+                <a 
+                    href="{{ url('/compare') }}"
+                    class="sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->is('compare') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
+                    title="Compare"
+                    data-sidebar-nav-item
+                >
+                    <img src="{{ asset('img/compare.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
+                    <span class="whitespace-nowrap" data-sidebar-nav-text>Compare</span>
+                </a>
+                
+                <a 
+                    href="{{ url('/terms') }}"
+                    class="sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->is('terms') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
+                    title="Terms"
+                    data-sidebar-nav-item
+                >
+                    <img src="{{ asset('img/terms.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
+                    <span class="whitespace-nowrap" data-sidebar-nav-text>Terms</span>
+                </a>
+            </div>
         </nav>
-        {{-- Informasi hak cipta dan versi aplikasi pada bagian bawah sidebar --}}
-        <div class="dk-sidebar__footer">
-            <span class="dk-sidebar__meta" data-sidebar-meta-full>Copyright © 2025 <a href="{{ url('/') }}" class="dk-sidebar__link" target="_blank" rel="noopener noreferrer">Serdadu</a> <a href="https://dukcapil.madiunkab.go.id" class="dk-sidebar__link" target="_blank" rel="noopener noreferrer">Dukcapil Kab. Madiun</a>. All rights reserved.</span>
-            <span class="dk-sidebar__meta" data-sidebar-meta-full>Versi 0.1.2</span>
-            <span class="dk-sidebar__meta" data-sidebar-meta-compact>&copy;</span>
-            <span class="dk-sidebar__meta" data-sidebar-meta-compact>Versi 0.1.2</span>
+
+        <!-- Footer -->
+        <div 
+            class="border-t border-gray-200 space-y-1 overflow-hidden p-4"
+            data-sidebar-footer
+        >
+            <div class="text-xs text-gray-500 text-center">
+                Copyright © 2025 
+                <a href="{{ url('/') }}" class="text-[#007151] hover:underline" target="_blank" rel="noopener">Serdadu</a>
+                <a href="https://dukcapil.madiunkab.go.id" class="text-[#007151] hover:underline" target="_blank" rel="noopener">Dukcapil Kab. Madiun</a>
+            </div>
+            <div class="text-xs text-gray-500 text-center">Versi 0.1.2</div>
         </div>
 </aside>
 
-    {{-- Topbar untuk tombol menu pada tampilan responsif --}}
-    <header class="dk-topbar">
-        <div class="dk-topbar__brand">
-            <img src="{{ asset('vendor/corporate-ui/img/kabupaten-madiun.png') }}" alt="Kabupaten Madiun"
-                class="dk-topbar__brand-logo">
-            <div class="dk-topbar__brand-text">
-                <span class="dk-topbar__brand-title">Serdadu</span>
-                <span class="dk-topbar__brand-subtitle">Sistem Rekap Data Terpadu</span>
+    <!-- Mobile Header -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-gray-200 shadow-sm">
+        <div class="flex items-center justify-between h-full px-4">
+            <div class="flex items-center gap-3">
+                <img 
+                    src="{{ asset('img/kabupaten-madiun.png') }}" 
+                    alt="Logo" 
+                    class="w-10 h-10 object-contain"
+                >
+                <div>
+                    <div class="font-semibold text-gray-900 text-sm">Serdadu</div>
+                    <div class="text-xs text-gray-500">Sistem Rekap Data Terpadu</div>
+                </div>
             </div>
+            <button 
+                id="mobile-menu-toggle"
+                class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Toggle menu"
+            >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
         </div>
-        <button class="dk-topbar__menu" type="button" data-offcanvas-toggle aria-controls="sidebarOffcanvas"
-            aria-expanded="false" aria-label="Buka navigasi">
-            <img src="{{ asset('img/menu.png') }}" alt="Menu">
-        </button>
     </header>
 
-    <div class="dk-main dk-main--expanded" data-main>
-        {{-- Kontainer konten dinamis yang diisi oleh masing-masing halaman --}}
-        <main class="dk-content">
-            @yield('content')
-        </main>
-    </div>
+    <!-- Mobile Sidebar Overlay -->
+    <div 
+        id="mobile-sidebar-overlay"
+        class="lg:hidden fixed inset-0 z-30 bg-black bg-opacity-50 hidden transition-opacity duration-300"
+    ></div>
 
-    {{-- Sidebar offcanvas khusus tampilan seluler --}}
-    <div class="offcanvas offcanvas-start dk-offcanvas" tabindex="-1" id="sidebarOffcanvas">
-        <div class="offcanvas-header">
-            <div class="dk-offcanvas-brand">
-                <div class="dk-offcanvas-brand__logo">
-                    <img src="{{ asset('vendor/corporate-ui/img/kabupaten-madiun.png') }}" alt="Kabupaten Madiun"
-                        class="dk-offcanvas-brand__img">
-                </div>
-                <div class="dk-offcanvas-brand__text">
-                    <span class="dk-offcanvas-brand__title">Serdadu</span>
-                    <small class="dk-offcanvas-brand__subtitle">Sistem Rekap Data Terpadu</small>
+    <!-- Mobile Sidebar -->
+    <aside 
+        id="mobile-sidebar"
+        class="lg:hidden fixed top-0 left-0 z-40 h-full w-64 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 flex flex-col"
+    >
+        <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <img src="{{ asset('img/kabupaten-madiun.png') }}" alt="Logo" class="w-10 h-10 object-contain">
+                <div>
+                    <div class="font-semibold text-gray-900 text-sm">Serdadu</div>
+                    <div class="text-xs text-gray-500">Sistem Rekap Data Terpadu</div>
                 </div>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            <button 
+                id="mobile-menu-close"
+                class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Close menu"
+            >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
         </div>
-        <div class="offcanvas-body">
-            <nav class="dk-sidebar__nav">
-                <a href="{{ route('public.landing') }}"
-                    class="dk-nav-link {{ request()->routeIs('public.landing') ? 'active' : '' }}"
-                    data-offcanvas-close>
-                    <span class="dk-nav-link__icon">
-                        <img src="{{ asset('img/home.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
-                    </span>
-                    <span class="dk-nav-link__label">Beranda</span>
-                </a>
-                <a href="{{ route('public.data') }}"
-                    class="dk-nav-link {{ request()->routeIs('public.data') ? 'active' : '' }}"
-                    data-offcanvas-close>
-                    <span class="dk-nav-link__icon">
-                        <img src="{{ asset('img/table.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
-                    </span>
-                    <span class="dk-nav-link__label">Data Agregat</span>
-                </a>
-                <a href="{{ route('public.charts') }}"
-                    class="dk-nav-link {{ request()->routeIs('public.charts') ? 'active' : '' }}"
-                    data-offcanvas-close>
-                    <span class="dk-nav-link__icon">
-                        <img src="{{ asset('img/bar-stats.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
-                    </span>
-                    <span class="dk-nav-link__label">Grafik Data</span>
-                </a>
-                <a href="{{ url('/compare') }}"
-                    class="dk-nav-link {{ request()->is('compare') ? 'active' : '' }}"
-                    data-offcanvas-close>
-                    <span class="dk-nav-link__icon">
-                        <img src="{{ asset('img/compare.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
-                    </span>
-                    <span class="dk-nav-link__label">Compare</span>
-                </a>
-                <a href="{{ url('/terms') }}"
-                    class="dk-nav-link {{ request()->is('terms') ? 'active' : '' }}"
-                    data-offcanvas-close>
-                    <span class="dk-nav-link__icon">
-                        <img src="{{ asset('img/terms.png') }}" alt="" class="dk-nav-link__image" loading="lazy">
-                    </span>
-                    <span class="dk-nav-link__label">Terms</span>
-                </a>
+        
+        <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+            <a 
+                href="{{ route('public.landing') }}"
+                class="mobile-menu-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.landing') ? 'bg-[#007151] text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+            >
+                <img src="{{ asset('img/home.png') }}" alt="" class="w-5 h-5">
+                <span>Home</span>
+            </a>
+            
+            <a 
+                href="{{ route('public.data') }}"
+                class="mobile-menu-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.data') ? 'bg-[#007151] text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+            >
+                <img src="{{ asset('img/table.png') }}" alt="" class="w-5 h-5">
+                <span>Tabel</span>
+            </a>
+            
+            <a 
+                href="{{ route('public.charts') }}"
+                class="mobile-menu-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.charts') ? 'bg-[#007151] text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+            >
+                <img src="{{ asset('img/bar-stats.png') }}" alt="" class="w-5 h-5">
+                <span>Grafik</span>
+            </a>
+            
+            <a 
+                href="{{ url('/compare') }}"
+                class="mobile-menu-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->is('compare') ? 'bg-[#007151] text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+            >
+                <img src="{{ asset('img/compare.png') }}" alt="" class="w-5 h-5">
+                <span>Compare</span>
+            </a>
+            
+            <a 
+                href="{{ url('/terms') }}"
+                class="mobile-menu-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->is('terms') ? 'bg-[#007151] text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+            >
+                <img src="{{ asset('img/terms.png') }}" alt="" class="w-5 h-5">
+                <span>Terms</span>
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t border-gray-200 space-y-1 mt-auto flex-shrink-0">
+            <div class="text-xs text-gray-500 text-center">
+                Copyright © 2025 
+                <a href="{{ url('/') }}" class="text-[#007151] hover:underline" target="_blank" rel="noopener">Serdadu</a>
+                <a href="https://dukcapil.madiunkab.go.id" class="text-[#007151] hover:underline" target="_blank" rel="noopener">Dukcapil Kab. Madiun</a>
+            </div>
+            <div class="text-xs text-gray-500 text-center">Versi 0.1.2</div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main 
+        id="main-content"
+        class="transition-all duration-300 ease-in-out min-h-screen lg:pt-0 pt-16 lg:ml-64"
+        style="will-change: margin-left;"
+    >
+        <!-- Breadcrumb Navigation -->
+        <div class="border-b border-gray-200 bg-white px-4 lg:px-6 py-3">
+            <nav class="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
+                @php
+                    $breadcrumbs = [];
+                    
+                    // Home/Beranda
+                    if (request()->routeIs('public.landing')) {
+                        $breadcrumbs[] = [
+                            'label' => 'Beranda',
+                            'route' => 'public.landing',
+                            'icon' => 'home',
+                            'active' => true
+                        ];
+                    } else {
+                        $breadcrumbs[] = [
+                            'label' => 'Beranda',
+                            'route' => 'public.landing',
+                            'icon' => 'home',
+                            'active' => false
+                        ];
+                        
+                        // Tabel/Data
+                        if (request()->routeIs('public.data') || request()->routeIs('public.data.fullscreen')) {
+                            $breadcrumbs[] = [
+                                'label' => 'Tabel',
+                                'route' => 'public.data',
+                                'icon' => 'table',
+                                'active' => false
+                            ];
+                            
+                            // Tambahkan kategori tab aktif jika ada
+                            $category = request()->query('category', 'gender');
+                            $categoryLabels = [
+                                'gender' => 'Jenis Kelamin',
+                                'age' => 'Kelompok Umur',
+                                'single-age' => 'Umur Tunggal',
+                                'education' => 'Pendidikan',
+                                'occupation' => 'Pekerjaan',
+                                'marital' => 'Status Perkawinan',
+                                'household' => 'Kepala Keluarga',
+                                'religion' => 'Agama',
+                                'wajib-ktp' => 'Wajib KTP',
+                            ];
+                            $categoryLabel = $categoryLabels[$category] ?? 'Jenis Kelamin';
+                            
+                            if (request()->routeIs('public.data.fullscreen')) {
+                                $breadcrumbs[] = [
+                                    'label' => $categoryLabel,
+                                    'route' => null,
+                                    'icon' => 'table',
+                                    'active' => false
+                                ];
+                                $breadcrumbs[] = [
+                                    'label' => 'Fullscreen',
+                                    'route' => null,
+                                    'icon' => 'maximize',
+                                    'active' => true
+                                ];
+                            } else {
+                                $breadcrumbs[] = [
+                                    'label' => $categoryLabel,
+                                    'route' => null,
+                                    'icon' => 'table',
+                                    'active' => true
+                                ];
+                            }
+                        }
+                        
+                        // Grafik
+                        if (request()->routeIs('public.charts')) {
+                            $breadcrumbs[] = [
+                                'label' => 'Grafik',
+                                'route' => 'public.charts',
+                                'icon' => 'chart',
+                                'active' => true
+                            ];
+                        }
+                    }
+                @endphp
+                
+                @if(count($breadcrumbs) > 1)
+                    <button 
+                        onclick="window.history.back()" 
+                        class="flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#007151] focus:ring-offset-2"
+                        title="Kembali"
+                        aria-label="Kembali"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <span class="text-gray-300">|</span>
+                @endif
+                
+                <ol class="flex items-center gap-2">
+                    @foreach($breadcrumbs as $index => $breadcrumb)
+                        <li class="flex items-center gap-2">
+                            @if($index > 0)
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            @endif
+                            
+                            @if($breadcrumb['route'] && !$breadcrumb['active'])
+                                <a 
+                                    href="{{ route($breadcrumb['route']) }}" 
+                                    class="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors {{ $breadcrumb['label'] === $categoryLabel ?? '' ? 'breadcrumb-category' : '' }}"
+                                >
+                                    @if($breadcrumb['icon'] === 'home')
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                        </svg>
+                                    @elseif($breadcrumb['icon'] === 'table')
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                        </svg>
+                                    @elseif($breadcrumb['icon'] === 'chart')
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                        </svg>
+                                    @elseif($breadcrumb['icon'] === 'maximize')
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                                        </svg>
+                                    @endif
+                                    <span>{{ $breadcrumb['label'] }}</span>
+                                </a>
+                            @else
+                                <span class="flex items-center gap-1.5 text-gray-900 font-medium {{ isset($categoryLabel) && $breadcrumb['label'] === $categoryLabel ? 'breadcrumb-category' : '' }}">
+                                    @if($breadcrumb['icon'] === 'home')
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                        </svg>
+                                    @elseif($breadcrumb['icon'] === 'table')
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                        </svg>
+                                    @elseif($breadcrumb['icon'] === 'chart')
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                        </svg>
+                                    @elseif($breadcrumb['icon'] === 'maximize')
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                                        </svg>
+                                    @endif
+                                    <span class="breadcrumb-category-text">{{ $breadcrumb['label'] }}</span>
+                                </span>
+                            @endif
+                        </li>
+                    @endforeach
+                </ol>
             </nav>
-            <div class="dk-offcanvas__footer">
-                <span class="dk-offcanvas__meta">Copyright © 2025 <a href="{{ url('/') }}" class="dk-offcanvas__link" target="_blank" rel="noopener noreferrer">Serdadu</a> <a href="https://dukcapil.madiunkab.go.id" class="dk-offcanvas__link" target="_blank" rel="noopener noreferrer">Dukcapil Kab. Madiun</a>. All rights reserved.</span>
-                <span class="dk-offcanvas__meta">Versi 0.1.2</span>
-            </div>
         </div>
-    </div>
+        
+        <div class="p-4 lg:p-6 max-w-full">
+            @yield('content')
+        </div>
+    </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
-        crossorigin="anonymous"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const toggleBtn = document.getElementById('sidebarToggle');
-            const sidebar = document.querySelector('[data-sidebar]');
-            const main = document.querySelector('[data-main]');
-            const labelElement = toggleBtn?.querySelector('[data-label]');
-            const offcanvasEl = document.getElementById('sidebarOffcanvas');
-            const fabButtons = document.querySelectorAll('.dk-sidebar-fab, .dk-offcanvas-fab');
-            const hasBootstrap = typeof bootstrap !== 'undefined';
-            const offcanvasInstance = (offcanvasEl && hasBootstrap)
-                ? bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl)
-                : null;
-
-            // Sembunyikan tombol FAB mengambang saat offcanvas terbuka agar tidak menutupi konten
-            if (offcanvasEl && fabButtons.length) {
-                offcanvasEl.addEventListener('show.bs.offcanvas', () => {
-                    fabButtons.forEach((btn) => {
-                        btn.dataset.prevVisibility = btn.style.visibility;
-                        btn.style.visibility = 'hidden';
-                    });
-                });
-                offcanvasEl.addEventListener('hidden.bs.offcanvas', () => {
-                    fabButtons.forEach((btn) => {
-                        if ('prevVisibility' in btn.dataset) {
-                            btn.style.visibility = btn.dataset.prevVisibility || '';
-                            delete btn.dataset.prevVisibility;
-                        } else {
-                            btn.style.visibility = '';
-                        }
-                    });
-                });
-            }
-
-            // Pastikan tautan menu offcanvas menutup panel tanpa menghalangi perpindahan halaman
-            if (offcanvasEl) {
-                const offcanvasLinks = offcanvasEl.querySelectorAll('[data-offcanvas-close]');
-                offcanvasLinks.forEach((link) => {
-                    link.addEventListener('click', () => {
-                        if (offcanvasInstance) {
-                            // Sembunyikan panel pada frame berikutnya supaya navigasi tetap lancar
-                            requestAnimationFrame(() => offcanvasInstance.hide());
-                        }
-                    });
-                });
-            }
-
-            const offcanvasToggles = document.querySelectorAll('[data-offcanvas-toggle]');
-            if (offcanvasToggles.length && offcanvasEl) {
-                offcanvasToggles.forEach((btn) => {
-                    btn.addEventListener('click', () => {
-                        if (!offcanvasInstance) {
-                            return;
-                        }
-                        if (offcanvasEl.classList.contains('show')) {
-                            offcanvasInstance.hide();
-                        } else {
-                            offcanvasInstance.show();
-                        }
-                    });
-                });
-            }
-
-            if (toggleBtn && sidebar && main) {
-                let manualCollapsed = sidebar.classList.contains('dk-sidebar--collapsed');
-                let hoverExpanded = false;
-                let hoverTimeoutId = null;
-                let animationTimeoutId = null;
-                let isAnimating = false;
-
-                const applyLayoutState = () => {
-                    const shouldCollapse = manualCollapsed && !hoverExpanded;
-                    beginAnimation();
-                    sidebar.classList.toggle('dk-sidebar--collapsed', shouldCollapse);
-                    sidebar.classList.toggle('dk-sidebar--hovering', hoverExpanded);
-                    main.classList.toggle('dk-main--expanded', shouldCollapse);
-                };
-
-                const syncFabState = () => {
-                    toggleBtn.classList.toggle('is-collapsed', manualCollapsed);
-
-                    if (labelElement) {
-                        labelElement.textContent = manualCollapsed ? 'Tampilkan' : 'Sembunyikan';
-                    }
-                    toggleBtn.setAttribute('aria-label', manualCollapsed ? 'Tampilkan sidebar' : 'Sembunyikan sidebar');
-                };
-
-                const clearHoverTimeout = () => {
-                    if (hoverTimeoutId) {
-                        window.clearTimeout(hoverTimeoutId);
-                        hoverTimeoutId = null;
-                    }
-                };
-
-                const beginAnimation = () => {
-                    isAnimating = true;
-                    if (animationTimeoutId) {
-                        window.clearTimeout(animationTimeoutId);
-                    }
-                    animationTimeoutId = window.setTimeout(() => {
-                        isAnimating = false;
-                        animationTimeoutId = null;
-                    }, 260);
-                };
-
-                const handleTransitionEnd = (event) => {
-                    if (event.target !== sidebar) {
-                        return;
-                    }
-                    if (event.propertyName === 'width') {
-                        isAnimating = false;
-                        if (animationTimeoutId) {
-                            window.clearTimeout(animationTimeoutId);
-                            animationTimeoutId = null;
-                        }
-                    }
-                };
-
-                sidebar.addEventListener('transitionend', handleTransitionEnd);
-
-                const setCollapsed = (collapsed) => {
-                    manualCollapsed = collapsed;
-                    if (!collapsed) {
-                        hoverExpanded = false;
-                    }
-                    clearHoverTimeout();
-                    applyLayoutState();
-                    syncFabState();
-                };
-
-                applyLayoutState();
-                syncFabState();
-
-                toggleBtn.addEventListener('click', () => {
-                    const isMobile = window.matchMedia('(max-width: 991.98px)').matches;
-                    if (isMobile) {
-                        if (offcanvasInstance) {
-                            offcanvasInstance.show();
-                        }
-                        return;
-                    }
-
-                    setCollapsed(!manualCollapsed);
-                });
-
-                sidebar.addEventListener('mouseenter', () => {
-                    if (!manualCollapsed || hoverExpanded || isAnimating) {
-                        return;
-                    }
-                    clearHoverTimeout();
-                    hoverTimeoutId = window.setTimeout(() => {
-                        hoverExpanded = true;
-                        applyLayoutState();
-                        hoverTimeoutId = null;
-                    }, 80);
-                });
-
-                sidebar.addEventListener('mouseleave', () => {
-                    if (hoverTimeoutId) {
-                        clearHoverTimeout();
-                    }
-                    if (!manualCollapsed || !hoverExpanded) {
-                        return;
-                    }
-                    if (isAnimating) {
-                        return;
-                    }
-                    hoverExpanded = false;
-                    applyLayoutState();
-                });
-            }
-
-            // Tidak ada injeksi sidebar untuk tab kategori (dikembalikan seperti semula)
-        });
-    </script>
-    {{-- Slot untuk menyisipkan skrip tambahan dari halaman turunan --}}
     @stack('scripts')
+    
+    <script>
+        // Vanilla JavaScript untuk sidebar collapse (CSP-friendly)
+        (function() {
+            'use strict';
+            
+            // Desktop Sidebar
+            const desktopSidebar = document.getElementById('desktop-sidebar');
+            const mainContent = document.getElementById('main-content');
+            
+            const sidebarText = document.querySelector('[data-sidebar-text]');
+            const sidebarNav = document.querySelector('[data-sidebar-nav]');
+            const sidebarNavTexts = document.querySelectorAll('[data-sidebar-nav-text]');
+            const sidebarNavItems = document.querySelectorAll('[data-sidebar-nav-item]');
+            const sidebarBrand = document.querySelector('[data-sidebar-brand]');
+            const sidebarBrandContent = document.querySelector('[data-sidebar-brand-content]');
+            const sidebarLogo = document.querySelector('[data-sidebar-logo]');
+            const sidebarFooter = document.querySelector('[data-sidebar-footer]');
+            
+            // Mobile Sidebar
+            const mobileSidebar = document.getElementById('mobile-sidebar');
+            const mobileOverlay = document.getElementById('mobile-sidebar-overlay');
+            const mobileToggle = document.getElementById('mobile-menu-toggle');
+            const mobileClose = document.getElementById('mobile-menu-close');
+            const mobileMenuLinks = document.querySelectorAll('.mobile-menu-link');
+            
+            let collapsed = false;
+            let hoverExpanded = false;
+            let hoverTimeout = null;
+            
+            // Load state from localStorage
+            try {
+                const stored = localStorage.getItem('sidebarCollapsed');
+                if (stored === 'true') {
+                    collapsed = true;
+                }
+            } catch (e) {
+                console.warn('localStorage not available');
+            }
+            
+            // Update desktop sidebar state
+            function updateDesktopSidebar() {
+                if (!desktopSidebar || !mainContent) {
+                    return;
+                }
+                
+                const isExpanded = !collapsed || hoverExpanded;
+                
+                if (!isExpanded) {
+                    // Collapsed state
+                    desktopSidebar.classList.remove('w-64');
+                    desktopSidebar.classList.add('w-20');
+                    mainContent.classList.remove('lg:ml-64');
+                    mainContent.classList.add('lg:ml-20');
+                    
+                    // Hide text elements
+                    if (sidebarText) sidebarText.style.display = 'none';
+                    sidebarNavTexts.forEach(el => el.style.display = 'none');
+                    if (sidebarFooter) sidebarFooter.style.display = 'none';
+                    
+                    // Adjust padding and center alignment
+                    if (sidebarBrand) {
+                        sidebarBrand.classList.remove('px-4');
+                        sidebarBrand.classList.add('px-2', 'justify-center');
+                    }
+                    if (sidebarBrandContent) {
+                        sidebarBrandContent.classList.remove('flex-1');
+                        sidebarBrandContent.classList.add('justify-center');
+                    }
+                    if (sidebarLogo) {
+                        sidebarLogo.classList.remove('w-10', 'h-10');
+                        sidebarLogo.classList.add('w-8', 'h-8');
+                    }
+                    if (sidebarNav) {
+                        sidebarNav.classList.remove('px-4');
+                        sidebarNav.classList.add('px-2');
+                    }
+                    // Center navigation items
+                    sidebarNavItems.forEach(item => {
+                        item.classList.remove('gap-3', 'px-3');
+                        item.classList.add('justify-center', 'px-2');
+                    });
+                } else {
+                    // Expanded state (either manually expanded or hover expanded)
+                    desktopSidebar.classList.remove('w-20');
+                    desktopSidebar.classList.add('w-64');
+                    mainContent.classList.remove('lg:ml-20');
+                    mainContent.classList.add('lg:ml-64');
+                    
+                    // Show text elements
+                    if (sidebarText) sidebarText.style.display = '';
+                    sidebarNavTexts.forEach(el => el.style.display = '');
+                    if (sidebarFooter) sidebarFooter.style.display = '';
+                    
+                    // Adjust padding and restore alignment
+                    if (sidebarBrand) {
+                        sidebarBrand.classList.remove('px-2', 'justify-center');
+                        sidebarBrand.classList.add('px-4');
+                    }
+                    if (sidebarBrandContent) {
+                        sidebarBrandContent.classList.add('flex-1');
+                        sidebarBrandContent.classList.remove('justify-center');
+                    }
+                    if (sidebarLogo) {
+                        sidebarLogo.classList.remove('w-8', 'h-8');
+                        sidebarLogo.classList.add('w-10', 'h-10');
+                    }
+                    if (sidebarNav) {
+                        sidebarNav.classList.remove('px-2');
+                        sidebarNav.classList.add('px-4');
+                    }
+                    // Restore navigation items alignment
+                    sidebarNavItems.forEach(item => {
+                        item.classList.remove('justify-center', 'px-2');
+                        item.classList.add('gap-3', 'px-3');
+                    });
+                }
+                
+                // Save to localStorage (only when not hover expanded)
+                if (!hoverExpanded) {
+                    try {
+                        localStorage.setItem('sidebarCollapsed', String(collapsed));
+                    } catch (e) {
+                        console.warn('Could not save to localStorage');
+                    }
+                }
+            }
+            
+            // Click on logo to toggle collapse
+            if (sidebarLogo) {
+                sidebarLogo.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    collapsed = !collapsed;
+                    hoverExpanded = false;
+                    updateDesktopSidebar();
+                });
+            }
+            
+            // Hover to expand functionality
+            if (desktopSidebar) {
+                desktopSidebar.addEventListener('mouseenter', function() {
+                    if (collapsed) {
+                        // Clear any existing timeout
+                        if (hoverTimeout) {
+                            clearTimeout(hoverTimeout);
+                        }
+                        
+                        // Small delay before expanding to avoid accidental triggers
+                        hoverTimeout = setTimeout(function() {
+                            if (collapsed && !hoverExpanded) {
+                                hoverExpanded = true;
+                                updateDesktopSidebar();
+                            }
+                        }, 100);
+                    }
+                });
+                
+                desktopSidebar.addEventListener('mouseleave', function() {
+                    // Clear timeout if mouse leaves before delay
+                    if (hoverTimeout) {
+                        clearTimeout(hoverTimeout);
+                        hoverTimeout = null;
+                    }
+                    
+                    // Collapse back if it was hover-expanded
+                    if (hoverExpanded) {
+                        hoverExpanded = false;
+                        updateDesktopSidebar();
+                    }
+                });
+            }
+            
+            // Prevent logo click from triggering hover
+            if (sidebarLogo) {
+                sidebarLogo.addEventListener('mouseenter', function(e) {
+                    e.stopPropagation();
+                });
+            }
+            
+            // Mobile sidebar functions
+            function openMobileSidebar() {
+                if (mobileSidebar && mobileOverlay) {
+                    mobileSidebar.classList.remove('-translate-x-full');
+                    mobileOverlay.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+            
+            function closeMobileSidebar() {
+                if (mobileSidebar && mobileOverlay) {
+                    mobileSidebar.classList.add('-translate-x-full');
+                    mobileOverlay.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            }
+            
+            if (mobileToggle) {
+                mobileToggle.addEventListener('click', openMobileSidebar);
+            }
+            
+            if (mobileClose) {
+                mobileClose.addEventListener('click', closeMobileSidebar);
+            }
+            
+            if (mobileOverlay) {
+                mobileOverlay.addEventListener('click', closeMobileSidebar);
+            }
+            
+            mobileMenuLinks.forEach(link => {
+                link.addEventListener('click', closeMobileSidebar);
+            });
+            
+            // Initialize sidebar state
+            updateDesktopSidebar();
+            
+            // Debug: Log initial state
+            console.log('Sidebar initialized:', {
+                collapsed: collapsed,
+                hoverExpanded: hoverExpanded,
+                sidebar: desktopSidebar ? 'found' : 'not found',
+                mainContent: mainContent ? 'found' : 'not found'
+            });
+        })();
+    </script>
 </body>
-
 </html>

@@ -1,3 +1,389 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Source files untuk content scanning - Tailwind v4 akan scan file-file ini untuk class yang digunakan */
+@source "../../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
+@source "../../../storage/framework/views/*.php";
+@source "../views/**/*.blade.php";
+@source "../js/**/*.js";
+
+/* Custom theme configuration menggunakan CSS variables */
+@theme {
+    /* Font family - sesuai dengan font yang digunakan di layout */
+    --font-family-sans: 'Poppins', 'Inter', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    
+    /* Custom colors untuk proyek */
+    --color-primary: #007151;
+    --color-primary-50: #f0fdf4;
+    --color-primary-100: #dcfce7;
+    --color-primary-500: #007151;
+    --color-primary-600: #005a3f;
+    --color-primary-700: #00432e;
+    --color-secondary: #6b7280;
+    
+    /* Breakpoints default Tailwind */
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1536px;
+}
+
+/* Utility classes untuk komponen modern */
+.bg-primary {
+    background-color: var(--color-primary);
+}
+
+.text-primary {
+    color: var(--color-primary);
+}
+
+.ring-primary {
+    --tw-ring-color: var(--color-primary);
+}
+
+.border-primary {
+    border-color: var(--color-primary);
+}
+
+.hover\:bg-primary:hover {
+    background-color: var(--color-primary);
+}
+
+.focus\:ring-primary:focus {
+    --tw-ring-color: var(--color-primary);
+}
+
+/* Fix untuk sidebar collapsed - pastikan konten tidak overflow */
+aside.fixed {
+    overflow: hidden;
+}
+
+/* Pastikan main content tidak overlap dengan sidebar */
+main {
+    position: relative;
+    z-index: 1;
+    overflow-x: hidden;
+}
+
+/* Pastikan konten sidebar yang collapsed tidak terlihat */
+aside nav a {
+    position: relative;
+}
+
+aside nav a span[x-show] {
+    transition: opacity 0.2s ease;
+}
+
+/* Hide elements with x-cloak until Alpine.js loads */
+[x-cloak] {
+    display: none !important;
+}
+
+/* Ensure sidebar is visible on desktop */
+@media (min-width: 1024px) {
+    aside.fixed {
+        display: flex !important;
+        flex-direction: column;
+    }
+}
+
+/* Card Component Styles */
+.dk-card {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e7eb;
+}
+
+.dk-card__title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+/* Table Component Styles */
+.dk-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.dk-table thead {
+    background-color: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.dk-table thead th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-right: 1px solid #e5e7eb;
+}
+
+.dk-table thead th:last-child {
+    border-right: none;
+}
+
+.dk-table thead th.text-right {
+    text-align: right;
+}
+
+.dk-table thead th.text-center {
+    text-align: center;
+}
+
+.dk-table thead th.text-left {
+    text-align: left;
+}
+
+.dk-table tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    border-right: 1px solid #e5e7eb;
+    color: #111827;
+}
+
+.dk-table tbody td:last-child {
+    border-right: none;
+}
+
+.dk-table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+.dk-table tfoot {
+    background-color: #f9fafb;
+    border-top: 2px solid #e5e7eb;
+}
+
+.dk-table tfoot th {
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: #111827;
+    text-align: left;
+    border-right: 1px solid #e5e7eb;
+}
+
+.dk-table tfoot th:last-child {
+    border-right: none;
+}
+
+.dk-table tfoot th.text-right {
+    text-align: right;
+}
+
+.dk-table tfoot th.text-center {
+    text-align: center;
+}
+
+.dk-table tfoot th.text-left {
+    text-align: left;
+}
+
+.dk-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.dk-table-scroll.has-scroll {
+    overflow-y: auto;
+}
+
+.dk-table-scroll::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+.dk-table-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.dk-table-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.dk-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Tab Component Styles */
+.dk-tabs {
+    display: flex;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 0;
+    padding: 0;
+    list-style: none;
+    gap: 0.5rem;
+    align-items: stretch;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f1f1;
+}
+
+.dk-tabs::-webkit-scrollbar {
+    height: 6px;
+}
+
+.dk-tabs::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.dk-tabs::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.dk-tabs::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.dk-tab-button {
+    padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 0;
+    line-height: 1.2;
+    min-height: 4rem;
+    border-radius: 0.375rem 0.375rem 0 0;
+    height: 100%;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.dk-tab-button > * {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.dk-tab-button:hover {
+    color: #007151;
+    background-color: rgba(0, 113, 81, 0.08);
+}
+
+.dk-tab-button.active {
+    color: #007151;
+    background-color: transparent;
+    border-bottom: 2px solid #007151;
+    margin-bottom: -2px;
+}
+
+.dk-tab-content {
+    padding: 1.5rem;
+}
+
+.dk-tab-pane {
+    display: none;
+}
+
+.dk-tab-pane.show {
+    display: block;
+}
+
+.dk-tab-pane.active {
+    display: block;
+}
+
+.dk-tab-pane.hidden {
+    display: none !important;
+}
+
+/* Table Heading Component Styles */
+.dk-table-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.dk-table-heading__info {
+    flex: 1;
+    min-width: 0;
+}
+
+.dk-table-heading__actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.dk-table-heading__badge {
+    display: flex;
+    align-items: center;
+}
+
+.dk-table-heading__chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.dk-table-heading__fullscreen {
+    display: flex;
+    align-items: center;
+}
+
+.dk-table-heading__fullscreen-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.dk-table-heading__fullscreen-btn:hover {
+    text-decoration: none;
+}
+
+.dk-table-heading__dropdown {
+    min-width: 200px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dk-table-heading {
+        flex-direction: column;
+    }
+    
+    .dk-table-heading__actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .dk-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .dk-tab-button {
+        white-space: nowrap;
+        padding: 0.5rem 1rem;
+        font-size: 0.8125rem;
+    }
+}

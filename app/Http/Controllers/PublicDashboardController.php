@@ -41,6 +41,7 @@ class PublicDashboardController extends Controller
                 'mapStats' => $this->emptyMapStats(),
                 'districtOptions' => $districts,
                 'districtCount' => $districts->count(),
+                'populationGrowth' => $this->populationGrowthRate(),
             ]);
         }
 
@@ -55,6 +56,8 @@ class PublicDashboardController extends Controller
             'female' => $gender['female'] ?? 0,
         ];
 
+        $populationGrowth = $this->populationGrowthRate();
+
         return view('public.landing', [
             'title' => 'Beranda',
             'period' => $period,
@@ -68,6 +71,7 @@ class PublicDashboardController extends Controller
             'education' => $education,
             'mapStats' => $this->mapPopulationSummary($period),
             'districtOptions' => $districts,
+            'populationGrowth' => $populationGrowth,
         ]);
     }
 
@@ -1515,6 +1519,59 @@ class PublicDashboardController extends Controller
         if (!empty($filters['village_id'])) {
             $query->where('village_id', $filters['village_id']);
         }
+    }
+
+    private function populationGrowthRate(int $limit = 10): array
+    {
+        $periods = $this->availablePeriods();
+        
+        if (empty($periods)) {
+            return [
+                'labels' => [],
+                'data' => [],
+                'growthRates' => [],
+            ];
+        }
+
+        // Ambil periode terakhir (maksimal $limit)
+        $recentPeriods = array_slice($periods, 0, $limit);
+        
+        $labels = [];
+        $data = [];
+        $growthRates = [];
+        
+        $previousTotal = null;
+        
+        foreach ($recentPeriods as $period) {
+            $gender = $this->genderSummary($period);
+            $total = $gender['total'] ?? 0;
+            
+            // Format label periode
+            $label = 'S' . $period['semester'] . ' ' . $period['year'];
+            $labels[] = $label;
+            $data[] = $total;
+            
+            // Hitung laju pertumbuhan
+            if ($previousTotal !== null && $previousTotal > 0) {
+                $growthRate = (($total - $previousTotal) / $previousTotal) * 100;
+                $growthRates[] = round($growthRate, 2);
+            } else {
+                $growthRates[] = null;
+            }
+            
+            $previousTotal = $total;
+        }
+        
+        // Reverse untuk menampilkan dari yang terlama ke terbaru
+        $labels = array_reverse($labels);
+        $data = array_reverse($data);
+        $growthRates = array_reverse($growthRates);
+        
+        return [
+            'labels' => $labels,
+            'data' => $data,
+            'growthRates' => $growthRates,
+        ];
     }
 
 }
