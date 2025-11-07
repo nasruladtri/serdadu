@@ -100,12 +100,14 @@ class PublicDashboardController extends Controller
         $marital = $period ? $this->maritalStatusSummary($period, $filters) : [];
         $headHouseholds = $period ? $this->headOfHouseholdSummary($period, $filters) : [];
         $religions = $period ? $this->religionSummary($period, $filters) : [];
+        $kk = $period ? $this->kkSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0, 'male_printed' => 0, 'female_printed' => 0, 'total_printed' => 0, 'male_not_printed' => 0, 'female_not_printed' => 0, 'total_not_printed' => 0];
         $areaTable = $this->areaPopulationTable($period, $filters);
         $educationMatrix = $this->educationMatrix($period, $filters);
         $wajibKtpMatrix = $this->wajibKtpMatrix($period, $filters);
         $maritalMatrix = $this->maritalMatrix($period, $filters);
         $headHouseholdMatrix = $this->headHouseholdMatrix($period, $filters);
         $religionMatrix = $this->religionMatrix($period, $filters);
+        $kkMatrix = $this->kkMatrix($period, $filters);
 
         return view('public.data', [
             'title' => 'Data Agregat',
@@ -128,12 +130,14 @@ class PublicDashboardController extends Controller
             'marital' => $marital,
             'headHouseholds' => $headHouseholds,
             'religions' => $religions,
+            'kk' => $kk,
             'areaTable' => $areaTable,
             'educationMatrix' => $educationMatrix,
             'wajibKtpMatrix' => $wajibKtpMatrix,
             'maritalMatrix' => $maritalMatrix,
             'headHouseholdMatrix' => $headHouseholdMatrix,
             'religionMatrix' => $religionMatrix,
+            'kkMatrix' => $kkMatrix,
         ]);
     }
 
@@ -164,12 +168,14 @@ class PublicDashboardController extends Controller
         $marital = $period ? $this->maritalStatusSummary($period, $filters) : [];
         $headHouseholds = $period ? $this->headOfHouseholdSummary($period, $filters) : [];
         $religions = $period ? $this->religionSummary($period, $filters) : [];
+        $kk = $period ? $this->kkSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0, 'male_printed' => 0, 'female_printed' => 0, 'total_printed' => 0, 'male_not_printed' => 0, 'female_not_printed' => 0, 'total_not_printed' => 0];
         $areaTable = $this->areaPopulationTable($period, $filters);
         $educationMatrix = $this->educationMatrix($period, $filters);
         $wajibKtpMatrix = $this->wajibKtpMatrix($period, $filters);
         $maritalMatrix = $this->maritalMatrix($period, $filters);
         $headHouseholdMatrix = $this->headHouseholdMatrix($period, $filters);
         $religionMatrix = $this->religionMatrix($period, $filters);
+        $kkMatrix = $this->kkMatrix($period, $filters);
 
         return view('public.data-fullscreen', [
             'title' => 'Data Agregat - Fullscreen',
@@ -192,12 +198,14 @@ class PublicDashboardController extends Controller
             'marital' => $marital,
             'headHouseholds' => $headHouseholds,
             'religions' => $religions,
+            'kk' => $kk,
             'areaTable' => $areaTable,
             'educationMatrix' => $educationMatrix,
             'wajibKtpMatrix' => $wajibKtpMatrix,
             'maritalMatrix' => $maritalMatrix,
             'headHouseholdMatrix' => $headHouseholdMatrix,
             'religionMatrix' => $religionMatrix,
+            'kkMatrix' => $kkMatrix,
             'category' => $category,
         ]);
     }
@@ -238,6 +246,7 @@ class PublicDashboardController extends Controller
             'household' => 'Kepala Keluarga',
             'religion' => 'Agama',
             'wajib-ktp' => 'Wajib KTP',
+            'kk' => 'Kartu Keluarga',
         ];
         $chartsNeedingTags = [
             'age',
@@ -253,6 +262,8 @@ class PublicDashboardController extends Controller
             'occupation',
         ];
 
+        $kkChart = $this->buildKkChart($chartTitles['kk'], $kk);
+
         $charts = [
             'gender' => $this->buildGenderChart($chartTitles['gender'], $gender),
             'age' => $this->buildSeriesChart($chartTitles['age'], $ageGroups),
@@ -263,6 +274,7 @@ class PublicDashboardController extends Controller
             'household' => $this->buildSeriesChart($chartTitles['household'], $headHouseholds),
             'religion' => $this->buildSeriesChart($chartTitles['religion'], $religions),
             'wajib-ktp' => $this->buildWajibKtpChart($chartTitles['wajib-ktp'], $wajibKtp),
+            'kk' => $kkChart,
         ];
 
         return view('public.charts', [
@@ -830,6 +842,34 @@ class PublicDashboardController extends Controller
         return $this->formatMatrixResult($results, $labels, $context);
     }
 
+    private function kkMatrix(?array $period, array $filters): array
+    {
+        $labels = [
+            'total' => 'Total KK',
+            'printed' => 'Sudah Cetak KK',
+            'not_printed' => 'Belum Cetak KK',
+        ];
+        if (!$period) {
+            return $this->buildEmptyMatrix($labels, $this->resolveAreaContext($filters));
+        }
+
+        $context = $this->prepareAreaQuery('pop_kk', $period, $filters);
+        $query = $context['query']
+            ->selectRaw('SUM(pop_kk.male) as total_m')
+            ->selectRaw('SUM(pop_kk.female) as total_f')
+            ->selectRaw('SUM(pop_kk.male_printed) as printed_m')
+            ->selectRaw('SUM(pop_kk.female_printed) as printed_f')
+            ->selectRaw('SUM(pop_kk.male_not_printed) as not_printed_m')
+            ->selectRaw('SUM(pop_kk.female_not_printed) as not_printed_f');
+
+        $this->applyGroupBy($query, $context['groupBy']);
+        $query->orderBy('area_name');
+
+        $results = $query->get();
+
+        return $this->formatMatrixResult($results, $labels, $context);
+    }
+
     private function maritalMatrix(?array $period, array $filters): array
     {
         $labels = $this->maritalLabels();
@@ -952,7 +992,7 @@ class PublicDashboardController extends Controller
 
         return [
             'level' => 'district',
-            'columnLabel' => 'SEMUA',
+            'columnLabel' => 'Kecamatan',
             'highlightId' => null,
         ];
     }
@@ -1332,6 +1372,24 @@ class PublicDashboardController extends Controller
         ];
     }
 
+    private function buildKkChart(string $title, array $summary): array
+    {
+        $labels = ['Total KK', 'Sudah Cetak', 'Belum Cetak'];
+        $data = [
+            (int) ($summary['total'] ?? 0),
+            (int) ($summary['total_printed'] ?? 0),
+            (int) ($summary['total_not_printed'] ?? 0),
+        ];
+
+        return [
+            'title' => $title,
+            'labels' => $labels,
+            'datasets' => [
+                $this->makeDataset('Kartu Keluarga', $data, ['#377dff', '#28a745', '#ffc107']),
+            ],
+        ];
+    }
+
     private function buildSeriesChart(string $title, array $rows): array
     {
         if (empty($rows)) {
@@ -1391,6 +1449,39 @@ class PublicDashboardController extends Controller
             'cerai_hidup',
             'cerai_mati',
         ]);
+    }
+
+    private function kkSummary(?array $period, array $filters = []): array
+    {
+        if (!$period) {
+            return ['male' => 0, 'female' => 0, 'total' => 0, 'male_printed' => 0, 'female_printed' => 0, 'total_printed' => 0, 'male_not_printed' => 0, 'female_not_printed' => 0, 'total_not_printed' => 0];
+        }
+
+        $query = DB::table('pop_kk')
+            ->where('year', $period['year'])
+            ->where('semester', $period['semester']);
+
+        $this->applyAreaScope($query, $filters);
+
+        $row = $query
+            ->selectRaw('SUM(male) as male, SUM(female) as female, SUM(total) as total, SUM(male_printed) as male_printed, SUM(female_printed) as female_printed, SUM(total_printed) as total_printed, SUM(male_not_printed) as male_not_printed, SUM(female_not_printed) as female_not_printed, SUM(total_not_printed) as total_not_printed')
+            ->first();
+
+        if (!$row) {
+            return ['male' => 0, 'female' => 0, 'total' => 0, 'male_printed' => 0, 'female_printed' => 0, 'total_printed' => 0, 'male_not_printed' => 0, 'female_not_printed' => 0, 'total_not_printed' => 0];
+        }
+
+        return [
+            'male' => (int) $row->male,
+            'female' => (int) $row->female,
+            'total' => (int) $row->total,
+            'male_printed' => (int) $row->male_printed,
+            'female_printed' => (int) $row->female_printed,
+            'total_printed' => (int) $row->total_printed,
+            'male_not_printed' => (int) $row->male_not_printed,
+            'female_not_printed' => (int) $row->female_not_printed,
+            'total_not_printed' => (int) $row->total_not_printed,
+        ];
     }
 
     private function religionSummary(?array $period, array $filters = []): array

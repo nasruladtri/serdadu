@@ -29,6 +29,11 @@ tmp_*.txt
 temp_*.txt
 *.log
 /public/build.zip
+/resources/temp/*
+
+# Bootstrap cache (compiled config files)
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitignore
 
 # Storage cache files (keep structure, ignore content)
 /storage/framework/cache/*

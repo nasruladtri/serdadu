@@ -118,8 +118,8 @@
                                 <div>
                                     <div class="metric-card metric-card-male">
                                         <div class="flex items-center justify-between mb-2">
-                                            <div class="flex items-center gap-2">
-                                                <img src="{{ asset('img/l.png') }}" alt="Laki-laki" class="w-6 h-6">
+                                        <div class="flex items-center gap-2">
+                                                <img src="{{ asset('img/l.png') }}" alt="Laki-laki" class="w-6 h-6 flex-shrink-0 object-contain brightness-0 invert">
                                                 <span class="text-xs font-medium text-white/90">Laki-laki</span>
                                             </div>
                                         </div>
@@ -136,7 +136,7 @@
                                     <div class="metric-card metric-card-female">
                                         <div class="flex items-center justify-between mb-2">
                                             <div class="flex items-center gap-2">
-                                                <img src="{{ asset('img/p.png') }}" alt="Perempuan" class="w-6 h-6">
+                                                <img src="{{ asset('img/p.png') }}" alt="Perempuan" class="w-6 h-6 flex-shrink-0 object-contain brightness-0 invert">
                                                 <span class="text-xs font-medium text-white/90">Perempuan</span>
                                             </div>
                                         </div>
@@ -173,28 +173,30 @@
                 <div class="lg:col-span-7 xl:col-span-8 flex flex-col">
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
                         <div class="p-6 border-b border-gray-200">
-                            <h2 class="text-lg font-semibold text-gray-900 mb-6">Peta Persebaran Penduduk Kabupaten Madiun</h2>
-                            @if (!empty($districtOptions) && $districtOptions->count())
-                                <div class="lg:w-auto w-full">
-                                    <label for="landing-district-filter" class="block text-xs font-medium text-gray-700 mb-1.5">Kecamatan</label>
-                                    <select 
-                                        id="landing-district-filter" 
-                                        class="w-full lg:w-64 text-sm border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                                    >
-                                        <option value="">Semua Kecamatan</option>
-                                        @foreach($districtOptions as $district)
-                                            <option value="{{ $district->code }}" data-slug="{{ \Illuminate\Support\Str::slug($district->name) }}">
-                                                {{ \Illuminate\Support\Str::title($district->name) }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            @endif
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                <h2 class="text-lg font-semibold text-gray-900">Peta Persebaran Penduduk Kabupaten Madiun</h2>
+                                @if (!empty($districtOptions) && $districtOptions->count())
+                                    <div class="lg:w-auto w-full">
+                                        <label for="landing-district-filter" class="block text-xs font-medium text-gray-700 mb-1.5">Kecamatan</label>
+                                        <select 
+                                            id="landing-district-filter" 
+                                            class="w-full lg:w-64 text-sm border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#007151] focus:border-transparent transition-colors"
+                                        >
+                                            <option value="">Semua Kecamatan</option>
+                                            @foreach($districtOptions as $district)
+                                                <option value="{{ $district->code }}" data-slug="{{ \Illuminate\Support\Str::slug($district->name) }}">
+                                                    {{ \Illuminate\Support\Str::title($district->name) }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                         <div class="relative flex-1">
                             <div id="landing-map-loader" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center">
                                 <div class="text-center">
-                                    <div class="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+                                    <div class="inline-block w-8 h-8 border-4 border-[#007151] border-t-transparent rounded-full animate-spin mb-3"></div>
                                     <div class="text-sm text-gray-600 font-medium">Memuat peta...</div>
                                 </div>
                             </div>
@@ -882,6 +884,48 @@
 
             const ctx = canvas.getContext('2d');
             
+            // Custom plugin untuk letter spacing pada legend
+            const letterSpacingPlugin = {
+                id: 'letterSpacingPlugin',
+                afterDraw(chart) {
+                    const legend = chart.legend;
+                    if (!legend || !legend.legendItems) return;
+                    
+                    const ctx = chart.ctx;
+                    const targetLabel = 'Laju Pertumbuhan (%)';
+                    const letterSpacing = 0.5;
+                    
+                    legend.legendItems.forEach((item, index) => {
+                        const itemText = item._originalText || item.text;
+                        if (itemText === targetLabel && item.hidden === false) {
+                            // Hitung posisi teks berdasarkan legend box
+                            const font = `${item.fontStyle || ''} ${item.fontSize || 12}px ${item.fontFamily || "'Inter', 'Poppins', sans-serif"}`.trim();
+                            ctx.font = font;
+                            ctx.fillStyle = item.fontColor || '#666';
+                            ctx.textBaseline = 'middle';
+                            
+                            // Render teks dengan letter spacing
+                            const text = itemText;
+                            const pointStyleWidth = item.pointStyleWidth || 10;
+                            const padding = item.padding || 4;
+                            const x = item.x + pointStyleWidth + padding;
+                            const y = item.y;
+                            
+                            // Render karakter per karakter dengan letter spacing
+                            let currentX = x;
+                            for (let i = 0; i < text.length; i++) {
+                                ctx.fillText(text[i], currentX, y);
+                                const metrics = ctx.measureText(text[i]);
+                                currentX += metrics.width + letterSpacing;
+                            }
+                        }
+                    });
+                }
+            };
+            
+            // Daftarkan plugin
+            Chart.register(letterSpacingPlugin);
+            
             new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -927,6 +971,17 @@
                                 font: {
                                     size: 12,
                                     family: "'Inter', 'Poppins', sans-serif"
+                                },
+                                generateLabels: function(chart) {
+                                    const original = Chart.defaults.plugins.legend.labels.generateLabels;
+                                    const labels = original.call(this, chart);
+                                    labels.forEach(label => {
+                                        if (label.text === 'Laju Pertumbuhan (%)') {
+                                            label._originalText = label.text; // Simpan teks asli
+                                            label.text = ''; // Sembunyikan teks asli, akan dirender oleh plugin dengan letter spacing
+                                        }
+                                    });
+                                    return labels;
                                 }
                             }
                         },

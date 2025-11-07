@@ -215,16 +215,19 @@ aside nav a span[x-show] {
 /* Tab Component Styles */
 .dk-tabs {
     display: flex;
-    border-bottom: 2px solid #e5e7eb;
-    margin-bottom: 0;
+    border-top: 2px solid #e5e7eb;
+    margin-top: 0;
     padding: 0;
     list-style: none;
     gap: 0.5rem;
     align-items: stretch;
     overflow-x: auto;
+    overflow-y: visible;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 #f1f1f1;
+    position: relative;
+    z-index: 1;
 }
 
 .dk-tabs::-webkit-scrollbar {
@@ -246,26 +249,31 @@ aside nav a span[x-show] {
 }
 
 .dk-tab-button {
-    padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+    padding: 1.5rem 1.5rem 2.5rem 1.5rem;
     font-size: 0.875rem;
     font-weight: 500;
     color: #6b7280;
     background: transparent;
-    border: none;
+    border: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-top: 2px solid transparent;
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
     position: relative;
-    margin-bottom: 0;
+    margin-top: 0;
     line-height: 1.2;
     min-height: 4rem;
-    border-radius: 0.375rem 0.375rem 0 0;
+    border-radius: 0 0 0.375rem 0.375rem;
     height: 100%;
     white-space: nowrap;
     flex-shrink: 0;
+    transform: scale(1);
 }
 
 .dk-tab-button > * {
@@ -273,16 +281,56 @@ aside nav a span[x-show] {
     padding-bottom: 0;
 }
 
-.dk-tab-button:hover {
+.dk-tab-button:hover:not(.active) {
     color: #007151;
     background-color: rgba(0, 113, 81, 0.08);
+    border-top: 2px solid transparent;
+    transform: scale(1.03);
+    font-size: 0.9375rem;
+    font-weight: 550;
 }
 
-.dk-tab-button.active {
-    color: #007151;
-    background-color: transparent;
-    border-bottom: 2px solid #007151;
-    margin-bottom: -2px;
+.dk-tab-button {
+    position: relative;
+}
+
+.dk-tab-button-indicator {
+    display: none;
+    position: absolute;
+    top: -5px;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background-color: #007151;
+    z-index: 30;
+}
+
+.dk-tab-button.active .dk-tab-button-indicator,
+.dk-tab-button.active:hover .dk-tab-button-indicator,
+button.dk-tab-button.active .dk-tab-button-indicator,
+button.dk-tab-button.active:hover .dk-tab-button-indicator,
+#aggregateTabs button.dk-tab-button.active .dk-tab-button-indicator,
+#aggregateTabs button.dk-tab-button.active:hover .dk-tab-button-indicator {
+    display: block;
+}
+
+.dk-tab-button.active,
+.dk-tab-button.active:hover,
+button.dk-tab-button.active,
+button.dk-tab-button.active:hover,
+#aggregateTabs button.dk-tab-button.active,
+#aggregateTabs button.dk-tab-button.active:hover {
+    color: #007151 !important;
+    background-color: transparent !important;
+    border-top: 5px solid #007151 !important;
+    margin-top: -3px;
+    z-index: 25;
+    position: relative;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+    align-items: center !important;
 }
 
 .dk-tab-content {

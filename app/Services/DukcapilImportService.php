@@ -210,6 +210,16 @@ class DukcapilImportService
             $payload['total'] = 0;
         }
 
+        // Khusus untuk pop_kk: hitung total_printed dan total_not_printed jika belum ada
+        if ($rule['table'] === 'pop_kk') {
+            if (!isset($payload['total_printed'])) {
+                $payload['total_printed'] = (int)($payload['male_printed'] ?? 0) + (int)($payload['female_printed'] ?? 0);
+            }
+            if (!isset($payload['total_not_printed'])) {
+                $payload['total_not_printed'] = (int)($payload['male_not_printed'] ?? 0) + (int)($payload['female_not_printed'] ?? 0);
+            }
+        }
+
         return $payload;
     }
 
@@ -919,6 +929,23 @@ class DukcapilImportService
             'umur'            => 'age',
             'kelompok_umur'   => 'age_group',
             'golongan_umur'   => 'age_group',
+            // Kartu Keluarga (KK)
+            'l_kk'                    => 'male',
+            'p_kk'                    => 'female',
+            'jml_kk'                  => 'total',
+            'lk_kk'                   => 'male',
+            'pr_kk'                   => 'female',
+            'l_cetak_kk'              => 'male_printed',
+            'p_cetak_kk'              => 'female_printed',
+            'jml_cetak_kk'            => 'total_printed',
+            'lk_cetak_kk'             => 'male_printed',
+            'pr_cetak_kk'             => 'female_printed',
+            'blm_cetak_kk_l'          => 'male_not_printed',
+            'blm_cetak_kk_p'          => 'female_not_printed',
+            'blm_cetak_kk_jml'        => 'total_not_printed',
+            'belum_cetak_kk_l'        => 'male_not_printed',
+            'belum_cetak_kk_p'        => 'female_not_printed',
+            'belum_cetak_kk_jml'      => 'total_not_printed',
         ];
         foreach ($map as $from => $to) {
             if (array_key_exists($from, $norm) && !array_key_exists($to, $norm)) {
