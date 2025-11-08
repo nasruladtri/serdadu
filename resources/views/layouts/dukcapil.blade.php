@@ -340,6 +340,39 @@
                                 'active' => true
                             ];
                         }
+                        
+                        // Perbandingan/Compare
+                        if (request()->routeIs('public.compare')) {
+                            $breadcrumbs[] = [
+                                'label' => 'Tabel',
+                                'route' => 'public.data',
+                                'icon' => 'table',
+                                'active' => false
+                            ];
+                            
+                            // Tambahkan kategori tab aktif jika ada
+                            $category = request()->query('category', 'gender');
+                            $categoryLabels = [
+                                'gender' => 'Jenis Kelamin',
+                                'age' => 'Kelompok Umur',
+                                'single-age' => 'Umur Tunggal',
+                                'education' => 'Pendidikan',
+                                'occupation' => 'Pekerjaan',
+                                'marital' => 'Status Perkawinan',
+                                'household' => 'Kepala Keluarga',
+                                'religion' => 'Agama',
+                                'wajib-ktp' => 'Wajib KTP',
+                                'kk' => 'Kartu Keluarga',
+                            ];
+                            $categoryLabel = $categoryLabels[$category] ?? 'Jenis Kelamin';
+                            
+                            $breadcrumbs[] = [
+                                'label' => $categoryLabel,
+                                'route' => null,
+                                'icon' => 'table',
+                                'active' => true
+                            ];
+                        }
                     }
                 @endphp
                 
