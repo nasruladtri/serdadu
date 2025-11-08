@@ -58,6 +58,30 @@
             }
         }
 
+        /* Chart legend styling */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chart-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+        
+        .chart-legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        
         @media (min-width: 641px) and (max-width: 1024px) {
             .chart-container {
                 min-height: 450px !important;
@@ -135,7 +159,7 @@
                         <div class="sm:col-span-1 md:col-span-1 lg:col-span-1">
                             <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Tahun</label>
                             <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" name="year" onchange="this.form.submit()">
-                                <option value="">Terbaru</option>
+                                <option value="">Pilih Tahun</option>
                                 @foreach ($years as $year)
                                     <option value="{{ $year }}" {{ (int) ($selectedYear ?? 0) === $year ? 'selected' : '' }}>
                                     {{ $year }}
@@ -146,7 +170,7 @@
                         <div class="sm:col-span-1 md:col-span-1 lg:col-span-1">
                             <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Semester</label>
                             <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" name="semester" onchange="this.form.submit()">
-                                <option value="">Terbaru</option>
+                                <option value="">Pilih Semester</option>
                                 @forelse ($semesterOptions as $option)
                                     <option value="{{ $option }}" {{ (int) ($selectedSemester ?? 0) === $option ? 'selected' : '' }}>
                                         Semester {{ $option }}
@@ -263,6 +287,7 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-gender" data-chart-key="gender" class="w-full h-full"></canvas>
                                 </div>
+                                <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-gender"></div>
                             </div>
                         </div>
                     @endif
@@ -296,6 +321,7 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-age" data-chart-key="age" class="w-full h-full"></canvas>
                                 </div>
+                                <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-age"></div>
                             </div>
                         </div>
                     @endif
@@ -329,6 +355,7 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-single-age" data-chart-key="single-age" class="w-full h-full"></canvas>
                                 </div>
+                                <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-single-age"></div>
                             </div>
                         </div>
                     @endif
@@ -362,6 +389,7 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-education" data-chart-key="education" class="w-full h-full"></canvas>
                                 </div>
+                                <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-education"></div>
                             </div>
                         </div>
                     @endif
@@ -395,6 +423,7 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-occupation" data-chart-key="occupation" class="w-full h-full"></canvas>
                                 </div>
+                                <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-occupation"></div>
                             </div>
                         </div>
                     @endif
@@ -428,6 +457,7 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-marital" data-chart-key="marital" class="w-full h-full"></canvas>
                                 </div>
+                                <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-marital"></div>
                             </div>
                         </div>
                     @endif
@@ -461,6 +491,7 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-kk" data-chart-key="kk" class="w-full h-full"></canvas>
                                 </div>
+                                <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-kk"></div>
                             </div>
                         </div>
                     @endif
@@ -494,6 +525,7 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-household" data-chart-key="household" class="w-full h-full"></canvas>
                                 </div>
+                                <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-household"></div>
                             </div>
                         </div>
                     @endif
@@ -527,6 +559,7 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-religion" data-chart-key="religion" class="w-full h-full"></canvas>
                                 </div>
+                                <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-religion"></div>
                             </div>
                         </div>
                     @endif
@@ -560,6 +593,7 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-wajib-ktp" data-chart-key="wajib-ktp" class="w-full h-full"></canvas>
                                 </div>
+                                <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-wajib-ktp"></div>
                             </div>
                         </div>
                     @endif
@@ -738,6 +772,24 @@
                             }
                         }
                     });
+                    
+                    // Buat legend di bawah chart
+                    const legendElement = document.getElementById('legend-' + key);
+                    if (legendElement && config.datasets) {
+                        legendElement.innerHTML = '';
+                        config.datasets.forEach((dataset) => {
+                            const color = Array.isArray(dataset.backgroundColor) 
+                                ? dataset.backgroundColor[0] 
+                                : dataset.backgroundColor;
+                            const legendItem = document.createElement('div');
+                            legendItem.className = 'chart-legend-item';
+                            legendItem.innerHTML = `
+                                <div class="chart-legend-color" style="background-color: ${color};"></div>
+                                <span>${dataset.label || ''}</span>
+                            `;
+                            legendElement.appendChild(legendItem);
+                        });
+                    }
                 }, 50);
             };
 

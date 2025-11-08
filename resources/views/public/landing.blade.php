@@ -73,10 +73,10 @@
                 <div class="lg:col-span-5 xl:col-span-4 flex flex-col">
                     <!-- Overview Card -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex-1">
-                        <div class="flex items-start justify-between mb-6">
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3 mb-6">
                             <h2 class="text-lg font-semibold text-gray-900">Data Agregat Kependudukan Terbaru</h2>
                             @if($period)
-                                <div class="ml-4 px-3 py-1 bg-[#007151] text-white text-xs font-medium rounded-full whitespace-nowrap">
+                                <div class="flex-shrink-0 px-2 py-0.5 sm:px-2.5 sm:py-1 lg:px-3 lg:py-1 bg-[#007151] text-white text-[10px] sm:text-[11px] lg:text-xs font-medium rounded-full whitespace-nowrap self-start sm:self-auto">
                                     Semester {{ $period['semester'] }} Tahun {{ $period['year'] }}
                                 </div>
                             @endif
@@ -104,9 +104,9 @@
                         <!-- Metrics Grid -->
                         <div>
                             <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Jumlah Penduduk</h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-2 gap-3 sm:gap-4">
                                 <!-- Total Penduduk -->
-                                <div class="col-span-full">
+                                <div class="col-span-2">
                                     <div class="metric-card metric-card-primary">
                                         <div class="flex items-center justify-between mb-2">
                                             <div class="flex items-center gap-2">
@@ -122,7 +122,7 @@
                                 </div>
 
                                 <!-- Laki-laki -->
-                                <div>
+                                <div class="col-span-1">
                                     <div class="metric-card metric-card-male">
                                         <div class="flex items-center justify-between mb-2">
                                         <div class="flex items-center gap-2">
@@ -139,7 +139,7 @@
                                 </div>
 
                                 <!-- Perempuan -->
-                                <div>
+                                <div class="col-span-1">
                                     <div class="metric-card metric-card-female">
                                         <div class="flex items-center justify-between mb-2">
                                             <div class="flex items-center gap-2">
@@ -156,7 +156,7 @@
                                 </div>
 
                                 <!-- Wajib KTP -->
-                                <div class="col-span-full">
+                                <div class="col-span-2">
                                     <div class="metric-card metric-card-primary">
                                         <div class="flex items-center justify-between mb-2">
                                             <div class="flex items-center gap-2">
@@ -891,47 +891,12 @@
 
             const ctx = canvas.getContext('2d');
             
-            // Custom plugin untuk letter spacing pada legend
-            const letterSpacingPlugin = {
-                id: 'letterSpacingPlugin',
-                afterDraw(chart) {
-                    const legend = chart.legend;
-                    if (!legend || !legend.legendItems) return;
-                    
-                    const ctx = chart.ctx;
-                    const targetLabel = 'Laju Pertumbuhan (%)';
-                    const letterSpacing = 0.5;
-                    
-                    legend.legendItems.forEach((item, index) => {
-                        const itemText = item._originalText || item.text;
-                        if (itemText === targetLabel && item.hidden === false) {
-                            // Hitung posisi teks berdasarkan legend box
-                            const font = `${item.fontStyle || ''} ${item.fontSize || 12}px ${item.fontFamily || "'Inter', 'Poppins', sans-serif"}`.trim();
-                            ctx.font = font;
-                            ctx.fillStyle = item.fontColor || '#666';
-                            ctx.textBaseline = 'middle';
-                            
-                            // Render teks dengan letter spacing
-                            const text = itemText;
-                            const pointStyleWidth = item.pointStyleWidth || 10;
-                            const padding = item.padding || 4;
-                            const x = item.x + pointStyleWidth + padding;
-                            const y = item.y;
-                            
-                            // Render karakter per karakter dengan letter spacing
-                            let currentX = x;
-                            for (let i = 0; i < text.length; i++) {
-                                ctx.fillText(text[i], currentX, y);
-                                const metrics = ctx.measureText(text[i]);
-                                currentX += metrics.width + letterSpacing;
-                            }
-                        }
-                    });
-                }
-            };
-            
-            // Daftarkan plugin
-            Chart.register(letterSpacingPlugin);
+            // Proses data untuk menghandle null values dengan benar
+            // Growth rate dihitung dengan membandingkan periode sebelumnya
+            // Null di periode pertama adalah normal (tidak ada periode sebelumnya untuk dibandingkan)
+            const processedGrowthRates = growthData.growthRates.map((rate, index) => {
+                return rate === null ? null : rate;
+            });
             
             new Chart(ctx, {
                 type: 'line',
@@ -947,10 +912,12 @@
                             fill: true,
                             tension: 0.4,
                             yAxisID: 'y',
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
                         },
                         {
                             label: 'Laju Pertumbuhan (%)',
-                            data: growthData.growthRates,
+                            data: processedGrowthRates,
                             borderColor: '#00a876',
                             backgroundColor: 'rgba(0, 168, 118, 0.1)',
                             borderWidth: 2,
@@ -958,6 +925,11 @@
                             tension: 0.4,
                             yAxisID: 'y1',
                             borderDash: [5, 5],
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            spanGaps: true, // Hubungkan titik meskipun ada null (untuk menampilkan garis kontinyu)
+                            // Jika spanGaps: false, garis akan terputus di titik null
+                            // Jika spanGaps: true, garis akan terhubung bahkan jika ada nilai null di tengah
                         }
                     ]
                 },
@@ -979,17 +951,7 @@
                                     size: 12,
                                     family: "'Inter', 'Poppins', sans-serif"
                                 },
-                                generateLabels: function(chart) {
-                                    const original = Chart.defaults.plugins.legend.labels.generateLabels;
-                                    const labels = original.call(this, chart);
-                                    labels.forEach(label => {
-                                        if (label.text === 'Laju Pertumbuhan (%)') {
-                                            label._originalText = label.text; // Simpan teks asli
-                                            label.text = ''; // Sembunyikan teks asli, akan dirender oleh plugin dengan letter spacing
-                                        }
-                                    });
-                                    return labels;
-                                }
+                                // Hapus generateLabels custom yang menyebabkan masalah
                             }
                         },
                         tooltip: {
@@ -1009,13 +971,22 @@
                                         label += ': ';
                                     }
                                     if (context.datasetIndex === 0) {
+                                        // Jumlah Penduduk
                                         label += new Intl.NumberFormat('id-ID').format(context.parsed.y);
                                     } else {
-                                        label += context.parsed.y !== null 
-                                            ? context.parsed.y.toFixed(2) + '%' 
-                                            : '-';
+                                        // Laju Pertumbuhan (%)
+                                        const value = context.parsed.y;
+                                        if (value === null || value === undefined || isNaN(value)) {
+                                            label += '-';
+                                        } else {
+                                            label += value.toFixed(2) + '%';
+                                        }
                                     }
                                     return label;
+                                },
+                                filter: function(tooltipItem) {
+                                    // Tampilkan tooltip bahkan jika value null (untuk informatif)
+                                    return true;
                                 }
                             }
                         }
@@ -1067,7 +1038,7 @@
                             type: 'linear',
                             display: true,
                             position: 'right',
-                            beginAtZero: true,
+                            beginAtZero: false, // Ubah menjadi false agar skala lebih natural
                             grid: {
                                 drawOnChartArea: false,
                             },
@@ -1078,7 +1049,10 @@
                                 },
                                 color: '#6b7280',
                                 callback: function(value) {
-                                    return value !== null ? value.toFixed(2) + '%' : '-';
+                                    if (value === null || isNaN(value)) {
+                                        return '';
+                                    }
+                                    return value.toFixed(2) + '%';
                                 }
                             },
                             title: {

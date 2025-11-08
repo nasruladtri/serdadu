@@ -228,6 +228,7 @@ class PublicDashboardController extends Controller
 
         $gender = $period ? $this->genderSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0];
         $wajibKtp = $period ? $this->wajibKtpSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0];
+        $kk = $period ? $this->kkSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0, 'male_printed' => 0, 'female_printed' => 0, 'total_printed' => 0, 'male_not_printed' => 0, 'female_not_printed' => 0, 'total_not_printed' => 0];
         $ageGroups = $period ? $this->ageGroupSummary($period, $filters) : [];
         $singleAges = $period ? $this->singleAgeSummary($period, $filters) : [];
         $education = $period ? $this->educationSummary($period, $filters) : [];
@@ -235,7 +236,6 @@ class PublicDashboardController extends Controller
         $marital = $period ? $this->maritalStatusSummary($period, $filters) : [];
         $headHouseholds = $period ? $this->headOfHouseholdSummary($period, $filters) : [];
         $religions = $period ? $this->religionSummary($period, $filters) : [];
-        $kk = $period ? $this->kkSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0, 'male_printed' => 0, 'female_printed' => 0, 'total_printed' => 0, 'male_not_printed' => 0, 'female_not_printed' => 0, 'total_not_printed' => 0];
 
         $chartTitles = [
             'gender' => 'Jenis Kelamin',
@@ -291,6 +291,233 @@ class PublicDashboardController extends Controller
             'selectedDistrict' => $selectedDistrict,
             'selectedVillage' => $selectedVillage,
             'charts' => $charts,
+            'chartTitles' => $chartTitles,
+            'chartsNeedingTags' => $chartsNeedingTags,
+            'chartsAngledTags' => $chartsAngledTags,
+        ]);
+    }
+
+    public function compare(Request $request)
+    {
+        // Get all periods
+        $periods = $this->availablePeriods();
+        $districts = District::orderBy('name')->get();
+        $years = collect($periods)->pluck('year')->unique()->sortDesc()->values()->all();
+        
+        // Get all available semesters (not filtered by year) - untuk dropdown compare
+        $allAvailableSemesters = collect($periods)
+            ->pluck('semester')
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        // Prepare context untuk primary data
+        $primaryYear = $request->input('year');
+        $primarySemester = $request->input('semester');
+        $primaryDistrict = $request->input('district_id');
+        $primaryVillage = $request->input('village_id');
+
+        // Get available semesters for primary (filtered by selected year if year is selected)
+        $primaryAvailableSemesters = collect($periods)
+            ->when($primaryYear, fn($c) => $c->where('year', $primaryYear))
+            ->pluck('semester')
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        // Get primary period - hanya resolve jika tahun dan semester keduanya ada DAN semester tersebut valid untuk tahun tersebut
+        $primaryPeriod = null;
+        $primarySemesterValid = true;
+        if ($primaryYear && $primarySemester) {
+            // Pastikan semester yang dipilih benar-benar ada untuk tahun yang dipilih
+            $isValidSemester = empty($primaryAvailableSemesters) || in_array((int)$primarySemester, $primaryAvailableSemesters);
+            if ($isValidSemester) {
+                // Cari periode yang sesuai dengan input user
+                foreach ($periods as $period) {
+                    if ($period['year'] == (int)$primaryYear && $period['semester'] == (int)$primarySemester) {
+                        $primaryPeriod = $period;
+                        break;
+                    }
+                }
+            } else {
+                // Semester tidak valid untuk tahun tersebut
+                $primarySemesterValid = false;
+                // Reset semester yang tidak valid
+                $primarySemester = null;
+            }
+            // Jika semester tidak valid untuk tahun tersebut, $primaryPeriod tetap null sehingga data tidak ditampilkan
+        } else {
+            // Jika tidak ada input, gunakan resolvePeriod untuk mendapatkan periode terbaru
+            $primaryPeriod = $this->resolvePeriod($primaryYear, $primarySemester, $periods);
+        }
+
+        // Get primary villages
+        $primaryVillages = collect();
+        if ($primaryDistrict) {
+            $primaryVillages = Village::where('district_id', $primaryDistrict)->orderBy('name')->get();
+        }
+
+        $primaryFilters = [
+            'district_id' => $primaryDistrict ? (int) $primaryDistrict : null,
+            'village_id' => $primaryVillage ? (int) $primaryVillage : null,
+        ];
+
+        // Prepare context untuk compare data (dari query parameter compare_*)
+        $compareYear = $request->input('compare_year');
+        $compareSemester = $request->input('compare_semester');
+        $compareDistrict = $request->input('compare_district_id');
+        $compareVillage = $request->input('compare_village_id');
+
+        // Get available semesters for compare (filtered by selected year if year is selected)
+        $compareAvailableSemesters = collect($periods)
+            ->when($compareYear, fn($c) => $c->where('year', $compareYear))
+            ->pluck('semester')
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        // Resolve compare period - hanya resolve jika tahun dan semester keduanya ada DAN semester tersebut valid untuk tahun tersebut
+        $comparePeriod = null;
+        $compareSemesterValid = true;
+        if ($compareYear && $compareSemester) {
+            // Pastikan semester yang dipilih benar-benar ada untuk tahun yang dipilih
+            $isValidSemester = !empty($compareAvailableSemesters) && in_array((int)$compareSemester, $compareAvailableSemesters);
+            if ($isValidSemester) {
+                // Cari periode yang sesuai dengan input user
+                foreach ($periods as $period) {
+                    if ($period['year'] == (int)$compareYear && $period['semester'] == (int)$compareSemester) {
+                        $comparePeriod = $period;
+                        break;
+                    }
+                }
+            } else {
+                // Semester tidak valid untuk tahun tersebut
+                $compareSemesterValid = false;
+                // Reset semester yang tidak valid
+                $compareSemester = null;
+            }
+            // Jika semester tidak valid untuk tahun tersebut, $comparePeriod tetap null sehingga data tidak ditampilkan
+        }
+
+        // Prepare compare filters
+        $compareFilters = [
+            'district_id' => $compareDistrict ? (int) $compareDistrict : null,
+            'village_id' => $compareVillage ? (int) $compareVillage : null,
+        ];
+
+        // Get compare villages if district is selected
+        $compareVillages = collect();
+        if ($compareDistrict) {
+            $compareVillages = Village::where('district_id', $compareDistrict)
+                ->orderBy('name')
+                ->get();
+        }
+
+        // Get data for primary
+        $primaryGender = $primaryPeriod ? $this->genderSummary($primaryPeriod, $primaryFilters) : ['male' => 0, 'female' => 0, 'total' => 0];
+        $primaryWajibKtp = $primaryPeriod ? $this->wajibKtpSummary($primaryPeriod, $primaryFilters) : ['male' => 0, 'female' => 0, 'total' => 0];
+        $primaryKk = $primaryPeriod ? $this->kkSummary($primaryPeriod, $primaryFilters) : ['male' => 0, 'female' => 0, 'total' => 0, 'male_printed' => 0, 'female_printed' => 0, 'total_printed' => 0, 'male_not_printed' => 0, 'female_not_printed' => 0, 'total_not_printed' => 0];
+        $primaryAgeGroups = $primaryPeriod ? $this->ageGroupSummary($primaryPeriod, $primaryFilters) : [];
+        $primarySingleAges = $primaryPeriod ? $this->singleAgeSummary($primaryPeriod, $primaryFilters) : [];
+        $primaryEducation = $primaryPeriod ? $this->educationSummary($primaryPeriod, $primaryFilters) : [];
+        $primaryOccupations = $primaryPeriod ? $this->occupationHighlights($primaryPeriod, $primaryFilters) : [];
+        $primaryMarital = $primaryPeriod ? $this->maritalStatusSummary($primaryPeriod, $primaryFilters) : [];
+        $primaryHeadHouseholds = $primaryPeriod ? $this->headOfHouseholdSummary($primaryPeriod, $primaryFilters) : [];
+        $primaryReligions = $primaryPeriod ? $this->religionSummary($primaryPeriod, $primaryFilters) : [];
+
+        // Get data for compare
+        $compareGender = $comparePeriod ? $this->genderSummary($comparePeriod, $compareFilters) : ['male' => 0, 'female' => 0, 'total' => 0];
+        $compareWajibKtp = $comparePeriod ? $this->wajibKtpSummary($comparePeriod, $compareFilters) : ['male' => 0, 'female' => 0, 'total' => 0];
+        $compareKk = $comparePeriod ? $this->kkSummary($comparePeriod, $compareFilters) : ['male' => 0, 'female' => 0, 'total' => 0, 'male_printed' => 0, 'female_printed' => 0, 'total_printed' => 0, 'male_not_printed' => 0, 'female_not_printed' => 0, 'total_not_printed' => 0];
+        $compareAgeGroups = $comparePeriod ? $this->ageGroupSummary($comparePeriod, $compareFilters) : [];
+        $compareSingleAges = $comparePeriod ? $this->singleAgeSummary($comparePeriod, $compareFilters) : [];
+        $compareEducation = $comparePeriod ? $this->educationSummary($comparePeriod, $compareFilters) : [];
+        $compareOccupations = $comparePeriod ? $this->occupationHighlights($comparePeriod, $compareFilters) : [];
+        $compareMarital = $comparePeriod ? $this->maritalStatusSummary($comparePeriod, $compareFilters) : [];
+        $compareHeadHouseholds = $comparePeriod ? $this->headOfHouseholdSummary($comparePeriod, $compareFilters) : [];
+        $compareReligions = $comparePeriod ? $this->religionSummary($comparePeriod, $compareFilters) : [];
+
+        $chartTitles = [
+            'gender' => 'Jenis Kelamin',
+            'age' => 'Kelompok Umur',
+            'single-age' => 'Umur Tunggal',
+            'education' => 'Pendidikan',
+            'occupation' => 'Pekerjaan',
+            'marital' => 'Status Perkawinan',
+            'household' => 'Kepala Keluarga',
+            'religion' => 'Agama',
+            'wajib-ktp' => 'Wajib KTP',
+            'kk' => 'Kartu Keluarga',
+        ];
+
+        $chartsNeedingTags = [
+            'age',
+            'single-age',
+            'education',
+            'occupation',
+            'marital',
+            'household',
+            'religion',
+        ];
+
+        $chartsAngledTags = [
+            'single-age',
+            'occupation',
+        ];
+
+        // Build charts for primary
+        $primaryCharts = [
+            'gender' => $this->buildGenderChart($chartTitles['gender'], $primaryGender),
+            'age' => $this->buildSeriesChart($chartTitles['age'], $primaryAgeGroups),
+            'single-age' => $this->buildSeriesChart($chartTitles['single-age'], $primarySingleAges),
+            'education' => $this->buildSeriesChart($chartTitles['education'], $primaryEducation),
+            'occupation' => $this->buildSeriesChart($chartTitles['occupation'], $primaryOccupations),
+            'marital' => $this->buildSeriesChart($chartTitles['marital'], $primaryMarital),
+            'household' => $this->buildSeriesChart($chartTitles['household'], $primaryHeadHouseholds),
+            'religion' => $this->buildSeriesChart($chartTitles['religion'], $primaryReligions),
+            'wajib-ktp' => $this->buildWajibKtpChart($chartTitles['wajib-ktp'], $primaryWajibKtp),
+            'kk' => $this->buildKkChart($chartTitles['kk'], $primaryKk),
+        ];
+
+        // Build charts for compare
+        $compareCharts = [
+            'gender' => $this->buildGenderChart($chartTitles['gender'], $compareGender),
+            'age' => $this->buildSeriesChart($chartTitles['age'], $compareAgeGroups),
+            'single-age' => $this->buildSeriesChart($chartTitles['single-age'], $compareSingleAges),
+            'education' => $this->buildSeriesChart($chartTitles['education'], $compareEducation),
+            'occupation' => $this->buildSeriesChart($chartTitles['occupation'], $compareOccupations),
+            'marital' => $this->buildSeriesChart($chartTitles['marital'], $compareMarital),
+            'household' => $this->buildSeriesChart($chartTitles['household'], $compareHeadHouseholds),
+            'religion' => $this->buildSeriesChart($chartTitles['religion'], $compareReligions),
+            'wajib-ktp' => $this->buildWajibKtpChart($chartTitles['wajib-ktp'], $compareWajibKtp),
+            'kk' => $this->buildKkChart($chartTitles['kk'], $compareKk),
+        ];
+
+        return view('public.compare', [
+            'title' => 'Perbandingan Data',
+            'primaryPeriod' => $primaryPeriod,
+            'comparePeriod' => $comparePeriod,
+            'periods' => $periods,
+            'years' => $years,
+            'primaryAvailableSemesters' => $primaryAvailableSemesters,
+            'compareAvailableSemesters' => $compareAvailableSemesters,
+            'allAvailableSemesters' => $allAvailableSemesters,
+            'primaryYear' => $primaryYear,
+            'primarySemester' => $primarySemester,
+            'compareYear' => $compareYear,
+            'compareSemester' => $compareSemester,
+            'districts' => $districts,
+            'primaryVillages' => $primaryVillages,
+            'compareVillages' => $compareVillages,
+            'primaryDistrict' => $primaryDistrict,
+            'primaryVillage' => $primaryVillage,
+            'compareDistrict' => $compareDistrict,
+            'compareVillage' => $compareVillage,
+            'primaryCharts' => $primaryCharts,
+            'compareCharts' => $compareCharts,
             'chartTitles' => $chartTitles,
             'chartsNeedingTags' => $chartsNeedingTags,
             'chartsAngledTags' => $chartsAngledTags,
@@ -1615,7 +1842,22 @@ class PublicDashboardController extends Controller
 
     private function populationGrowthRate(int $limit = 10): array
     {
-        $periods = $this->availablePeriods();
+        // Ambil periode dari pop_gender (bukan pop_age_group)
+        // pop_gender adalah tabel agregat utama untuk data populasi
+        $periods = DB::table('pop_gender')
+            ->select('year', 'semester')
+            ->groupBy('year', 'semester')
+            ->orderByDesc('year')
+            ->orderByDesc('semester')
+            ->limit($limit)
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'year' => (int) $row->year,
+                    'semester' => (int) $row->semester,
+                ];
+            })
+            ->toArray();
         
         if (empty($periods)) {
             return [
@@ -1625,8 +1867,9 @@ class PublicDashboardController extends Controller
             ];
         }
 
-        // Ambil periode terakhir (maksimal $limit)
-        $recentPeriods = array_slice($periods, 0, $limit);
+        // Reverse untuk mengurutkan dari terlama ke terbaru sebelum perhitungan
+        // Ini memastikan growth rate dihitung dengan benar (periode sebelumnya = periode sebelumnya yang sebenarnya)
+        $periods = array_reverse($periods);
         
         $labels = [];
         $data = [];
@@ -1634,7 +1877,8 @@ class PublicDashboardController extends Controller
         
         $previousTotal = null;
         
-        foreach ($recentPeriods as $period) {
+        foreach ($periods as $period) {
+            // Gunakan genderSummary yang mengambil dari pop_gender
             $gender = $this->genderSummary($period);
             $total = $gender['total'] ?? 0;
             
@@ -1643,22 +1887,21 @@ class PublicDashboardController extends Controller
             $labels[] = $label;
             $data[] = $total;
             
-            // Hitung laju pertumbuhan
+            // Hitung laju pertumbuhan berdasarkan periode sebelumnya yang ADA
+            // Growth rate hanya bisa dihitung jika ada periode sebelumnya
             if ($previousTotal !== null && $previousTotal > 0) {
                 $growthRate = (($total - $previousTotal) / $previousTotal) * 100;
                 $growthRates[] = round($growthRate, 2);
             } else {
+                // Periode pertama tidak memiliki growth rate
                 $growthRates[] = null;
             }
             
+            // Update untuk periode berikutnya
             $previousTotal = $total;
         }
         
-        // Reverse untuk menampilkan dari yang terlama ke terbaru
-        $labels = array_reverse($labels);
-        $data = array_reverse($data);
-        $growthRates = array_reverse($growthRates);
-        
+        // Data sudah dalam urutan dari terlama ke terbaru
         return [
             'labels' => $labels,
             'data' => $data,

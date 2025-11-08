@@ -89,8 +89,8 @@
                 </a>
                 
                 <a 
-                    href="{{ url('/compare') }}"
-                    class="sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->is('compare') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
+                    href="{{ route('public.compare') }}"
+                    class="sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.compare') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
                     title="Compare"
                     data-sidebar-nav-item
                 >
@@ -206,8 +206,8 @@
             </a>
             
             <a 
-                href="{{ url('/compare') }}"
-                class="mobile-menu-link sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->is('compare') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
+                href="{{ route('public.compare') }}"
+                class="mobile-menu-link sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.compare') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
             >
                 <img src="{{ asset('img/compare.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
                 <span>Compare</span>

@@ -9,6 +9,7 @@ Route::get('/', [PublicDashboardController::class, 'landing'])->name('public.lan
 Route::get('/data', [PublicDashboardController::class, 'data'])->name('public.data');
 Route::get('/data/fullscreen', [PublicDashboardController::class, 'fullscreen'])->name('public.data.fullscreen');
 Route::get('/grafik', [PublicDashboardController::class, 'charts'])->name('public.charts');
+Route::get('/compare', [PublicDashboardController::class, 'compare'])->name('public.compare');
 
 Route::get('/dashboard', function () {
     return redirect()->route('public.data');
