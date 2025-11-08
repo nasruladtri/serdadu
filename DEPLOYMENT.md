@@ -122,7 +122,9 @@ git push -u origin main
 ### Prerequisites
 
 Pastikan VPS Ubuntu sudah memiliki:
-- PHP 8.2 atau lebih tinggi
+- **PHP 8.2 atau lebih tinggi** (disarankan PHP 8.4)
+  - Project ini membutuhkan minimum PHP 8.2.0 (lihat `composer.json`)
+  - PHP 8.4 adalah versi terbaru dan sangat direkomendasikan
 - Composer
 - MySQL/MariaDB
 - Node.js 18+ dan NPM
@@ -136,13 +138,82 @@ sudo apt update
 sudo apt upgrade -y
 ```
 
-### Langkah 2: Install PHP 8.2 dan Extensions
+### Langkah 2: Install PHP dan Extensions
+
+**⚠️ Catatan Penting:**
+- Project ini membutuhkan **minimum PHP 8.2.0** (lihat `composer.json`)
+- **PHP 8.4** sangat disarankan karena versi terbaru dengan fitur dan performa terbaik
+- Jangan gunakan PHP versi di bawah 8.2 (tidak kompatibel dengan Laravel 11)
+
+**Instalasi PHP 8.4 (Disarankan):**
 
 ```bash
 sudo apt install software-properties-common -y
 sudo add-apt-repository ppa:ondrej/php -y
 sudo apt update
 
+# Install PHP 8.4 (atau versi yang diinginkan)
+sudo apt install -y php8.4 \
+    php8.4-fpm \
+    php8.4-cli \
+    php8.4-common \
+    php8.4-mysql \
+    php8.4-zip \
+    php8.4-gd \
+    php8.4-mbstring \
+    php8.4-curl \
+    php8.4-xml \
+    php8.4-bcmath \
+    php8.4-intl
+
+# Verifikasi extension yang terinstall
+php -m | grep -i gd
+php -m | grep -i mbstring
+php -m | grep -i xml
+```
+
+**⚙️ Konfigurasi PHP untuk Upload File Besar (PENTING untuk Import Excel):**
+
+```bash
+# Edit PHP.ini untuk FPM (web server)
+sudo nano /etc/php/8.4/fpm/php.ini
+
+# Cari dan ubah nilai berikut:
+# upload_max_filesize = 100M
+# post_max_size = 100M
+# max_execution_time = 300
+# max_input_time = 300
+# memory_limit = 256M
+
+# Edit PHP.ini untuk CLI (jika diperlukan)
+sudo nano /etc/php/8.4/cli/php.ini
+# Lakukan perubahan yang sama
+
+# Restart PHP-FPM setelah perubahan
+sudo systemctl restart php8.4-fpm
+```
+
+**Atau gunakan command cepat untuk mengubah konfigurasi:**
+
+```bash
+# Untuk PHP 8.4 FPM
+sudo sed -i 's/upload_max_filesize = .*/upload_max_filesize = 100M/' /etc/php/8.4/fpm/php.ini
+sudo sed -i 's/post_max_size = .*/post_max_size = 100M/' /etc/php/8.4/fpm/php.ini
+sudo sed -i 's/max_execution_time = .*/max_execution_time = 300/' /etc/php/8.4/fpm/php.ini
+sudo sed -i 's/max_input_time = .*/max_input_time = 300/' /etc/php/8.4/fpm/php.ini
+sudo sed -i 's/memory_limit = .*/memory_limit = 256M/' /etc/php/8.4/fpm/php.ini
+
+# Restart PHP-FPM
+sudo systemctl restart php8.4-fpm
+
+# Verifikasi perubahan
+php -i | grep -E "upload_max_filesize|post_max_size|max_execution_time"
+```
+
+**Alternatif: Jika menggunakan PHP 8.2 atau 8.3**
+
+```bash
+# Untuk PHP 8.2
 sudo apt install -y php8.2 \
     php8.2-fpm \
     php8.2-cli \
@@ -155,7 +226,14 @@ sudo apt install -y php8.2 \
     php8.2-xml \
     php8.2-bcmath \
     php8.2-intl
+
+# Atau untuk PHP 8.3 (ganti 8.2 dengan 8.3)
 ```
+
+**⚠️ PENTING:**
+- Pastikan `php-gd` extension sudah terinstall karena diperlukan oleh `phpoffice/phpspreadsheet` dan `maatwebsite/excel`
+- Setelah install, verifikasi dengan: `php -m | grep gd`
+- Restart PHP-FPM setelah install extensions: `sudo systemctl restart php8.4-fpm`
 
 ### Langkah 3: Install Composer
 
@@ -197,9 +275,29 @@ cd serdadu
 
 ### Langkah 8: Install Dependencies
 
+**⚠️ Sebelum install dependencies, pastikan semua PHP extensions sudah terinstall:**
+
 ```bash
-# Install PHP dependencies
+# Verifikasi PHP extensions (pastikan gd, mbstring, xml, dll sudah ada)
+php -m
+
+# Jika extension belum terinstall, install terlebih dahulu
+# Contoh untuk PHP 8.4:
+sudo apt install -y php8.4-gd php8.4-mbstring php8.4-xml php8.4-curl php8.4-zip php8.4-bcmath
+
+# Restart PHP-FPM setelah install extension
+sudo systemctl restart php8.4-fpm  # atau php8.2-fpm sesuai versi PHP Anda
+```
+
+**Install PHP dependencies:**
+
+```bash
+# Jika terjadi error "lock file tidak kompatibel", coba update composer dulu
+# Opsi 1: Install langsung (disarankan jika lock file sudah benar)
 composer install --optimize-autoloader --no-dev
+
+# Opsi 2: Jika masih error, update composer (hati-hati, akan update versi package)
+# composer update --no-dev --optimize-autoloader
 
 # Install Node.js dependencies
 npm install
@@ -283,6 +381,10 @@ server {
     server_name yourdomain.com www.yourdomain.com;
     root /var/www/serdadu/public;
 
+    # ⚠️ PENTING: Set max body size untuk upload file besar (misalnya Excel)
+    # Default adalah 1M, kita set menjadi 100M untuk file Excel besar
+    client_max_body_size 100M;
+
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-Content-Type-Options "nosniff";
 
@@ -300,9 +402,13 @@ server {
     error_page 404 /index.php;
 
     location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+        fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;  # Sesuaikan dengan versi PHP (php8.2-fpm.sock atau php8.4-fpm.sock)
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
+        
+        # ⚠️ PENTING: Set timeout dan body size untuk upload file besar
+        fastcgi_read_timeout 300;
+        fastcgi_send_timeout 300;
     }
 
     location ~ /\.(?!well-known).* {
@@ -415,8 +521,8 @@ php artisan view:cache
 # Run migrations (jika ada)
 php artisan migrate --force
 
-# Restart services
-sudo systemctl reload php8.2-fpm
+# Restart services (sesuaikan versi PHP dengan yang digunakan)
+sudo systemctl reload php8.4-fpm  # atau php8.2-fpm, php8.3-fpm, dll
 sudo systemctl reload nginx
 sudo supervisorctl restart serdadu-worker:*
 ```
@@ -424,6 +530,43 @@ sudo supervisorctl restart serdadu-worker:*
 ---
 
 ## Troubleshooting
+
+### ⚠️ Missing PHP Extensions (ext-gd, ext-mbstring, dll) - ERROR SAAT COMPOSER INSTALL
+
+**Error yang muncul:**
+- `Your lock file does not contain a compatible set of packages. Please run composer update.`
+- `ext-gd * is missing from your system`
+- `phpoffice/phpspreadsheet` requires `ext-gd`
+
+**Solusi cepat:**
+
+```bash
+# 1. Cek versi PHP yang digunakan
+php -v
+
+# 2. Install extension yang diperlukan (contoh untuk PHP 8.4)
+# Ganti 8.4 dengan versi PHP Anda (8.2, 8.3, dll)
+sudo apt install -y php8.4-gd php8.4-mbstring php8.4-xml php8.4-curl php8.4-zip php8.4-bcmath php8.4-intl
+
+# 3. Verifikasi extension sudah terinstall
+php -m | grep -E "gd|mbstring|xml|curl|zip|bcmath|intl"
+
+# 4. Restart PHP-FPM
+sudo systemctl restart php8.4-fpm  # Sesuaikan dengan versi PHP Anda
+
+# 5. Coba install composer lagi
+cd /var/www/nasruladitri.space/serdadu  # atau path project Anda
+composer install --optimize-autoloader --no-dev
+
+# 6. Jika masih error dengan lock file, jalankan:
+composer update --no-dev --optimize-autoloader
+```
+
+**Catatan penting:**
+- Extension `gd` **WAJIB** terinstall untuk `phpoffice/phpspreadsheet` dan `maatwebsite/excel`
+- Pastikan extension terinstall sebelum menjalankan `composer install`
+- Setelah install extension, **restart PHP-FPM** agar perubahan berlaku
+- Jika menggunakan PHP versi lain, ganti `8.4` dengan versi yang sesuai (contoh: `8.2`, `8.3`)
 
 ### Permission Issues
 ```bash
@@ -441,14 +584,15 @@ tail -f /var/www/serdadu/storage/logs/laravel.log
 # Nginx error logs
 sudo tail -f /var/log/nginx/error.log
 
-# PHP-FPM logs
-sudo tail -f /var/log/php8.2-fpm.log
+# PHP-FPM logs (sesuaikan versi PHP)
+sudo tail -f /var/log/php8.4-fpm.log  # atau php8.2-fpm.log, php8.3-fpm.log
 ```
 
 ### Test PHP-FPM
 ```bash
-sudo systemctl status php8.2-fpm
-sudo systemctl restart php8.2-fpm
+# Ganti 8.2 dengan versi PHP Anda (8.4, 8.3, dll)
+sudo systemctl status php8.4-fpm
+sudo systemctl restart php8.4-fpm
 ```
 
 ### Test Nginx Configuration
@@ -458,12 +602,128 @@ sudo systemctl status nginx
 sudo systemctl restart nginx
 ```
 
+### ⚠️ Error 413 Request Entity Too Large - File Upload Terlalu Besar
+
+**Error:** `413 Request Entity Too Large` atau log error: `client intended to send too large body: X bytes`
+
+**Penyebab:**
+- File Excel yang diupload melebihi batas maksimum yang diizinkan
+- Konfigurasi Nginx `client_max_body_size` terlalu kecil (default 1M)
+- Konfigurasi PHP `upload_max_filesize` dan `post_max_size` terlalu kecil
+- **PENTING:** Konfigurasi Nginx mungkin belum diterapkan di server block yang benar
+
+**⚠️ Langkah Pertama - Cek File Konfigurasi yang Aktif:**
+
+```bash
+# Cek server block yang aktif untuk domain Anda
+sudo nginx -T | grep -B 5 -A 15 "serdadu.nasruladitri.space"
+
+# Atau cek semua file konfigurasi
+sudo ls -la /etc/nginx/sites-available/
+sudo ls -la /etc/nginx/sites-enabled/
+```
+
+**Solusi Lengkap:**
+
+```bash
+# 1. Edit konfigurasi Nginx untuk meningkatkan batas upload
+sudo nano /etc/nginx/sites-available/serdadu
+# atau
+sudo nano /etc/nginx/sites-available/nasruladitri.space  # Sesuaikan dengan domain Anda
+
+# Tambahkan atau ubah baris berikut di dalam block "server":
+# client_max_body_size 100M;
+
+# Simpan dan keluar (Ctrl+X, Y, Enter)
+
+# 2. Edit konfigurasi PHP untuk meningkatkan batas upload
+# Untuk PHP 8.4 FPM:
+sudo nano /etc/php/8.4/fpm/php.ini
+
+# Cari dan ubah nilai berikut (gunakan Ctrl+W untuk search):
+# upload_max_filesize = 100M
+# post_max_size = 100M
+# max_execution_time = 300
+# max_input_time = 300
+# memory_limit = 256M
+
+# Simpan dan keluar
+
+# 3. Alternatif: Gunakan command untuk mengubah secara langsung
+sudo sed -i 's/upload_max_filesize = .*/upload_max_filesize = 100M/' /etc/php/8.4/fpm/php.ini
+sudo sed -i 's/post_max_size = .*/post_max_size = 100M/' /etc/php/8.4/fpm/php.ini
+sudo sed -i 's/max_execution_time = .*/max_execution_time = 300/' /etc/php/8.4/fpm/php.ini
+sudo sed -i 's/max_input_time = .*/max_input_time = 300/' /etc/php/8.4/fpm/php.ini
+
+# 4. Test konfigurasi Nginx
+sudo nginx -t
+
+# 5. Restart services
+sudo systemctl restart php8.4-fpm  # Sesuaikan dengan versi PHP
+sudo systemctl restart nginx
+
+# 6. Verifikasi konfigurasi PHP
+php -i | grep -E "upload_max_filesize|post_max_size|max_execution_time"
+```
+
+**Catatan Penting:**
+- `client_max_body_size` di Nginx harus lebih besar atau sama dengan `post_max_size` di PHP
+- `post_max_size` di PHP harus lebih besar atau sama dengan `upload_max_filesize`
+- Disarankan: `client_max_body_size = 100M`, `post_max_size = 100M`, `upload_max_filesize = 100M`
+- Untuk file Excel yang sangat besar (>100M), sesuaikan nilai sesuai kebutuhan
+
+**Verifikasi Setelah Perubahan:**
+
+```bash
+# Buat file PHP test untuk melihat konfigurasi
+echo "<?php phpinfo(); ?>" | sudo tee /var/www/serdadu/public/phpinfo.php
+
+# Akses di browser: http://yourdomain.com/phpinfo.php
+# Cari: upload_max_filesize, post_max_size, max_execution_time
+
+# HAPUS file phpinfo.php setelah verifikasi (untuk keamanan)
+sudo rm /var/www/serdadu/public/phpinfo.php
+```
+
+**Troubleshooting Tambahan:**
+
+Jika masih error setelah perubahan:
+
+1. **Cek konfigurasi Nginx yang aktif:**
+```bash
+sudo nginx -T | grep client_max_body_size
+```
+
+2. **Cek konfigurasi PHP yang digunakan:**
+```bash
+php -i | grep -E "Configuration File|upload_max_filesize|post_max_size"
+```
+
+3. **Cek log error:**
+```bash
+# Nginx error log
+sudo tail -f /var/log/nginx/error.log
+
+# PHP-FPM error log
+sudo tail -f /var/log/php8.4-fpm.log
+```
+
+4. **Jika menggunakan domain spesifik, pastikan konfigurasi di server block yang benar:**
+```bash
+# List semua konfigurasi Nginx
+ls -la /etc/nginx/sites-available/
+
+# Edit konfigurasi untuk domain Anda
+sudo nano /etc/nginx/sites-available/nasruladitri.space  # Ganti dengan domain Anda
+```
+
 ---
 
 ## Checklist Deploy
 
 - [ ] Semua file sudah di-commit dan push ke GitHub
-- [ ] VPS sudah memiliki PHP 8.2+, Composer, MySQL, Node.js, Nginx
+- [ ] VPS sudah memiliki PHP 8.2+ (disarankan PHP 8.4), Composer, MySQL, Node.js, Nginx
+- [ ] Semua PHP extensions sudah terinstall (gd, mbstring, xml, curl, zip, bcmath, intl)
 - [ ] Repository sudah di-clone di VPS
 - [ ] Dependencies sudah di-install (composer & npm)
 - [ ] File `.env` sudah dikonfigurasi

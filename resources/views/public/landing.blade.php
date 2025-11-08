@@ -73,7 +73,14 @@
                 <div class="lg:col-span-5 xl:col-span-4 flex flex-col">
                     <!-- Overview Card -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex-1">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-6">Data Agregat Kependudukan Terbaru</h2>
+                        <div class="flex items-start justify-between mb-6">
+                            <h2 class="text-lg font-semibold text-gray-900">Data Agregat Kependudukan Terbaru</h2>
+                            @if($period)
+                                <div class="ml-4 px-3 py-1 bg-[#007151] text-white text-xs font-medium rounded-full whitespace-nowrap">
+                                    Semester {{ $period['semester'] }} Tahun {{ $period['year'] }}
+                                </div>
+                            @endif
+                        </div>
                         
                         <!-- Wilayah Info -->
                         <div class="mb-6">

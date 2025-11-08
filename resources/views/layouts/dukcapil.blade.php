@@ -183,41 +183,41 @@
         <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
             <a 
                 href="{{ route('public.landing') }}"
-                class="mobile-menu-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.landing') ? 'bg-[#007151] text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+                class="mobile-menu-link sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.landing') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
             >
-                <img src="{{ asset('img/home.png') }}" alt="" class="w-5 h-5">
+                <img src="{{ asset('img/home.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
                 <span>Home</span>
             </a>
             
             <a 
                 href="{{ route('public.data') }}"
-                class="mobile-menu-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.data') ? 'bg-[#007151] text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+                class="mobile-menu-link sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.data') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
             >
-                <img src="{{ asset('img/table.png') }}" alt="" class="w-5 h-5">
+                <img src="{{ asset('img/table.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
                 <span>Tabel</span>
             </a>
             
             <a 
                 href="{{ route('public.charts') }}"
-                class="mobile-menu-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.charts') ? 'bg-[#007151] text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+                class="mobile-menu-link sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.charts') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
             >
-                <img src="{{ asset('img/bar-stats.png') }}" alt="" class="w-5 h-5">
+                <img src="{{ asset('img/bar-stats.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
                 <span>Grafik</span>
             </a>
             
             <a 
                 href="{{ url('/compare') }}"
-                class="mobile-menu-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->is('compare') ? 'bg-[#007151] text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+                class="mobile-menu-link sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->is('compare') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
             >
-                <img src="{{ asset('img/compare.png') }}" alt="" class="w-5 h-5">
+                <img src="{{ asset('img/compare.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
                 <span>Compare</span>
             </a>
             
             <a 
                 href="{{ url('/terms') }}"
-                class="mobile-menu-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->is('terms') ? 'bg-[#007151] text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+                class="mobile-menu-link sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->is('terms') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
             >
-                <img src="{{ asset('img/terms.png') }}" alt="" class="w-5 h-5">
+                <img src="{{ asset('img/terms.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
                 <span>Terms</span>
             </a>
         </nav>
@@ -281,6 +281,7 @@
                                 'household' => 'Kepala Keluarga',
                                 'religion' => 'Agama',
                                 'wajib-ktp' => 'Wajib KTP',
+                                'kk' => 'Kartu Keluarga',
                             ];
                             $categoryLabel = $categoryLabels[$category] ?? 'Jenis Kelamin';
                             
@@ -312,6 +313,29 @@
                             $breadcrumbs[] = [
                                 'label' => 'Grafik',
                                 'route' => 'public.charts',
+                                'icon' => 'chart',
+                                'active' => false
+                            ];
+                            
+                            // Tambahkan kategori tab aktif jika ada
+                            $category = request()->query('category', 'gender');
+                            $categoryLabels = [
+                                'gender' => 'Jenis Kelamin',
+                                'age' => 'Kelompok Umur',
+                                'single-age' => 'Umur Tunggal',
+                                'education' => 'Pendidikan',
+                                'occupation' => 'Pekerjaan',
+                                'marital' => 'Status Perkawinan',
+                                'household' => 'Kepala Keluarga',
+                                'religion' => 'Agama',
+                                'wajib-ktp' => 'Wajib KTP',
+                                'kk' => 'Kartu Keluarga',
+                            ];
+                            $categoryLabel = $categoryLabels[$category] ?? 'Jenis Kelamin';
+                            
+                            $breadcrumbs[] = [
+                                'label' => $categoryLabel,
+                                'route' => null,
                                 'icon' => 'chart',
                                 'active' => true
                             ];
@@ -345,7 +369,7 @@
                             @if($breadcrumb['route'] && !$breadcrumb['active'])
                                 <a 
                                     href="{{ route($breadcrumb['route']) }}" 
-                                    class="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors {{ $breadcrumb['label'] === $categoryLabel ?? '' ? 'breadcrumb-category' : '' }}"
+                                    class="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors {{ (isset($categoryLabel) && $breadcrumb['label'] === $categoryLabel) ? 'breadcrumb-category' : '' }}"
                                 >
                                     @if($breadcrumb['icon'] === 'home')
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

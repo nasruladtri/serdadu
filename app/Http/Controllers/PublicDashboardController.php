@@ -235,6 +235,7 @@ class PublicDashboardController extends Controller
         $marital = $period ? $this->maritalStatusSummary($period, $filters) : [];
         $headHouseholds = $period ? $this->headOfHouseholdSummary($period, $filters) : [];
         $religions = $period ? $this->religionSummary($period, $filters) : [];
+        $kk = $period ? $this->kkSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0, 'male_printed' => 0, 'female_printed' => 0, 'total_printed' => 0, 'male_not_printed' => 0, 'female_not_printed' => 0, 'total_not_printed' => 0];
 
         $chartTitles = [
             'gender' => 'Jenis Kelamin',

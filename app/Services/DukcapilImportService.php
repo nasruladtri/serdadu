@@ -354,9 +354,9 @@ class DukcapilImportService
 
     private function registerAggregates(string $table, array $payload): void
     {
-        if ($table === 'pop_age_group') {
-            $this->addGenderAggregate($payload, 'age_group');
-        } elseif ($table === 'pop_single_age') {
+        // Hanya aggregasi gender dari pop_single_age karena data lebih akurat
+        // pop_age_group tidak digunakan untuk aggregasi gender untuk menghindari duplikasi/kesalahan
+        if ($table === 'pop_single_age') {
             $this->addGenderAggregate($payload, 'single_age');
             $this->addWajibKtpAggregate($payload);
         }
@@ -388,13 +388,15 @@ class DukcapilImportService
 
         $bucket =& $this->genderRollups[$year][$semester][$districtId][$villageKey];
 
+        // Hanya gunakan single_age untuk aggregasi gender (data lebih akurat)
+        // Jika sudah ada data dari source lain, skip untuk menghindari konflik
         if ($bucket['source'] !== $source) {
-            if ($source === 'age_group') {
-                $bucket = ['male' => 0, 'female' => 0, 'source' => 'age_group'];
-            } else {
-                // Prefer data yang berasal dari sheet kelompok umur.
+            // Prefer single_age karena data lebih granular dan akurat
+            if ($source !== 'single_age') {
                 return;
             }
+            // Reset jika switching ke single_age
+            $bucket = ['male' => 0, 'female' => 0, 'source' => 'single_age'];
         }
 
         $bucket['male'] += $male;
