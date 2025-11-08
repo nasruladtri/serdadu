@@ -494,12 +494,128 @@ Tambahkan baris berikut:
 
 ## Update Deployment (Setelah Perubahan)
 
-Setelah melakukan perubahan dan push ke GitHub, di VPS:
+### ⚠️ PENTING: Masalah Git Pull dengan Local Changes
+
+**Masalah yang sering terjadi:**
+Ketika melakukan `git pull` di server, sering muncul error:
+```
+error: Your local changes to the following files would be overwritten by merge:
+- app/Http/Controllers/PublicDashboardController.php
+- resources/views/layouts/dukcapil.blade.php
+- resources/views/public/charts.blade.php
+- resources/views/public/landing.blade.php
+- routes/web.php
+Please commit your changes or stash them before you merge.
+```
+
+**Penyebab:**
+- File-file di server berubah karena proses build/cache Laravel
+- File mungkin diubah langsung di server (manual edit)
+- Git mendeteksi perubahan lokal yang tidak ter-commit
+
+**Solusi:**
+
+**Opsi 1: Gunakan Script Deployment (DISARANKAN)**
+
+Gunakan script deployment yang sudah menangani masalah ini secara otomatis:
 
 ```bash
-cd /var/www/serdadu
+# Upload script deploy.sh ke server, lalu:
+cd /var/www/nasruladitri.space/serdadu
+chmod +x deploy.sh
+sudo ./deploy.sh
+```
 
-# Pull perubahan terbaru
+Script ini akan:
+- Otomatis menyimpan perubahan lokal (git stash) sebelum pull
+- Menjalankan semua langkah deployment
+- Mengembalikan perubahan jika diperlukan
+
+**Opsi 2: Manual dengan Git Stash**
+
+```bash
+cd /var/www/nasruladitri.space/serdadu
+
+# 1. Simpan perubahan lokal
+git stash push -m "Backup sebelum pull $(date)"
+
+# 2. Pull perubahan terbaru
+git pull origin main
+
+# 3. Install dependencies baru (jika ada)
+composer install --optimize-autoloader --no-dev
+npm install
+npm run build
+
+# 4. Clear dan rebuild cache
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+
+# 5. Rebuild cache untuk production
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# 6. Run migrations (jika ada)
+php artisan migrate --force
+
+# 7. Restart services (sesuaikan versi PHP dengan yang digunakan)
+sudo systemctl reload php8.4-fpm  # atau php8.2-fpm, php8.3-fpm, dll
+sudo systemctl reload nginx
+sudo supervisorctl restart serdadu-worker:*
+```
+
+**Opsi 3: Discard Local Changes (HATI-HATI)**
+
+⚠️ **PERINGATAN:** Ini akan membuang SEMUA perubahan lokal yang tidak ter-commit!
+
+```bash
+cd /var/www/nasruladitri.space/serdadu
+
+# 1. Buang semua perubahan lokal
+git reset --hard HEAD
+git clean -fd
+
+# 2. Pull perubahan terbaru
+git pull origin main
+
+# 3. Lanjutkan dengan langkah deployment seperti biasa
+composer install --optimize-autoloader --no-dev
+npm install
+npm run build
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan migrate --force
+sudo systemctl reload php8.4-fpm
+sudo systemctl reload nginx
+```
+
+**Opsi 4: Gunakan Script Deploy-Safe (Auto Discard)**
+
+Script `deploy-safe.sh` akan otomatis membuang perubahan lokal:
+
+```bash
+cd /var/www/nasruladitri.space/serdadu
+chmod +x deploy-safe.sh
+sudo ./deploy-safe.sh
+```
+
+### Cara Manual (Tanpa Script)
+
+Jika tidak menggunakan script, ikuti langkah berikut:
+
+```bash
+cd /var/www/nasruladitri.space/serdadu
+
+# Pull perubahan terbaru (dengan stash jika perlu)
+git stash push -m "Backup sebelum pull" || true
 git pull origin main
 
 # Install dependencies baru (jika ada)
@@ -529,7 +645,111 @@ sudo supervisorctl restart serdadu-worker:*
 
 ---
 
+## Script Deployment
+
+### Setup Script Deployment
+
+1. **Upload script ke server:**
+   ```bash
+   # Upload deploy.sh dan deploy-safe.sh ke /var/www/nasruladitri.space/serdadu/
+   ```
+
+2. **Beri permission execute:**
+   ```bash
+   cd /var/www/nasruladitri.space/serdadu
+   chmod +x deploy.sh
+   chmod +x deploy-safe.sh
+   chmod +x quick-fix-git-pull.sh
+   chmod +x fix-permissions.sh
+   ```
+
+3. **Edit script sesuai kebutuhan:**
+   - Edit `APP_PATH` jika path berbeda
+   - Edit `PHP_VERSION` sesuai versi PHP yang digunakan (8.2, 8.3, atau 8.4)
+
+4. **Jalankan script:**
+   ```bash
+   # Quick fix untuk git pull error (interaktif)
+   sudo ./quick-fix-git-pull.sh
+   
+   # Script deployment lengkap (menyimpan perubahan lokal)
+   sudo ./deploy.sh
+   
+   # Script dengan auto-discard (membuang perubahan lokal)
+   sudo ./deploy-safe.sh
+   
+   # Fix permissions saja
+   sudo ./fix-permissions.sh
+   ```
+
+### Perbedaan Script
+
+- **`quick-fix-git-pull.sh`**: Quick fix interaktif untuk masalah git pull (memilih stash atau discard)
+- **`deploy.sh`**: Script deployment lengkap, menyimpan perubahan lokal dengan `git stash` sebelum pull (AMAN)
+- **`deploy-safe.sh`**: Script deployment lengkap dengan auto-discard perubahan lokal menggunakan `git reset --hard` (HATI-HATI)
+- **`fix-permissions.sh`**: Script untuk memperbaiki permissions Laravel
+
+**Rekomendasi:**
+- Untuk masalah git pull error: Gunakan `quick-fix-git-pull.sh` (interaktif, aman)
+- Untuk deployment rutin: Gunakan `deploy.sh` (menyimpan perubahan lokal)
+- Untuk deployment dengan discard: Gunakan `deploy-safe.sh` (hanya jika yakin perubahan lokal tidak penting)
+
+---
+
 ## Troubleshooting
+
+### ⚠️ Git Pull Error: Local Changes Would Be Overwritten
+
+**Error yang muncul:**
+```
+error: Your local changes to the following files would be overwritten by merge:
+- app/Http/Controllers/PublicDashboardController.php
+- resources/views/layouts/dukcapil.blade.php
+- resources/views/public/charts.blade.php
+- resources/views/public/landing.blade.php
+- routes/web.php
+Please commit your changes or stash them before you merge.
+Aborting
+```
+
+**Penyebab:**
+- File di server berubah karena proses build/cache Laravel
+- File mungkin diubah langsung di server
+- Git mendeteksi perubahan lokal yang tidak ter-commit
+
+**Solusi Cepat:**
+
+**1. Stash perubahan lokal (DISARANKAN):**
+```bash
+cd /var/www/nasruladitri.space/serdadu
+git stash push -m "Backup sebelum pull"
+git pull origin main
+# Lanjutkan deployment seperti biasa
+```
+
+**2. Discard perubahan lokal (HATI-HATI):**
+```bash
+cd /var/www/nasruladitri.space/serdadu
+git reset --hard HEAD
+git clean -fd
+git pull origin main
+# Lanjutkan deployment seperti biasa
+```
+
+**3. Gunakan script deployment:**
+```bash
+cd /var/www/nasruladitri.space/serdadu
+sudo ./deploy.sh  # Atau deploy-safe.sh
+```
+
+**Pencegahan:**
+- **JANGAN** edit file langsung di server. Edit di local, commit, push ke GitHub, lalu pull di server
+- Gunakan script deployment yang otomatis menangani masalah ini
+- Pastikan semua perubahan sudah di-commit dan push ke GitHub sebelum pull di server
+
+**Catatan:**
+- Perubahan karena build/cache biasanya tidak penting dan bisa dibuang
+- Jika ada perubahan penting di server yang tidak ter-commit, backup terlebih dahulu sebelum discard
 
 ### ⚠️ Missing PHP Extensions (ext-gd, ext-mbstring, dll) - ERROR SAAT COMPOSER INSTALL
 

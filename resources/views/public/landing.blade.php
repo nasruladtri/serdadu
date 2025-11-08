@@ -104,9 +104,9 @@
                         <!-- Metrics Grid -->
                         <div>
                             <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Jumlah Penduduk</h3>
-                            <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                            <div class="space-y-3 sm:space-y-4">
                                 <!-- Total Penduduk -->
-                                <div class="col-span-2">
+                                <div>
                                     <div class="metric-card metric-card-primary">
                                         <div class="flex items-center justify-between mb-2">
                                             <div class="flex items-center gap-2">
@@ -121,42 +121,45 @@
                                     </div>
                                 </div>
 
-                                <!-- Laki-laki -->
-                                <div class="col-span-1">
-                                    <div class="metric-card metric-card-male">
-                                        <div class="flex items-center justify-between mb-2">
-                                        <div class="flex items-center gap-2">
-                                                <img src="{{ asset('img/l.png') }}" alt="Laki-laki" class="w-6 h-6 flex-shrink-0 object-contain brightness-0 invert">
-                                                <span class="text-xs font-medium text-white/90">Laki-laki</span>
+                                <!-- Laki-laki dan Perempuan - Side by Side -->
+                                <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                                    <!-- Laki-laki -->
+                                    <div>
+                                        <div class="metric-card metric-card-male h-full">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <div class="flex items-center gap-2">
+                                                    <img src="{{ asset('img/l.png') }}" alt="Laki-laki" class="w-6 h-6 flex-shrink-0 object-contain brightness-0 invert">
+                                                    <span class="text-xs font-medium text-white/90">Laki-laki</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="text-xl font-bold mb-1">{{ number_format($malePop) }}</div>
-                                        <div class="text-xs text-white/80 mb-2">{{ number_format($malePercent, 1) }}%</div>
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: {{ $malePercent }}%"></div>
+                                            <div class="text-xl font-bold mb-1">{{ number_format($malePop) }}</div>
+                                            <div class="text-xs text-white/80 mb-2">{{ number_format($malePercent, 1) }}%</div>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: {{ $malePercent }}%"></div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- Perempuan -->
-                                <div class="col-span-1">
-                                    <div class="metric-card metric-card-female">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <div class="flex items-center gap-2">
-                                                <img src="{{ asset('img/p.png') }}" alt="Perempuan" class="w-6 h-6 flex-shrink-0 object-contain brightness-0 invert">
-                                                <span class="text-xs font-medium text-white/90">Perempuan</span>
+                                    <!-- Perempuan -->
+                                    <div>
+                                        <div class="metric-card metric-card-female h-full">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <div class="flex items-center gap-2">
+                                                    <img src="{{ asset('img/p.png') }}" alt="Perempuan" class="w-6 h-6 flex-shrink-0 object-contain brightness-0 invert">
+                                                    <span class="text-xs font-medium text-white/90">Perempuan</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="text-xl font-bold mb-1">{{ number_format($femalePop) }}</div>
-                                        <div class="text-xs text-white/80 mb-2">{{ number_format($femalePercent, 1) }}%</div>
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: {{ $femalePercent }}%"></div>
+                                            <div class="text-xl font-bold mb-1">{{ number_format($femalePop) }}</div>
+                                            <div class="text-xs text-white/80 mb-2">{{ number_format($femalePercent, 1) }}%</div>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: {{ $femalePercent }}%"></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Wajib KTP -->
-                                <div class="col-span-2">
+                                <div>
                                     <div class="metric-card metric-card-primary">
                                         <div class="flex items-center justify-between mb-2">
                                             <div class="flex items-center gap-2">
