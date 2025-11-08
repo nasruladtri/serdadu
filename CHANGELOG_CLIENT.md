@@ -71,7 +71,23 @@ Sistem SERDADU (Sistem Rekap Data Terpadu) merupakan aplikasi web untuk visualis
   - Filter dinamis
   - Grafik yang mudah dipahami
 
-### 5. Sistem Import Data
+### 5. Halaman Perbandingan Data (Compare) - **BARU**
+- **Perbandingan Side-by-Side:**
+  - Perbandingan data antara dua periode/wilayah secara bersamaan
+  - Layout side-by-side dengan grafik terpisah (kiri: Data Utama, kanan: Data Pembanding)
+  - Filter independen untuk Data Utama dan Data Pembanding
+  - Validasi semester berdasarkan tahun yang dipilih
+  - Tab navigation untuk semua kategori data (Gender, Kelompok Umur, Umur Tunggal, Pendidikan, Pekerjaan, Status Perkawinan, Kepala Keluarga, Agama, KK)
+  
+- **Fitur Perbandingan:**
+  - Filter berdasarkan Tahun dan Semester untuk setiap dataset
+  - Filter berdasarkan Kecamatan dan Desa/Kelurahan
+  - Badge label yang menampilkan periode/wilayah yang dipilih
+  - Chart interaktif untuk kedua dataset
+  - Tampilan responsif untuk berbagai ukuran layar
+  - Validasi untuk mencegah kombinasi semester/tahun yang tidak valid
+
+### 6. Sistem Import Data
 - **Import dari Excel:**
   - Import data dari file Excel (format DKB)
   - Support multiple sheets dalam satu file
@@ -98,6 +114,19 @@ Sistem SERDADU (Sistem Rekap Data Terpadu) merupakan aplikasi web untuk visualis
 - ✅ Penanganan variasi format kolom Excel
 - ✅ Perhitungan total otomatis untuk data KK
 - ✅ Pencegahan data duplikat
+- ✅ **Perbaikan Akurasi Data Gender (Januari 2025):**
+  - Menggunakan `pop_single_age` untuk agregasi gender menggantikan `pop_age_group`
+  - Menghapus agregasi gender dari `pop_age_group` yang menyebabkan data tidak akurat
+  - Memprioritaskan `pop_single_age` untuk agregasi gender karena data lebih granular
+  - Memperbaiki total penduduk 2025 semester 1 dari 1,152,144 menjadi 738,240 (data lebih akurat)
+
+- ✅ **Penambahan Halaman Perbandingan Data (Januari 2025):**
+  - Fitur baru untuk membandingkan data antara dua periode/wilayah secara side-by-side
+  - Layout grafik terpisah untuk Data Utama dan Data Pembanding
+  - Filter independen untuk setiap dataset
+  - Validasi semester berdasarkan tahun yang dipilih
+  - Tab navigation untuk semua kategori data
+  - Tampilan responsif dan user-friendly
 
 ### Perbaikan Tampilan
 - ✅ Desain responsif untuk mobile, tablet, dan desktop
@@ -188,6 +217,14 @@ Sistem SERDADU (Sistem Rekap Data Terpadu) merupakan aplikasi web untuk visualis
    - Pilih kategori data yang ingin dilihat
    - Filter berdasarkan periode dan wilayah
 
+4. **Membandingkan Data:**
+   - Pilih halaman "Perbandingan Data"
+   - Pilih periode dan wilayah untuk Data Utama (kiri)
+   - Pilih periode dan wilayah untuk Data Pembanding (kanan)
+   - Klik "Bandingkan" untuk melihat grafik side-by-side
+   - Gunakan tab untuk beralih antar kategori data
+   - Bandingkan data antar periode atau wilayah dengan mudah
+
 ### Untuk Admin
 
 1. **Import Data:**
@@ -243,9 +280,12 @@ Jika mengalami masalah atau memiliki pertanyaan:
 ### Update yang Akan Datang
 - Export data ke PDF dan Excel
 - Advanced filtering
-- Data comparison antar periode
 - Custom reports
+- Dashboard analytics yang lebih advanced
+- Notifikasi real-time untuk update data
 - Dan fitur lainnya
+
+**Catatan:** Fitur data comparison antar periode sudah tersedia di halaman Perbandingan Data.
 
 ---
 
@@ -259,11 +299,21 @@ Jika mengalami masalah atau memiliki pertanyaan:
   - Node.js 18+
 
 ### Teknologi yang Digunakan
-- Laravel Framework
-- MySQL Database
-- Leaflet.js untuk peta
-- Chart.js untuk grafik
-- Tailwind CSS untuk styling
+- **Backend:**
+  - Laravel Framework (PHP 8.2+)
+  - MySQL/MariaDB Database
+  
+- **Frontend:**
+  - Leaflet.js untuk peta interaktif
+  - Chart.js untuk visualisasi grafik
+  - Tailwind CSS untuk styling
+  - Alpine.js untuk interaktivitas
+  - Blade templating engine
+  
+- **Versi:**
+  - SERDADU v1.0.0
+  - PHP 8.2 atau lebih tinggi (disarankan 8.4)
+  - Node.js 18+
 
 ---
 
