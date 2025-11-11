@@ -360,9 +360,9 @@ php artisan storage:link
 
 # Set permissions
 sudo chown -R www-data:www-data /var/www/serdadu
-sudo chmod -R 755 /var/www/serdadu
-sudo chmod -R 775 /var/www/serdadu/storage
-sudo chmod -R 775 /var/www/serdadu/bootstrap/cache
+sudo chmod -R 755 /var/www/nasruladitri.space/serdadu
+sudo chmod -R 775 /var/www/serdadu/nasruladitri.space/storage
+sudo chmod -R 775 /var/www/nasruladitri.space/serdadu/bootstrap/cache
 ```
 
 ### Langkah 12: Konfigurasi Nginx
