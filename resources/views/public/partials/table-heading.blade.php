@@ -75,7 +75,7 @@
                         role="button"
                         tabindex="0"
                         aria-label="Download PDF">
-                        <img src="{{ Vite::asset('resources/img/pdf.png') }}" alt="PDF icon" class="w-5 h-5 object-contain">
+                        <img src="{{ asset('img/pdf.png') }}" alt="PDF icon" class="w-5 h-5 object-contain">
                     </span>
                     <span 
                         class="js-download-btn inline-flex items-center px-4 py-1.5 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer select-none"
@@ -88,7 +88,7 @@
                         role="button"
                         tabindex="0"
                         aria-label="Download Excel">
-                        <img src="{{ Vite::asset('resources/img/sheet.png') }}" alt="Excel icon" class="w-5 h-5 object-contain">
+                        <img src="{{ asset('img/sheet.png') }}" alt="Excel icon" class="w-5 h-5 object-contain">
                     </span>
                 </div>
             @endif
