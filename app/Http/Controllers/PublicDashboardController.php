@@ -7,6 +7,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\District;
 use App\Models\Village;
+use App\Models\DownloadLog;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 class PublicDashboardController extends Controller
 {
@@ -35,11 +44,21 @@ class PublicDashboardController extends Controller
         $districts = District::orderBy('name')->get(['id', 'name', 'code']);
 
         if (!$period) {
+            $districtsForMap = $districts->map(function($district) {
+                return [
+                    'id' => $district->id,
+                    'code' => $district->code,
+                    'name' => $district->name,
+                    'slug' => Str::slug($district->name),
+                ];
+            })->values();
+
             return view('public.landing', [
                 'title' => 'Beranda',
                 'period' => null,
                 'mapStats' => $this->emptyMapStats(),
                 'districtOptions' => $districts,
+                'districtsForMap' => $districtsForMap,
                 'districtCount' => $districts->count(),
                 'populationGrowth' => $this->populationGrowthRate(),
             ]);
@@ -58,6 +77,15 @@ class PublicDashboardController extends Controller
 
         $populationGrowth = $this->populationGrowthRate();
 
+        $districtsForMap = $districts->map(function($district) {
+            return [
+                'id' => $district->id,
+                'code' => $district->code,
+                'name' => $district->name,
+                'slug' => Str::slug($district->name),
+            ];
+        })->values();
+
         return view('public.landing', [
             'title' => 'Beranda',
             'period' => $period,
@@ -71,6 +99,8 @@ class PublicDashboardController extends Controller
             'education' => $education,
             'mapStats' => $this->mapPopulationSummary($period),
             'districtOptions' => $districts,
+            'districts' => $districts,
+            'districtsForMap' => $districtsForMap,
             'populationGrowth' => $populationGrowth,
         ]);
     }
@@ -158,6 +188,56 @@ class PublicDashboardController extends Controller
         ] = $this->prepareFilterContext($request);
 
         $category = $request->get('category', 'gender');
+        $regionName = config('app.region_name', 'Kabupaten Madiun');
+        $primaryDistrictName = $primaryDistrict ? Str::title(optional($districts->firstWhere('id', $primaryDistrict))->name ?? '') : null;
+        $compareDistrictName = $compareDistrict ? Str::title(optional($districts->firstWhere('id', $compareDistrict))->name ?? '') : null;
+        $primaryVillageName = $primaryVillage ? Str::title(Village::where('id', $primaryVillage)->value('name') ?? '') : null;
+        $compareVillageName = $compareVillage ? Str::title(Village::where('id', $compareVillage)->value('name') ?? '') : null;
+
+        $primaryAreaSegments = [$regionName];
+        if ($primaryDistrictName) {
+            $primaryAreaSegments[] = 'Kecamatan ' . $primaryDistrictName;
+            $primaryAreaSegments[] = $primaryVillageName ? 'Desa/Kelurahan ' . $primaryVillageName : 'Semua Desa/Kelurahan';
+        } else {
+            $primaryAreaSegments[] = 'Semua Kecamatan';
+            $primaryAreaSegments[] = 'Semua Desa/Kelurahan';
+        }
+        $primaryAreaDescriptor = implode(' > ', array_filter($primaryAreaSegments));
+
+        $compareAreaSegments = [$regionName];
+        if ($compareDistrictName) {
+            $compareAreaSegments[] = 'Kecamatan ' . $compareDistrictName;
+            $compareAreaSegments[] = $compareVillageName ? 'Desa/Kelurahan ' . $compareVillageName : 'Semua Desa/Kelurahan';
+        } else {
+            $compareAreaSegments[] = 'Semua Kecamatan';
+            $compareAreaSegments[] = 'Semua Desa/Kelurahan';
+        }
+        $compareAreaDescriptor = implode(' > ', array_filter($compareAreaSegments));
+        $regionName = config('app.region_name', 'Kabupaten Madiun');
+        $primaryDistrictName = $primaryDistrict ? Str::title($districts->firstWhere('id', $primaryDistrict)->name ?? '') : null;
+        $compareDistrictName = $compareDistrict ? Str::title($districts->firstWhere('id', $compareDistrict)->name ?? '') : null;
+        $primaryVillageName = $primaryVillage ? Str::title(Village::where('id', $primaryVillage)->value('name') ?? '') : null;
+        $compareVillageName = $compareVillage ? Str::title(Village::where('id', $compareVillage)->value('name') ?? '') : null;
+
+        $primaryAreaSegments = [$regionName];
+        if ($primaryDistrictName) {
+            $primaryAreaSegments[] = 'Kecamatan ' . $primaryDistrictName;
+            $primaryAreaSegments[] = $primaryVillageName ? 'Desa/Kelurahan ' . $primaryVillageName : 'Semua Desa/Kelurahan';
+        } else {
+            $primaryAreaSegments[] = 'Semua Kecamatan';
+            $primaryAreaSegments[] = 'Semua Desa/Kelurahan';
+        }
+        $primaryAreaDescriptor = implode(' > ', array_filter($primaryAreaSegments));
+
+        $compareAreaSegments = [$regionName];
+        if ($compareDistrictName) {
+            $compareAreaSegments[] = 'Kecamatan ' . $compareDistrictName;
+            $compareAreaSegments[] = $compareVillageName ? 'Desa/Kelurahan ' . $compareVillageName : 'Semua Desa/Kelurahan';
+        } else {
+            $compareAreaSegments[] = 'Semua Kecamatan';
+            $compareAreaSegments[] = 'Semua Desa/Kelurahan';
+        }
+        $compareAreaDescriptor = implode(' > ', array_filter($compareAreaSegments));
 
         $gender = $period ? $this->genderSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0];
         $wajibKtp = $period ? $this->wajibKtpSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0];
@@ -317,15 +397,27 @@ class PublicDashboardController extends Controller
         $primarySemester = $request->input('semester');
         $primaryDistrict = $request->input('district_id');
         $primaryVillage = $request->input('village_id');
+        
+        // Normalize inputs - treat empty strings as null, but preserve numeric values
+        $primaryYear = ($primaryYear === '' || $primaryYear === null) ? null : (int) $primaryYear;
+        $primarySemester = ($primarySemester === '' || $primarySemester === null) ? null : (int) $primarySemester;
+        $primaryDistrict = ($primaryDistrict === '' || $primaryDistrict === null) ? null : (int) $primaryDistrict;
+        $primaryVillage = ($primaryVillage === '' || $primaryVillage === null) ? null : (int) $primaryVillage;
 
         // Get available semesters for primary (filtered by selected year if year is selected)
-        $primaryAvailableSemesters = collect($periods)
-            ->when($primaryYear, fn($c) => $c->where('year', $primaryYear))
-            ->pluck('semester')
-            ->unique()
-            ->sort()
-            ->values()
-            ->all();
+        // Jika tahun sudah dipilih, hanya tampilkan semester untuk tahun tersebut
+        // Jika tahun belum dipilih, kosongkan agar view bisa menggunakan $allAvailableSemesters
+        if ($primaryYear !== null) {
+            $primaryAvailableSemesters = collect($periods)
+                ->where('year', (int)$primaryYear)
+                ->pluck('semester')
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
+        } else {
+            $primaryAvailableSemesters = [];
+        }
 
         // Get primary period - hanya resolve jika tahun dan semester keduanya ada DAN semester tersebut valid untuk tahun tersebut
         $primaryPeriod = null;
@@ -357,6 +449,13 @@ class PublicDashboardController extends Controller
         $primaryVillages = collect();
         if ($primaryDistrict) {
             $primaryVillages = Village::where('district_id', $primaryDistrict)->orderBy('name')->get();
+            // Validate: if village is selected but not valid for the selected district, reset it
+            if ($primaryVillage && !$primaryVillages->contains('id', (int)$primaryVillage)) {
+                $primaryVillage = null;
+            }
+        } else {
+            // If no district is selected, reset village
+            $primaryVillage = null;
         }
 
         $primaryFilters = [
@@ -369,15 +468,27 @@ class PublicDashboardController extends Controller
         $compareSemester = $request->input('compare_semester');
         $compareDistrict = $request->input('compare_district_id');
         $compareVillage = $request->input('compare_village_id');
+        
+        // Normalize inputs - treat empty strings as null, but preserve numeric values
+        $compareYear = ($compareYear === '' || $compareYear === null) ? null : (int) $compareYear;
+        $compareSemester = ($compareSemester === '' || $compareSemester === null) ? null : (int) $compareSemester;
+        $compareDistrict = ($compareDistrict === '' || $compareDistrict === null) ? null : (int) $compareDistrict;
+        $compareVillage = ($compareVillage === '' || $compareVillage === null) ? null : (int) $compareVillage;
 
         // Get available semesters for compare (filtered by selected year if year is selected)
-        $compareAvailableSemesters = collect($periods)
-            ->when($compareYear, fn($c) => $c->where('year', $compareYear))
-            ->pluck('semester')
-            ->unique()
-            ->sort()
-            ->values()
-            ->all();
+        // Jika tahun sudah dipilih, hanya tampilkan semester untuk tahun tersebut
+        // Jika tahun belum dipilih, kosongkan agar view bisa menggunakan $allAvailableSemesters
+        if ($compareYear !== null) {
+            $compareAvailableSemesters = collect($periods)
+                ->where('year', (int)$compareYear)
+                ->pluck('semester')
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
+        } else {
+            $compareAvailableSemesters = [];
+        }
 
         // Resolve compare period - hanya resolve jika tahun dan semester keduanya ada DAN semester tersebut valid untuk tahun tersebut
         $comparePeriod = null;
@@ -402,19 +513,26 @@ class PublicDashboardController extends Controller
             // Jika semester tidak valid untuk tahun tersebut, $comparePeriod tetap null sehingga data tidak ditampilkan
         }
 
-        // Prepare compare filters
-        $compareFilters = [
-            'district_id' => $compareDistrict ? (int) $compareDistrict : null,
-            'village_id' => $compareVillage ? (int) $compareVillage : null,
-        ];
-
         // Get compare villages if district is selected
         $compareVillages = collect();
         if ($compareDistrict) {
             $compareVillages = Village::where('district_id', $compareDistrict)
                 ->orderBy('name')
                 ->get();
+            // Validate: if village is selected but not valid for the selected district, reset it
+            if ($compareVillage && !$compareVillages->contains('id', (int)$compareVillage)) {
+                $compareVillage = null;
+            }
+        } else {
+            // If no district is selected, reset village
+            $compareVillage = null;
         }
+
+        // Prepare compare filters (after validation)
+        $compareFilters = [
+            'district_id' => $compareDistrict ? (int) $compareDistrict : null,
+            'village_id' => $compareVillage ? (int) $compareVillage : null,
+        ];
 
         // Get data for primary
         $primaryGender = $primaryPeriod ? $this->genderSummary($primaryPeriod, $primaryFilters) : ['male' => 0, 'female' => 0, 'total' => 0];
@@ -524,6 +642,310 @@ class PublicDashboardController extends Controller
         ]);
     }
 
+    public function chartsFullscreen(Request $request)
+    {
+        [
+            'periods' => $periods,
+            'period' => $period,
+            'districts' => $districts,
+            'villages' => $villages,
+            'selectedDistrict' => $selectedDistrict,
+            'selectedVillage' => $selectedVillage,
+            'filters' => $filters,
+            'years' => $years,
+            'semesterOptions' => $availableSemesters,
+            'selectedYear' => $selectedYear,
+            'selectedSemester' => $selectedSemester,
+        ] = $this->prepareFilterContext($request);
+
+        $category = $request->get('category', 'gender');
+
+        $gender = $period ? $this->genderSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0];
+        $wajibKtp = $period ? $this->wajibKtpSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0];
+        $kk = $period ? $this->kkSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0, 'male_printed' => 0, 'female_printed' => 0, 'total_printed' => 0, 'male_not_printed' => 0, 'female_not_printed' => 0, 'total_not_printed' => 0];
+        $ageGroups = $period ? $this->ageGroupSummary($period, $filters) : [];
+        $singleAges = $period ? $this->singleAgeSummary($period, $filters) : [];
+        $education = $period ? $this->educationSummary($period, $filters) : [];
+        $topOccupations = $period ? $this->occupationHighlights($period, $filters) : [];
+        $marital = $period ? $this->maritalStatusSummary($period, $filters) : [];
+        $headHouseholds = $period ? $this->headOfHouseholdSummary($period, $filters) : [];
+        $religions = $period ? $this->religionSummary($period, $filters) : [];
+
+        $chartTitles = [
+            'gender' => 'Jenis Kelamin',
+            'age' => 'Kelompok Umur',
+            'single-age' => 'Umur Tunggal',
+            'education' => 'Pendidikan',
+            'occupation' => 'Pekerjaan',
+            'marital' => 'Status Perkawinan',
+            'household' => 'Kepala Keluarga',
+            'religion' => 'Agama',
+            'wajib-ktp' => 'Wajib KTP',
+            'kk' => 'Kartu Keluarga',
+        ];
+        $chartsNeedingTags = [
+            'age',
+            'single-age',
+            'education',
+            'occupation',
+            'marital',
+            'household',
+            'religion',
+        ];
+        $chartsAngledTags = [
+            'single-age',
+            'occupation',
+        ];
+
+        $kkChart = $this->buildKkChart($chartTitles['kk'], $kk);
+
+        $charts = [
+            'gender' => $this->buildGenderChart($chartTitles['gender'], $gender),
+            'age' => $this->buildSeriesChart($chartTitles['age'], $ageGroups),
+            'single-age' => $this->buildSeriesChart($chartTitles['single-age'], $singleAges),
+            'education' => $this->buildSeriesChart($chartTitles['education'], $education),
+            'occupation' => $this->buildSeriesChart($chartTitles['occupation'], $topOccupations),
+            'marital' => $this->buildSeriesChart($chartTitles['marital'], $marital),
+            'household' => $this->buildSeriesChart($chartTitles['household'], $headHouseholds),
+            'religion' => $this->buildSeriesChart($chartTitles['religion'], $religions),
+            'wajib-ktp' => $this->buildWajibKtpChart($chartTitles['wajib-ktp'], $wajibKtp),
+            'kk' => $kkChart,
+        ];
+
+        return view('public.charts-fullscreen', [
+            'title' => 'Grafik Data - Fullscreen',
+            'period' => $period,
+            'periods' => $periods,
+            'years' => $years,
+            'semesterOptions' => $availableSemesters,
+            'selectedYear' => $selectedYear,
+            'selectedSemester' => $selectedSemester,
+            'districts' => $districts,
+            'villages' => $villages,
+            'selectedDistrict' => $selectedDistrict,
+            'selectedVillage' => $selectedVillage,
+            'charts' => $charts,
+            'chartTitles' => $chartTitles,
+            'chartsNeedingTags' => $chartsNeedingTags,
+            'chartsAngledTags' => $chartsAngledTags,
+            'category' => $category,
+        ]);
+    }
+
+    public function compareFullscreen(Request $request)
+    {
+        // Get all periods
+        $periods = $this->availablePeriods();
+        $districts = District::orderBy('name')->get();
+        $years = collect($periods)->pluck('year')->unique()->sortDesc()->values()->all();
+        
+        // Get all available semesters (not filtered by year) - untuk dropdown compare
+        $allAvailableSemesters = collect($periods)
+            ->pluck('semester')
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        // Prepare context untuk primary data
+        $primaryYear = $request->input('year');
+        $primarySemester = $request->input('semester');
+        $primaryDistrict = $request->input('district_id');
+        $primaryVillage = $request->input('village_id');
+        
+        // Normalize inputs - treat empty strings as null, but preserve numeric values
+        $primaryYear = ($primaryYear === '' || $primaryYear === null) ? null : (int) $primaryYear;
+        $primarySemester = ($primarySemester === '' || $primarySemester === null) ? null : (int) $primarySemester;
+        $primaryDistrict = ($primaryDistrict === '' || $primaryDistrict === null) ? null : (int) $primaryDistrict;
+        $primaryVillage = ($primaryVillage === '' || $primaryVillage === null) ? null : (int) $primaryVillage;
+        
+        // Prepare context untuk compare data
+        $compareYear = $request->input('compare_year');
+        $compareSemester = $request->input('compare_semester');
+        $compareDistrict = $request->input('compare_district_id');
+        $compareVillage = $request->input('compare_village_id');
+        
+        // Normalize inputs
+        $compareYear = ($compareYear === '' || $compareYear === null) ? null : (int) $compareYear;
+        $compareSemester = ($compareSemester === '' || $compareSemester === null) ? null : (int) $compareSemester;
+        $compareDistrict = ($compareDistrict === '' || $compareDistrict === null) ? null : (int) $compareDistrict;
+        $compareVillage = ($compareVillage === '' || $compareVillage === null) ? null : (int) $compareVillage;
+
+        $category = $request->get('category', 'gender');
+
+        // Resolve periods untuk primary
+        $primaryPeriod = null;
+        if ($primaryYear && $primarySemester) {
+            $primaryPeriod = collect($periods)->first(function ($p) use ($primaryYear, $primarySemester) {
+                return $p['year'] === $primaryYear && $p['semester'] === $primarySemester;
+            });
+        }
+
+        // Resolve periods untuk compare
+        $comparePeriod = null;
+        if ($compareYear && $compareSemester) {
+            $comparePeriod = collect($periods)->first(function ($p) use ($compareYear, $compareSemester) {
+                return $p['year'] === $compareYear && $p['semester'] === $compareSemester;
+            });
+        }
+
+        // Get available semesters for selected years
+        $primaryAvailableSemesters = $primaryYear
+            ? collect($periods)
+                ->where('year', $primaryYear)
+                ->pluck('semester')
+                ->unique()
+                ->sort()
+                ->values()
+                ->all()
+            : [];
+
+        $compareAvailableSemesters = $compareYear
+            ? collect($periods)
+                ->where('year', $compareYear)
+                ->pluck('semester')
+                ->unique()
+                ->sort()
+                ->values()
+                ->all()
+            : [];
+
+        // Get villages untuk primary
+        $primaryVillages = $primaryDistrict
+            ? Village::where('district_id', $primaryDistrict)->orderBy('name')->get()
+            : collect();
+
+        // Get villages untuk compare
+        $compareVillages = $compareDistrict
+            ? Village::where('district_id', $compareDistrict)->orderBy('name')->get()
+            : collect();
+
+        // Build filters
+        $primaryFilters = [];
+        if ($primaryDistrict) {
+            $primaryFilters['district_id'] = $primaryDistrict;
+        }
+        if ($primaryVillage) {
+            $primaryFilters['village_id'] = $primaryVillage;
+        }
+
+        $compareFilters = [];
+        if ($compareDistrict) {
+            $compareFilters['district_id'] = $compareDistrict;
+        }
+        if ($compareVillage) {
+            $compareFilters['village_id'] = $compareVillage;
+        }
+
+        // Get summary data untuk primary
+        $primaryGender = $primaryPeriod ? $this->genderSummary($primaryPeriod, $primaryFilters) : ['male' => 0, 'female' => 0, 'total' => 0];
+        $primaryWajibKtp = $primaryPeriod ? $this->wajibKtpSummary($primaryPeriod, $primaryFilters) : ['male' => 0, 'female' => 0, 'total' => 0];
+        $primaryKk = $primaryPeriod ? $this->kkSummary($primaryPeriod, $primaryFilters) : ['male' => 0, 'female' => 0, 'total' => 0, 'male_printed' => 0, 'female_printed' => 0, 'total_printed' => 0, 'male_not_printed' => 0, 'female_not_printed' => 0, 'total_not_printed' => 0];
+        $primaryAgeGroups = $primaryPeriod ? $this->ageGroupSummary($primaryPeriod, $primaryFilters) : [];
+        $primarySingleAges = $primaryPeriod ? $this->singleAgeSummary($primaryPeriod, $primaryFilters) : [];
+        $primaryEducation = $primaryPeriod ? $this->educationSummary($primaryPeriod, $primaryFilters) : [];
+        $primaryOccupations = $primaryPeriod ? $this->occupationHighlights($primaryPeriod, $primaryFilters) : [];
+        $primaryMarital = $primaryPeriod ? $this->maritalStatusSummary($primaryPeriod, $primaryFilters) : [];
+        $primaryHeadHouseholds = $primaryPeriod ? $this->headOfHouseholdSummary($primaryPeriod, $primaryFilters) : [];
+        $primaryReligions = $primaryPeriod ? $this->religionSummary($primaryPeriod, $primaryFilters) : [];
+
+        // Get summary data untuk compare
+        $compareGender = $comparePeriod ? $this->genderSummary($comparePeriod, $compareFilters) : ['male' => 0, 'female' => 0, 'total' => 0];
+        $compareWajibKtp = $comparePeriod ? $this->wajibKtpSummary($comparePeriod, $compareFilters) : ['male' => 0, 'female' => 0, 'total' => 0];
+        $compareKk = $comparePeriod ? $this->kkSummary($comparePeriod, $compareFilters) : ['male' => 0, 'female' => 0, 'total' => 0, 'male_printed' => 0, 'female_printed' => 0, 'total_printed' => 0, 'male_not_printed' => 0, 'female_not_printed' => 0, 'total_not_printed' => 0];
+        $compareAgeGroups = $comparePeriod ? $this->ageGroupSummary($comparePeriod, $compareFilters) : [];
+        $compareSingleAges = $comparePeriod ? $this->singleAgeSummary($comparePeriod, $compareFilters) : [];
+        $compareEducation = $comparePeriod ? $this->educationSummary($comparePeriod, $compareFilters) : [];
+        $compareOccupations = $comparePeriod ? $this->occupationHighlights($comparePeriod, $compareFilters) : [];
+        $compareMarital = $comparePeriod ? $this->maritalStatusSummary($comparePeriod, $compareFilters) : [];
+        $compareHeadHouseholds = $comparePeriod ? $this->headOfHouseholdSummary($comparePeriod, $compareFilters) : [];
+        $compareReligions = $comparePeriod ? $this->religionSummary($comparePeriod, $compareFilters) : [];
+
+        $chartTitles = [
+            'gender' => 'Jenis Kelamin',
+            'age' => 'Kelompok Umur',
+            'single-age' => 'Umur Tunggal',
+            'education' => 'Pendidikan',
+            'occupation' => 'Pekerjaan',
+            'marital' => 'Status Perkawinan',
+            'household' => 'Kepala Keluarga',
+            'religion' => 'Agama',
+            'wajib-ktp' => 'Wajib KTP',
+            'kk' => 'Kartu Keluarga',
+        ];
+
+        $chartsNeedingTags = [
+            'age',
+            'single-age',
+            'education',
+            'occupation',
+            'marital',
+            'household',
+            'religion',
+        ];
+
+        $chartsAngledTags = [
+            'single-age',
+            'occupation',
+        ];
+
+        // Build charts for primary
+        $primaryCharts = [
+            'gender' => $this->buildGenderChart($chartTitles['gender'], $primaryGender),
+            'age' => $this->buildSeriesChart($chartTitles['age'], $primaryAgeGroups),
+            'single-age' => $this->buildSeriesChart($chartTitles['single-age'], $primarySingleAges),
+            'education' => $this->buildSeriesChart($chartTitles['education'], $primaryEducation),
+            'occupation' => $this->buildSeriesChart($chartTitles['occupation'], $primaryOccupations),
+            'marital' => $this->buildSeriesChart($chartTitles['marital'], $primaryMarital),
+            'household' => $this->buildSeriesChart($chartTitles['household'], $primaryHeadHouseholds),
+            'religion' => $this->buildSeriesChart($chartTitles['religion'], $primaryReligions),
+            'wajib-ktp' => $this->buildWajibKtpChart($chartTitles['wajib-ktp'], $primaryWajibKtp),
+            'kk' => $this->buildKkChart($chartTitles['kk'], $primaryKk),
+        ];
+
+        // Build charts for compare
+        $compareCharts = [
+            'gender' => $this->buildGenderChart($chartTitles['gender'], $compareGender),
+            'age' => $this->buildSeriesChart($chartTitles['age'], $compareAgeGroups),
+            'single-age' => $this->buildSeriesChart($chartTitles['single-age'], $compareSingleAges),
+            'education' => $this->buildSeriesChart($chartTitles['education'], $compareEducation),
+            'occupation' => $this->buildSeriesChart($chartTitles['occupation'], $compareOccupations),
+            'marital' => $this->buildSeriesChart($chartTitles['marital'], $compareMarital),
+            'household' => $this->buildSeriesChart($chartTitles['household'], $compareHeadHouseholds),
+            'religion' => $this->buildSeriesChart($chartTitles['religion'], $compareReligions),
+            'wajib-ktp' => $this->buildWajibKtpChart($chartTitles['wajib-ktp'], $compareWajibKtp),
+            'kk' => $this->buildKkChart($chartTitles['kk'], $compareKk),
+        ];
+
+        return view('public.compare-fullscreen', [
+            'title' => 'Perbandingan Data - Fullscreen',
+            'primaryPeriod' => $primaryPeriod,
+            'comparePeriod' => $comparePeriod,
+            'periods' => $periods,
+            'years' => $years,
+            'primaryAvailableSemesters' => $primaryAvailableSemesters,
+            'compareAvailableSemesters' => $compareAvailableSemesters,
+            'allAvailableSemesters' => $allAvailableSemesters,
+            'primaryYear' => $primaryYear,
+            'primarySemester' => $primarySemester,
+            'compareYear' => $compareYear,
+            'compareSemester' => $compareSemester,
+            'districts' => $districts,
+            'primaryVillages' => $primaryVillages,
+            'compareVillages' => $compareVillages,
+            'primaryDistrict' => $primaryDistrict,
+            'primaryVillage' => $primaryVillage,
+            'compareDistrict' => $compareDistrict,
+            'compareVillage' => $compareVillage,
+            'primaryCharts' => $primaryCharts,
+            'compareCharts' => $compareCharts,
+            'chartTitles' => $chartTitles,
+            'chartsNeedingTags' => $chartsNeedingTags,
+            'chartsAngledTags' => $chartsAngledTags,
+            'category' => $category,
+        ]);
+    }
+
     private function availablePeriods(): array
     {
         return DB::table('pop_age_group')
@@ -544,16 +966,19 @@ class PublicDashboardController extends Controller
     private function prepareFilterContext(Request $request): array
     {
         $periods = $this->availablePeriods();
-        $period = $this->resolvePeriod(
-            $request->input('year'),
-            $request->input('semester'),
-            $periods
-        );
+        
+        // Get inputs from request - treat empty strings as null
+        $yearInput = $request->input('year');
+        $semesterInput = $request->input('semester');
+        $yearInput = ($yearInput === '' || $yearInput === null) ? null : $yearInput;
+        $semesterInput = ($semesterInput === '' || $semesterInput === null) ? null : $semesterInput;
 
         $districts = District::orderBy('name')->get();
 
         $selectedDistrict = $request->input('district_id');
         $selectedVillage = $request->input('village_id');
+        $selectedDistrict = ($selectedDistrict === '' || $selectedDistrict === null) ? null : $selectedDistrict;
+        $selectedVillage = ($selectedVillage === '' || $selectedVillage === null) ? null : $selectedVillage;
 
         if ($selectedDistrict && !$districts->contains('id', (int) $selectedDistrict)) {
             $selectedDistrict = null;
@@ -577,15 +1002,44 @@ class PublicDashboardController extends Controller
         ];
 
         $years = collect($periods)->pluck('year')->unique()->sortDesc()->values()->all();
-        $selectedYear = $period['year'] ?? null;
+        
+        // Get all available semesters (not filtered by year) for initial dropdown
+        $allAvailableSemesters = collect($periods)
+            ->pluck('semester')
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+        
+        // Only set selected values if inputs were provided (not empty)
+        $selectedYear = $yearInput !== null ? (int) $yearInput : null;
+        $selectedSemester = $semesterInput !== null ? (int) $semesterInput : null;
+        
+        // Get available semesters based on selected year (if year is selected)
         $availableSemesters = collect($periods)
             ->when($selectedYear, fn($c) => $c->where('year', $selectedYear))
             ->pluck('semester')
             ->unique()
-            ->sortDesc()
+            ->sort()
             ->values()
             ->all();
-        $selectedSemester = $period['semester'] ?? null;
+        
+        // If no year is selected, show all available semesters
+        if (!$selectedYear) {
+            $availableSemesters = $allAvailableSemesters;
+        }
+        
+        // Validate: if year is selected but semester is not valid for that year, reset semester
+        if ($selectedYear && $selectedSemester !== null && !in_array($selectedSemester, $availableSemesters)) {
+            $selectedSemester = null;
+        }
+        
+        // Only resolve period if BOTH year AND semester are provided (after validation)
+        // This ensures data only appears when both filters are selected and valid
+        $period = null;
+        if ($selectedYear !== null && $selectedSemester !== null) {
+            $period = $this->resolvePeriod((string) $selectedYear, (string) $selectedSemester, $periods);
+        }
 
         return [
             'periods' => $periods,
@@ -1909,4 +2363,773 @@ class PublicDashboardController extends Controller
         ];
     }
 
+    public function downloadTablePdf(Request $request)
+    {
+        [
+            'periods' => $periods,
+            'period' => $period,
+            'districts' => $districts,
+            'villages' => $villages,
+            'selectedDistrict' => $selectedDistrict,
+            'selectedVillage' => $selectedVillage,
+            'filters' => $filters,
+            'years' => $years,
+            'semesterOptions' => $availableSemesters,
+            'selectedYear' => $selectedYear,
+            'selectedSemester' => $selectedSemester,
+        ] = $this->prepareFilterContext($request);
+
+        $category = $request->get('category', 'gender');
+
+        if (!$period) {
+            return redirect()->route('public.data')->with('error', 'Pilih periode terlebih dahulu');
+        }
+
+        // Get data based on category
+        $gender = $this->genderSummary($period, $filters);
+        $wajibKtp = $this->wajibKtpSummary($period, $filters);
+        $ageGroups = $this->ageGroupSummary($period, $filters);
+        $singleAges = $this->singleAgeSummary($period, $filters);
+        $education = $this->educationSummary($period, $filters);
+        $topOccupations = $this->occupationHighlights($period, $filters);
+        $marital = $this->maritalStatusSummary($period, $filters);
+        $headHouseholds = $this->headOfHouseholdSummary($period, $filters);
+        $religions = $this->religionSummary($period, $filters);
+        $kk = $this->kkSummary($period, $filters);
+        $areaTable = $this->areaPopulationTable($period, $filters);
+        $educationMatrix = $this->educationMatrix($period, $filters);
+        $wajibKtpMatrix = $this->wajibKtpMatrix($period, $filters);
+        $maritalMatrix = $this->maritalMatrix($period, $filters);
+        $headHouseholdMatrix = $this->headHouseholdMatrix($period, $filters);
+        $religionMatrix = $this->religionMatrix($period, $filters);
+        $kkMatrix = $this->kkMatrix($period, $filters);
+
+        $tabs = [
+            'gender' => 'Jenis Kelamin',
+            'age' => 'Kelompok Umur',
+            'single-age' => 'Umur Tunggal',
+            'education' => 'Pendidikan',
+            'occupation' => 'Pekerjaan',
+            'marital' => 'Status Perkawinan',
+            'kk' => 'Kartu Keluarga',
+            'household' => 'Kepala Keluarga',
+            'religion' => 'Agama',
+            'wajib-ktp' => 'Wajib KTP',
+        ];
+
+        $districtName = $selectedDistrict ? optional($districts->firstWhere('id', (int) $selectedDistrict))->name : null;
+        $villageName = $selectedVillage ? optional($villages->firstWhere('id', (int) $selectedVillage))->name : null;
+        $kabupatenName = config('app.region_name', 'Kabupaten Madiun');
+        $areaSegments = [$kabupatenName];
+        if ($districtName) {
+            $areaSegments[] = 'Kecamatan ' . Str::title($districtName);
+            $areaSegments[] = $villageName ? ('Desa/Kelurahan ' . Str::title($villageName)) : 'Semua Desa/Kelurahan';
+        } else {
+            $areaSegments[] = 'Semua Kecamatan';
+            $areaSegments[] = 'Semua Desa/Kelurahan';
+        }
+        $areaDescriptor = implode(' > ', array_filter($areaSegments));
+        $periodLabel = $this->formatPeriodLabel($period);
+
+        $pdf = Pdf::loadView('public.exports.table-pdf', [
+            'category' => $category,
+            'categoryLabel' => $tabs[$category] ?? 'Data',
+            'period' => $period,
+            'periodLabel' => $periodLabel,
+            'areaDescriptor' => $areaDescriptor,
+            'gender' => $gender,
+            'wajibKtp' => $wajibKtp,
+            'ageGroups' => $ageGroups,
+            'singleAges' => $singleAges,
+            'education' => $education,
+            'topOccupations' => $topOccupations,
+            'marital' => $marital,
+            'headHouseholds' => $headHouseholds,
+            'religions' => $religions,
+            'kk' => $kk,
+            'areaTable' => $areaTable,
+            'educationMatrix' => $educationMatrix,
+            'wajibKtpMatrix' => $wajibKtpMatrix,
+            'maritalMatrix' => $maritalMatrix,
+            'headHouseholdMatrix' => $headHouseholdMatrix,
+            'religionMatrix' => $religionMatrix,
+            'kkMatrix' => $kkMatrix,
+        ])->setPaper('a4', 'landscape');
+
+        $filename = 'data-' . $category . '-' . $period['year'] . '-s' . $period['semester'] . '.pdf';
+        $this->logDownload($request, 'table', 'pdf', [
+            'category' => $category,
+            'period' => $period,
+            'filters' => $filters,
+        ]);
+        return $pdf->download($filename);
+    }
+
+    public function downloadTableExcel(Request $request)
+    {
+        [
+            'periods' => $periods,
+            'period' => $period,
+            'districts' => $districts,
+            'villages' => $villages,
+            'selectedDistrict' => $selectedDistrict,
+            'selectedVillage' => $selectedVillage,
+            'filters' => $filters,
+            'years' => $years,
+            'semesterOptions' => $availableSemesters,
+            'selectedYear' => $selectedYear,
+            'selectedSemester' => $selectedSemester,
+        ] = $this->prepareFilterContext($request);
+
+        $category = $request->get('category', 'gender');
+
+        if (!$period) {
+            return redirect()->route('public.data')->with('error', 'Pilih periode terlebih dahulu');
+        }
+
+        // Get data based on category
+        $gender = $this->genderSummary($period, $filters);
+        $wajibKtp = $this->wajibKtpSummary($period, $filters);
+        $ageGroups = $this->ageGroupSummary($period, $filters);
+        $singleAges = $this->singleAgeSummary($period, $filters);
+        $education = $this->educationSummary($period, $filters);
+        $topOccupations = $this->occupationHighlights($period, $filters);
+        $marital = $this->maritalStatusSummary($period, $filters);
+        $headHouseholds = $this->headOfHouseholdSummary($period, $filters);
+        $religions = $this->religionSummary($period, $filters);
+        $kk = $this->kkSummary($period, $filters);
+        $areaTable = $this->areaPopulationTable($period, $filters);
+        $educationMatrix = $this->educationMatrix($period, $filters);
+        $wajibKtpMatrix = $this->wajibKtpMatrix($period, $filters);
+        $maritalMatrix = $this->maritalMatrix($period, $filters);
+        $headHouseholdMatrix = $this->headHouseholdMatrix($period, $filters);
+        $religionMatrix = $this->religionMatrix($period, $filters);
+        $kkMatrix = $this->kkMatrix($period, $filters);
+
+        $tabs = [
+            'gender' => 'Jenis Kelamin',
+            'age' => 'Kelompok Umur',
+            'single-age' => 'Umur Tunggal',
+            'education' => 'Pendidikan',
+            'occupation' => 'Pekerjaan',
+            'marital' => 'Status Perkawinan',
+            'kk' => 'Kartu Keluarga',
+            'household' => 'Kepala Keluarga',
+            'religion' => 'Agama',
+            'wajib-ktp' => 'Wajib KTP',
+        ];
+
+        $districtName = $selectedDistrict ? optional($districts->firstWhere('id', (int) $selectedDistrict))->name : null;
+        $villageName = $selectedVillage ? optional($villages->firstWhere('id', (int) $selectedVillage))->name : null;
+        $kabupatenName = config('app.region_name', 'Kabupaten Madiun');
+        $areaSegments = [$kabupatenName];
+        if ($districtName) {
+            $areaSegments[] = 'Kecamatan ' . Str::title($districtName);
+            $areaSegments[] = $villageName ? ('Desa/Kelurahan ' . Str::title($villageName)) : 'Semua Desa/Kelurahan';
+        } else {
+            $areaSegments[] = 'Semua Kecamatan';
+            $areaSegments[] = 'Semua Desa/Kelurahan';
+        }
+        $areaDescriptor = implode(' > ', array_filter($areaSegments));
+        $periodLabel = $this->formatPeriodLabel($period);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Header
+        $sheet->setCellValue('A1', $tabs[$category] ?? 'Data');
+        $sheet->mergeCells('A1:D1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+
+        $sheet->setCellValue('A2', $areaDescriptor);
+        $sheet->mergeCells('A2:D2');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+
+        if ($periodLabel) {
+            $sheet->setCellValue('E1', $periodLabel);
+            $sheet->mergeCells('E1:E2');
+            $sheet->getStyle('E1')->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_RIGHT)
+                ->setVertical(Alignment::VERTICAL_CENTER);
+        } else {
+            $sheet->setCellValue('E1', '');
+            $sheet->setCellValue('E2', '');
+        }
+
+        $row = 5;
+
+        // Set header style
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+        ];
+
+        if ($category === 'gender') {
+            $sheet->setCellValue('A' . $row, 'No');
+            $sheet->setCellValue('B' . $row, $areaTable['column'] ?? 'Wilayah');
+            $sheet->setCellValue('C' . $row, 'Laki-laki');
+            $sheet->setCellValue('D' . $row, 'Perempuan');
+            $sheet->setCellValue('E' . $row, 'Jumlah');
+            $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray($headerStyle);
+
+            $row++;
+            $areaRows = $areaTable['rows'] ?? [];
+            foreach ($areaRows as $index => $areaRow) {
+                $sheet->setCellValue('A' . $row, $index + 1);
+                $sheet->setCellValue('B' . $row, Str::title($areaRow['name']));
+                $sheet->setCellValue('C' . $row, $areaRow['male']);
+                $sheet->setCellValue('D' . $row, $areaRow['female']);
+                $sheet->setCellValue('E' . $row, $areaRow['total']);
+                $row++;
+            }
+
+            // Total
+            if (!empty($areaRows)) {
+                $totals = $areaTable['totals'] ?? ['male' => 0, 'female' => 0, 'total' => 0];
+                $sheet->setCellValue('A' . $row, '');
+                $sheet->setCellValue('B' . $row, 'Jumlah Keseluruhan');
+                $sheet->setCellValue('C' . $row, $totals['male']);
+                $sheet->setCellValue('D' . $row, $totals['female']);
+                $sheet->setCellValue('E' . $row, $totals['total']);
+                $sheet->getStyle('B' . $row . ':E' . $row)->getFont()->setBold(true);
+                $row++;
+            }
+        } elseif ($category === 'age') {
+            $sheet->setCellValue('A' . $row, 'No');
+            $sheet->setCellValue('B' . $row, 'Kelompok Umur');
+            $sheet->setCellValue('C' . $row, 'Laki-laki');
+            $sheet->setCellValue('D' . $row, 'Perempuan');
+            $sheet->setCellValue('E' . $row, 'Jumlah');
+            $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray($headerStyle);
+
+            $row++;
+            foreach ($ageGroups as $index => $ageGroup) {
+                $sheet->setCellValue('A' . $row, $index + 1);
+                $sheet->setCellValue('B' . $row, $ageGroup['label']);
+                $sheet->setCellValue('C' . $row, $ageGroup['male']);
+                $sheet->setCellValue('D' . $row, $ageGroup['female']);
+                $sheet->setCellValue('E' . $row, $ageGroup['total']);
+                $row++;
+            }
+
+            // Total
+            if (!empty($ageGroups)) {
+                $ageMale = array_sum(array_column($ageGroups, 'male'));
+                $ageFemale = array_sum(array_column($ageGroups, 'female'));
+                $ageTotal = array_sum(array_column($ageGroups, 'total'));
+                $sheet->setCellValue('A' . $row, '');
+                $sheet->setCellValue('B' . $row, 'Jumlah Keseluruhan');
+                $sheet->setCellValue('C' . $row, $ageMale);
+                $sheet->setCellValue('D' . $row, $ageFemale);
+                $sheet->setCellValue('E' . $row, $ageTotal);
+                $sheet->getStyle('B' . $row . ':E' . $row)->getFont()->setBold(true);
+                $row++;
+            }
+        } elseif ($category === 'single-age') {
+            $sheet->setCellValue('A' . $row, 'No');
+            $sheet->setCellValue('B' . $row, 'Usia');
+            $sheet->setCellValue('C' . $row, 'Laki-laki');
+            $sheet->setCellValue('D' . $row, 'Perempuan');
+            $sheet->setCellValue('E' . $row, 'Jumlah');
+            $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray($headerStyle);
+
+            $row++;
+            foreach ($singleAges as $index => $singleAge) {
+                $sheet->setCellValue('A' . $row, $index + 1);
+                $sheet->setCellValue('B' . $row, $singleAge['label']);
+                $sheet->setCellValue('C' . $row, $singleAge['male']);
+                $sheet->setCellValue('D' . $row, $singleAge['female']);
+                $sheet->setCellValue('E' . $row, $singleAge['total']);
+                $row++;
+            }
+
+            // Total
+            if (!empty($singleAges)) {
+                $singleMale = array_sum(array_column($singleAges, 'male'));
+                $singleFemale = array_sum(array_column($singleAges, 'female'));
+                $singleTotal = array_sum(array_column($singleAges, 'total'));
+                $sheet->setCellValue('A' . $row, '');
+                $sheet->setCellValue('B' . $row, 'Jumlah Keseluruhan');
+                $sheet->setCellValue('C' . $row, $singleMale);
+                $sheet->setCellValue('D' . $row, $singleFemale);
+                $sheet->setCellValue('E' . $row, $singleTotal);
+                $sheet->getStyle('B' . $row . ':E' . $row)->getFont()->setBold(true);
+                $row++;
+            }
+        } elseif ($category === 'occupation') {
+            $sheet->setCellValue('A' . $row, 'No');
+            $sheet->setCellValue('B' . $row, 'Pekerjaan');
+            $sheet->setCellValue('C' . $row, 'Laki-laki');
+            $sheet->setCellValue('D' . $row, 'Perempuan');
+            $sheet->setCellValue('E' . $row, 'Jumlah');
+            $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray($headerStyle);
+
+            $row++;
+            foreach ($topOccupations as $index => $occupation) {
+                $sheet->setCellValue('A' . $row, $index + 1);
+                $sheet->setCellValue('B' . $row, $occupation['label']);
+                $sheet->setCellValue('C' . $row, $occupation['male']);
+                $sheet->setCellValue('D' . $row, $occupation['female']);
+                $sheet->setCellValue('E' . $row, $occupation['total']);
+                $row++;
+            }
+
+            // Total
+            if (!empty($topOccupations)) {
+                $jobMale = array_sum(array_column($topOccupations, 'male'));
+                $jobFemale = array_sum(array_column($topOccupations, 'female'));
+                $jobTotal = array_sum(array_column($topOccupations, 'total'));
+                $sheet->setCellValue('A' . $row, '');
+                $sheet->setCellValue('B' . $row, 'Jumlah Keseluruhan');
+                $sheet->setCellValue('C' . $row, $jobMale);
+                $sheet->setCellValue('D' . $row, $jobFemale);
+                $sheet->setCellValue('E' . $row, $jobTotal);
+                $sheet->getStyle('B' . $row . ':E' . $row)->getFont()->setBold(true);
+                $row++;
+            }
+        } elseif (in_array($category, ['education', 'wajib-ktp', 'marital', 'household', 'religion', 'kk'])) {
+            $matrix = match($category) {
+                'education' => $educationMatrix,
+                'wajib-ktp' => $wajibKtpMatrix,
+                'marital' => $maritalMatrix,
+                'household' => $headHouseholdMatrix,
+                'religion' => $religionMatrix,
+                'kk' => $kkMatrix,
+                default => [],
+            };
+
+            $columns = $matrix['columns'] ?? [];
+            $rows = $matrix['rows'] ?? [];
+            $columnLabel = $matrix['columnLabel'] ?? 'Wilayah';
+
+            // Calculate total columns needed
+            $totalCols = 2 + (count($columns) * 3);
+            $startCol = 2; // B is index 1, so start from C which is index 2
+            
+            // Header row 1
+            $sheet->setCellValue('A' . $row, 'No');
+            $sheet->setCellValue('B' . $row, $columnLabel);
+            $colIndex = $startCol;
+            foreach ($columns as $column) {
+                $colLetter = $this->getColumnLetter($colIndex);
+                $mergeEndLetter = $this->getColumnLetter($colIndex + 2);
+                $sheet->mergeCells($colLetter . $row . ':' . $mergeEndLetter . $row);
+                $sheet->setCellValue($colLetter . $row, $column['label']);
+                $colIndex += 3;
+            }
+            $lastCol = $this->getColumnLetter($startCol + (count($columns) * 3) - 1);
+            $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray($headerStyle);
+
+            // Header row 2
+            $row++;
+            $sheet->setCellValue('A' . $row, '');
+            $sheet->setCellValue('B' . $row, '');
+            $colIndex = $startCol;
+            foreach ($columns as $column) {
+                $colLetter = $this->getColumnLetter($colIndex);
+                $sheet->setCellValue($colLetter . $row, 'L');
+                $sheet->setCellValue($this->getColumnLetter($colIndex + 1) . $row, 'P');
+                $sheet->setCellValue($this->getColumnLetter($colIndex + 2) . $row, 'Jumlah');
+                $colIndex += 3;
+            }
+            $lastCol = $this->getColumnLetter($startCol + (count($columns) * 3) - 1);
+            $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->applyFromArray($headerStyle);
+
+            $row++;
+            foreach ($rows as $index => $matrixRow) {
+                $sheet->setCellValue('A' . $row, $index + 1);
+                $sheet->setCellValue('B' . $row, Str::title($matrixRow['name']));
+                $colIndex = $startCol;
+                foreach ($columns as $column) {
+                    $key = $column['key'];
+                    $value = $matrixRow['values'][$key] ?? ['male' => 0, 'female' => 0, 'total' => 0];
+                    $colLetter = $this->getColumnLetter($colIndex);
+                    $sheet->setCellValue($colLetter . $row, $value['male']);
+                    $sheet->setCellValue($this->getColumnLetter($colIndex + 1) . $row, $value['female']);
+                    $sheet->setCellValue($this->getColumnLetter($colIndex + 2) . $row, $value['total']);
+                    $colIndex += 3;
+                }
+                $row++;
+            }
+
+            // Total
+            if (!empty($rows)) {
+                $totals = $matrix['totals'] ?? [];
+                $sheet->setCellValue('A' . $row, '');
+                $sheet->setCellValue('B' . $row, 'Jumlah Keseluruhan');
+                $colIndex = $startCol;
+                foreach ($columns as $column) {
+                    $key = $column['key'];
+                    $total = $totals[$key] ?? ['male' => 0, 'female' => 0, 'total' => 0];
+                    $colLetter = $this->getColumnLetter($colIndex);
+                    $sheet->setCellValue($colLetter . $row, $total['male']);
+                    $sheet->setCellValue($this->getColumnLetter($colIndex + 1) . $row, $total['female']);
+                    $sheet->setCellValue($this->getColumnLetter($colIndex + 2) . $row, $total['total']);
+                    $colIndex += 3;
+                }
+                $lastCol = $this->getColumnLetter($startCol + (count($columns) * 3) - 1);
+                $sheet->getStyle('B' . $row . ':' . $lastCol . $row)->getFont()->setBold(true);
+                $row++;
+            }
+        }
+
+        // Auto size columns
+        foreach (range('A', $sheet->getHighestColumn()) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'data-' . $category . '-' . $period['year'] . '-s' . $period['semester'] . '.xlsx';
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
+        $writer->save($tempFile);
+
+        $this->logDownload($request, 'table', 'excel', [
+            'category' => $category,
+            'period' => $period,
+            'filters' => $filters,
+        ]);
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
+
+    private function getColumnLetter($num)
+    {
+        // Convert 0-based index to Excel column letter using PhpSpreadsheet's Coordinate class
+        // Input: 0 = A, 1 = B, 2 = C, etc.
+        return Coordinate::stringFromColumnIndex($num + 1);
+    }
+
+    public function downloadChartPdf(Request $request)
+    {
+        [
+            'periods' => $periods,
+            'period' => $period,
+            'districts' => $districts,
+            'villages' => $villages,
+            'selectedDistrict' => $selectedDistrict,
+            'selectedVillage' => $selectedVillage,
+            'filters' => $filters,
+            'years' => $years,
+            'semesterOptions' => $availableSemesters,
+            'selectedYear' => $selectedYear,
+            'selectedSemester' => $selectedSemester,
+        ] = $this->prepareFilterContext($request);
+
+        $category = $request->get('category', 'gender');
+
+        if (!$period) {
+            return redirect()->route('public.charts')->with('error', 'Pilih periode terlebih dahulu');
+        }
+
+        $gender = $this->genderSummary($period, $filters);
+        $wajibKtp = $this->wajibKtpSummary($period, $filters);
+        $kk = $this->kkSummary($period, $filters);
+        $ageGroups = $this->ageGroupSummary($period, $filters);
+        $singleAges = $this->singleAgeSummary($period, $filters);
+        $education = $this->educationSummary($period, $filters);
+        $topOccupations = $this->occupationHighlights($period, $filters);
+        $marital = $this->maritalStatusSummary($period, $filters);
+        $headHouseholds = $this->headOfHouseholdSummary($period, $filters);
+        $religions = $this->religionSummary($period, $filters);
+
+        $chartTitles = [
+            'gender' => 'Jenis Kelamin',
+            'age' => 'Kelompok Umur',
+            'single-age' => 'Umur Tunggal',
+            'education' => 'Pendidikan',
+            'occupation' => 'Pekerjaan',
+            'marital' => 'Status Perkawinan',
+            'household' => 'Kepala Keluarga',
+            'religion' => 'Agama',
+            'wajib-ktp' => 'Wajib KTP',
+            'kk' => 'Kartu Keluarga',
+        ];
+
+        $charts = [
+            'gender' => $this->buildGenderChart($chartTitles['gender'], $gender),
+            'age' => $this->buildSeriesChart($chartTitles['age'], $ageGroups),
+            'single-age' => $this->buildSeriesChart($chartTitles['single-age'], $singleAges),
+            'education' => $this->buildSeriesChart($chartTitles['education'], $education),
+            'occupation' => $this->buildSeriesChart($chartTitles['occupation'], $topOccupations),
+            'marital' => $this->buildSeriesChart($chartTitles['marital'], $marital),
+            'household' => $this->buildSeriesChart($chartTitles['household'], $headHouseholds),
+            'religion' => $this->buildSeriesChart($chartTitles['religion'], $religions),
+            'wajib-ktp' => $this->buildWajibKtpChart($chartTitles['wajib-ktp'], $wajibKtp),
+            'kk' => $this->buildKkChart($chartTitles['kk'], $kk),
+        ];
+
+        $districtName = $selectedDistrict ? optional($districts->firstWhere('id', (int) $selectedDistrict))->name : null;
+        $villageName = $selectedVillage ? optional($villages->firstWhere('id', (int) $selectedVillage))->name : null;
+        $kabupatenName = config('app.region_name', 'Kabupaten Madiun');
+        $areaSegments = [$kabupatenName];
+        if ($districtName) {
+            $areaSegments[] = 'Kecamatan ' . Str::title($districtName);
+            $areaSegments[] = $villageName ? ('Desa/Kelurahan ' . Str::title($villageName)) : 'Semua Desa/Kelurahan';
+        } else {
+            $areaSegments[] = 'Semua Kecamatan';
+            $areaSegments[] = 'Semua Desa/Kelurahan';
+        }
+        $areaDescriptor = implode(' > ', array_filter($areaSegments));
+        $periodLabel = $this->formatPeriodLabel($period);
+
+        $pdf = Pdf::loadView('public.exports.chart-pdf', [
+            'category' => $category,
+            'categoryLabel' => $chartTitles[$category] ?? 'Grafik Data',
+            'period' => $period,
+            'periodLabel' => $periodLabel,
+            'areaDescriptor' => $areaDescriptor,
+            'chart' => $charts[$category] ?? null,
+        ])->setPaper('a4', 'landscape');
+
+        $filename = 'grafik-' . $category . '-' . $period['year'] . '-s' . $period['semester'] . '.pdf';
+        $this->logDownload($request, 'chart', 'pdf', [
+            'category' => $category,
+            'period' => $period,
+            'filters' => $filters,
+        ]);
+        return $pdf->download($filename);
+    }
+
+    public function downloadComparePdf(Request $request)
+    {
+        $periods = $this->availablePeriods();
+        $districts = District::orderBy('name')->get();
+        
+        $primaryYear = $request->input('year');
+        $primarySemester = $request->input('semester');
+        $primaryDistrict = $request->input('district_id');
+        $primaryVillage = $request->input('village_id');
+        
+        $primaryYear = ($primaryYear === '' || $primaryYear === null) ? null : (int) $primaryYear;
+        $primarySemester = ($primarySemester === '' || $primarySemester === null) ? null : (int) $primarySemester;
+        $primaryDistrict = ($primaryDistrict === '' || $primaryDistrict === null) ? null : (int) $primaryDistrict;
+        $primaryVillage = ($primaryVillage === '' || $primaryVillage === null) ? null : (int) $primaryVillage;
+
+        $compareYear = $request->input('compare_year');
+        $compareSemester = $request->input('compare_semester');
+        $compareDistrict = $request->input('compare_district_id');
+        $compareVillage = $request->input('compare_village_id');
+        
+        $compareYear = ($compareYear === '' || $compareYear === null) ? null : (int) $compareYear;
+        $compareSemester = ($compareSemester === '' || $compareSemester === null) ? null : (int) $compareSemester;
+        $compareDistrict = ($compareDistrict === '' || $compareDistrict === null) ? null : (int) $compareDistrict;
+        $compareVillage = ($compareVillage === '' || $compareVillage === null) ? null : (int) $compareVillage;
+
+        $category = $request->get('category', 'gender');
+
+        // Resolve periods
+        $primaryPeriod = null;
+        if ($primaryYear && $primarySemester) {
+            foreach ($periods as $period) {
+                if ($period['year'] == $primaryYear && $period['semester'] == $primarySemester) {
+                    $primaryPeriod = $period;
+                    break;
+                }
+            }
+        }
+
+        $comparePeriod = null;
+        if ($compareYear && $compareSemester) {
+            foreach ($periods as $period) {
+                if ($period['year'] == $compareYear && $period['semester'] == $compareSemester) {
+                    $comparePeriod = $period;
+                    break;
+                }
+            }
+        }
+
+        if (!$primaryPeriod || !$comparePeriod) {
+            return redirect()->route('public.compare')->with('error', 'Pilih periode untuk Data Utama dan Data Pembanding');
+        }
+
+        $regionName = config('app.region_name', 'Kabupaten Madiun');
+        $primaryDistrictName = $primaryDistrict ? Str::title(optional($districts->firstWhere('id', $primaryDistrict))->name ?? '') : null;
+        $primaryVillageName = $primaryVillage ? Str::title(Village::where('id', $primaryVillage)->value('name') ?? '') : null;
+        $compareDistrictName = $compareDistrict ? Str::title(optional($districts->firstWhere('id', $compareDistrict))->name ?? '') : null;
+        $compareVillageName = $compareVillage ? Str::title(Village::where('id', $compareVillage)->value('name') ?? '') : null;
+
+        $primaryAreaSegments = [$regionName];
+        if ($primaryDistrictName) {
+            $primaryAreaSegments[] = 'Kecamatan ' . $primaryDistrictName;
+            $primaryAreaSegments[] = $primaryVillageName ? 'Desa/Kelurahan ' . $primaryVillageName : 'Semua Desa/Kelurahan';
+        } else {
+            $primaryAreaSegments[] = 'Semua Kecamatan';
+            $primaryAreaSegments[] = 'Semua Desa/Kelurahan';
+        }
+        $primaryAreaDescriptor = implode(' > ', array_filter($primaryAreaSegments));
+
+        $compareAreaSegments = [$regionName];
+        if ($compareDistrictName) {
+            $compareAreaSegments[] = 'Kecamatan ' . $compareDistrictName;
+            $compareAreaSegments[] = $compareVillageName ? 'Desa/Kelurahan ' . $compareVillageName : 'Semua Desa/Kelurahan';
+        } else {
+            $compareAreaSegments[] = 'Semua Kecamatan';
+            $compareAreaSegments[] = 'Semua Desa/Kelurahan';
+        }
+        $compareAreaDescriptor = implode(' > ', array_filter($compareAreaSegments));
+
+        $primaryFilters = [
+            'district_id' => $primaryDistrict ? (int) $primaryDistrict : null,
+            'village_id' => $primaryVillage ? (int) $primaryVillage : null,
+        ];
+
+        $compareFilters = [
+            'district_id' => $compareDistrict ? (int) $compareDistrict : null,
+            'village_id' => $compareVillage ? (int) $compareVillage : null,
+        ];
+
+        // Get data
+        $primaryGender = $this->genderSummary($primaryPeriod, $primaryFilters);
+        $primaryWajibKtp = $this->wajibKtpSummary($primaryPeriod, $primaryFilters);
+        $primaryKk = $this->kkSummary($primaryPeriod, $primaryFilters);
+        $primaryAgeGroups = $this->ageGroupSummary($primaryPeriod, $primaryFilters);
+        $primarySingleAges = $this->singleAgeSummary($primaryPeriod, $primaryFilters);
+        $primaryEducation = $this->educationSummary($primaryPeriod, $primaryFilters);
+        $primaryOccupations = $this->occupationHighlights($primaryPeriod, $primaryFilters);
+        $primaryMarital = $this->maritalStatusSummary($primaryPeriod, $primaryFilters);
+        $primaryHeadHouseholds = $this->headOfHouseholdSummary($primaryPeriod, $primaryFilters);
+        $primaryReligions = $this->religionSummary($primaryPeriod, $primaryFilters);
+
+        $compareGender = $this->genderSummary($comparePeriod, $compareFilters);
+        $compareWajibKtp = $this->wajibKtpSummary($comparePeriod, $compareFilters);
+        $compareKk = $this->kkSummary($comparePeriod, $compareFilters);
+        $compareAgeGroups = $this->ageGroupSummary($comparePeriod, $compareFilters);
+        $compareSingleAges = $this->singleAgeSummary($comparePeriod, $compareFilters);
+        $compareEducation = $this->educationSummary($comparePeriod, $compareFilters);
+        $compareOccupations = $this->occupationHighlights($comparePeriod, $compareFilters);
+        $compareMarital = $this->maritalStatusSummary($comparePeriod, $compareFilters);
+        $compareHeadHouseholds = $this->headOfHouseholdSummary($comparePeriod, $compareFilters);
+        $compareReligions = $this->religionSummary($comparePeriod, $compareFilters);
+
+        $chartTitles = [
+            'gender' => 'Jenis Kelamin',
+            'age' => 'Kelompok Umur',
+            'single-age' => 'Umur Tunggal',
+            'education' => 'Pendidikan',
+            'occupation' => 'Pekerjaan',
+            'marital' => 'Status Perkawinan',
+            'household' => 'Kepala Keluarga',
+            'religion' => 'Agama',
+            'wajib-ktp' => 'Wajib KTP',
+            'kk' => 'Kartu Keluarga',
+        ];
+
+        $primaryCharts = [
+            'gender' => $this->buildGenderChart($chartTitles['gender'], $primaryGender),
+            'age' => $this->buildSeriesChart($chartTitles['age'], $primaryAgeGroups),
+            'single-age' => $this->buildSeriesChart($chartTitles['single-age'], $primarySingleAges),
+            'education' => $this->buildSeriesChart($chartTitles['education'], $primaryEducation),
+            'occupation' => $this->buildSeriesChart($chartTitles['occupation'], $primaryOccupations),
+            'marital' => $this->buildSeriesChart($chartTitles['marital'], $primaryMarital),
+            'household' => $this->buildSeriesChart($chartTitles['household'], $primaryHeadHouseholds),
+            'religion' => $this->buildSeriesChart($chartTitles['religion'], $primaryReligions),
+            'wajib-ktp' => $this->buildWajibKtpChart($chartTitles['wajib-ktp'], $primaryWajibKtp),
+            'kk' => $this->buildKkChart($chartTitles['kk'], $primaryKk),
+        ];
+
+        $compareCharts = [
+            'gender' => $this->buildGenderChart($chartTitles['gender'], $compareGender),
+            'age' => $this->buildSeriesChart($chartTitles['age'], $compareAgeGroups),
+            'single-age' => $this->buildSeriesChart($chartTitles['single-age'], $compareSingleAges),
+            'education' => $this->buildSeriesChart($chartTitles['education'], $compareEducation),
+            'occupation' => $this->buildSeriesChart($chartTitles['occupation'], $compareOccupations),
+            'marital' => $this->buildSeriesChart($chartTitles['marital'], $compareMarital),
+            'household' => $this->buildSeriesChart($chartTitles['household'], $compareHeadHouseholds),
+            'religion' => $this->buildSeriesChart($chartTitles['religion'], $compareReligions),
+            'wajib-ktp' => $this->buildWajibKtpChart($chartTitles['wajib-ktp'], $compareWajibKtp),
+            'kk' => $this->buildKkChart($chartTitles['kk'], $compareKk),
+        ];
+
+        // Build labels
+        $primaryLabel = 'S' . $primaryPeriod['semester'] . ' ' . $primaryPeriod['year'];
+        if ($primaryDistrictName) {
+            $primaryLabel .= ' - ' . $primaryDistrictName;
+            if ($primaryVillageName) {
+                $primaryLabel .= ' - ' . $primaryVillageName;
+            }
+        }
+
+        $compareLabel = 'S' . $comparePeriod['semester'] . ' ' . $comparePeriod['year'];
+        if ($compareDistrictName) {
+            $compareLabel .= ' - ' . $compareDistrictName;
+            if ($compareVillageName) {
+                $compareLabel .= ' - ' . $compareVillageName;
+            }
+        }
+
+        $pdf = Pdf::loadView('public.exports.compare-pdf', [
+            'category' => $category,
+            'categoryLabel' => $chartTitles[$category] ?? 'Perbandingan Data',
+            'primaryPeriod' => $primaryPeriod,
+            'comparePeriod' => $comparePeriod,
+            'primaryLabel' => $primaryLabel,
+            'compareLabel' => $compareLabel,
+            'primaryAreaDescriptor' => $primaryAreaDescriptor,
+            'compareAreaDescriptor' => $compareAreaDescriptor,
+            'primaryChart' => $primaryCharts[$category] ?? null,
+            'compareChart' => $compareCharts[$category] ?? null,
+        ])->setPaper('a4', 'landscape');
+
+        $filename = 'perbandingan-' . $category . '-' . $primaryPeriod['year'] . '-s' . $primaryPeriod['semester'] . '-vs-' . $comparePeriod['year'] . '-s' . $comparePeriod['semester'] . '.pdf';
+        $this->logDownload($request, 'compare', 'pdf', [
+            'category' => $category,
+            'primary_period' => $primaryPeriod,
+            'compare_period' => $comparePeriod,
+            'primary_filters' => $primaryFilters,
+            'compare_filters' => $compareFilters,
+        ]);
+        return $pdf->download($filename);
+    }
+
+    public function terms()
+    {
+        return view('public.terms', [
+            'title' => 'Syarat & Ketentuan',
+        ]);
+    }
+
+    private function logDownload(Request $request, string $downloadType, string $fileType, array $meta = []): void
+    {
+        try {
+            $category = $meta['category'] ?? null;
+            $recentDuplicate = DownloadLog::when($category, function ($query) use ($category) {
+                    $query->where('category', $category);
+                })
+                ->where('download_type', $downloadType)
+                ->where('file_type', $fileType)
+                ->where('ip_address', $request->ip())
+                ->where('created_at', '>=', now()->subSeconds(5))
+                ->exists();
+
+            if ($recentDuplicate) {
+                return;
+            }
+
+            DownloadLog::create([
+                'full_name' => $request->get('nama_lengkap'),
+                'address' => $request->get('alamat'),
+                'occupation' => $request->get('pekerjaan'),
+                'institution' => $request->get('instansi'),
+                'phone_number' => $request->get('nomor_telepon'),
+                'purpose' => $request->get('tujuan_penggunaan'),
+                'download_type' => $downloadType,
+                'file_type' => $fileType,
+                'category' => $category,
+                'filters' => !empty($meta) ? $meta : null,
+                'ip_address' => $request->ip(),
+                'user_agent' => substr((string) $request->userAgent(), 0, 255),
+            ]);
+        } catch (\Throwable $e) {
+            logger()->warning('Failed to log download', [
+                'message' => $e->getMessage(),
+                'download_type' => $downloadType,
+                'file_type' => $fileType,
+            ]);
+        }
+    }
 }

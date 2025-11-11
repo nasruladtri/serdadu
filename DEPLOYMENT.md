@@ -788,6 +788,59 @@ composer update --no-dev --optimize-autoloader
 - Setelah install extension, **restart PHP-FPM** agar perubahan berlaku
 - Jika menggunakan PHP versi lain, ganti `8.4` dengan versi yang sesuai (contoh: `8.2`, `8.3`)
 
+### ⚠️ Missing PHP Extensions di Windows/Laragon
+
+**Error yang muncul:**
+- `Your lock file does not contain a compatible set of packages. Please run composer update.`
+- `ext-zip * is missing from your system`
+- `phpoffice/phpspreadsheet` requires `ext-zip`
+
+**Solusi untuk Windows/Laragon:**
+
+1. **Buka file php.ini:**
+   - Lokasi: `C:\laragon\bin\php\php-8.3.26-Win32-vs16-x64\php.ini`
+   - (Sesuaikan path dengan versi PHP yang digunakan di Laragon)
+
+2. **Cari baris extension zip (sekitar line 832):**
+   ```ini
+   ;extension=zip
+   ```
+
+3. **Hapus tanda titik koma (;) untuk mengaktifkan:**
+   ```ini
+   extension=zip
+   ```
+
+4. **Pastikan extension lain juga aktif:**
+   - `extension=gd` (WAJIB untuk Excel processing)
+   - `extension=mbstring`
+   - `extension=curl`
+   - `extension=intl`
+   - `extension=zip`
+   - `extension=xml` (biasanya sudah built-in di PHP 8.x)
+
+5. **Restart Laragon:**
+   - Klik menu Laragon → **Restart All**
+   - Atau restart Apache/Nginx secara manual
+
+6. **Verifikasi extension sudah aktif:**
+   ```bash
+   # Gunakan Laragon Terminal (yang sudah include PHP di PATH)
+   php -m | findstr /i "zip gd mbstring curl intl"
+   ```
+
+7. **Jalankan composer install:**
+   ```bash
+   cd C:\laragon\www\serdadu
+   composer install
+   ```
+
+**Catatan penting:**
+- Extension `zip` dan `gd` **WAJIB** terinstall untuk `phpoffice/phpspreadsheet` dan `maatwebsite/excel`
+- Di Laragon, extension biasanya sudah terinstall, hanya perlu diaktifkan di php.ini
+- Setelah mengubah php.ini, **restart Laragon** agar perubahan berlaku
+- Gunakan Laragon Terminal untuk menjalankan composer, karena PHP sudah ada di PATH
+
 ### Permission Issues
 ```bash
 sudo chown -R www-data:www-data /var/www/serdadu

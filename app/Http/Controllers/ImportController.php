@@ -110,6 +110,7 @@ class ImportController extends Controller
             'pop_head_of_household',
             'pop_gender',
             'pop_wajib_ktp',
+            'pop_kk',
             'import_logs',
         ];
 

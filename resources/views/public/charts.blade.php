@@ -122,7 +122,14 @@
         /* Pastikan table heading tidak mengambil terlalu banyak ruang */
         .dk-table-heading {
             flex-shrink: 0;
-            margin-bottom: 0;
+            margin-bottom: 2rem;
+        }
+        
+        /* Tambahkan jarak tambahan antara label dan chart pada layar kecil */
+        @media (max-width: 640px) {
+            .dk-table-heading {
+                margin-bottom: 1.5rem;
+            }
         }
     </style>
 @endpush
@@ -169,7 +176,7 @@
                         </div>
                         <div class="sm:col-span-1 md:col-span-1 lg:col-span-1">
                             <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Semester</label>
-                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" name="semester" onchange="this.form.submit()">
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" name="semester" onchange="this.form.submit()" {{ !$selectedYear ? 'disabled' : '' }}>
                                 <option value="">Pilih Semester</option>
                                 @forelse ($semesterOptions as $option)
                                     <option value="{{ $option }}" {{ (int) ($selectedSemester ?? 0) === $option ? 'selected' : '' }}>
@@ -216,7 +223,11 @@
     {{-- Tampilkan pesan jika belum ada dataset yang dipilih atau diunggah --}}
     @if (!$period)
         <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 dk-card">
-            <strong class="text-yellow-800">Data belum tersedia.</strong> <span class="text-yellow-700">Unggah dataset terlebih dahulu untuk menampilkan grafik agregat.</span>
+            @if (empty($periods))
+                <strong class="text-yellow-800">Data belum tersedia.</strong> <span class="text-yellow-700">Unggah dataset terlebih dahulu untuk menampilkan grafik agregat.</span>
+            @else
+                <strong class="text-yellow-800">Pilih Filter.</strong> <span class="text-yellow-700">Silakan pilih tahun, semester, kecamatan, atau desa/kelurahan untuk menampilkan grafik agregat.</span>
+            @endif
         </div>
     @else
         {{-- Inisialisasi variabel bantu untuk menyusun informasi tabel dan label tampilan --}}
@@ -262,11 +273,20 @@
                 {{-- Tab grafik berdasarkan jenis kelamin --}}
                 <div class="dk-tab-pane show active" id="tab-gender" role="tabpanel"
                     aria-labelledby="tab-gender-tab">
-                    @include('public.partials.table-heading', [
-                        'title' => $tabs['gender'],
-                        'areaDescriptor' => $areaDescriptor,
-                        'periodLabel' => $periodLabel,
-                    ])
+                    <div class="mb-4 flex flex-wrap gap-3 items-start justify-between">
+                        <div class="flex-1 min-w-[280px]">
+                            @include('public.partials.table-heading', [
+                                'title' => $tabs['gender'],
+                                'areaDescriptor' => $areaDescriptor,
+                                'periodLabel' => $periodLabel,
+                                'fullscreenRoute' => 'public.charts.fullscreen',
+                                'showDownloadButtons' => false,
+                            ])
+                        </div>
+                        <div class="flex-shrink-0">
+                            @include('public.partials.chart-download-button', ['category' => 'gender'])
+                        </div>
+                    </div>
                     @php
                         $chart = $charts['gender'] ?? null;
                         $chartHeight = '600px';
@@ -296,11 +316,20 @@
                 {{-- Tab grafik berdasarkan kelompok umur --}}
                 <div class="dk-tab-pane hidden" id="tab-age" role="tabpanel"
                     aria-labelledby="tab-age-tab">
-                    @include('public.partials.table-heading', [
-                        'title' => $tabs['age'],
-                        'areaDescriptor' => $areaDescriptor,
-                        'periodLabel' => $periodLabel,
-                    ])
+                    <div class="mb-4 flex flex-wrap gap-3 items-start justify-between">
+                        <div class="flex-1 min-w-[280px]">
+                            @include('public.partials.table-heading', [
+                                'title' => $tabs['age'],
+                                'areaDescriptor' => $areaDescriptor,
+                                'periodLabel' => $periodLabel,
+                                'fullscreenRoute' => 'public.charts.fullscreen',
+                                'showDownloadButtons' => false,
+                            ])
+                        </div>
+                        <div class="flex-shrink-0">
+                            @include('public.partials.chart-download-button', ['category' => 'age'])
+                        </div>
+                    </div>
                     @php
                         $chart = $charts['age'] ?? null;
                         $chartHeight = '600px';
@@ -330,11 +359,20 @@
                 {{-- Tab grafik umur tunggal --}}
                 <div class="dk-tab-pane hidden" id="tab-single-age" role="tabpanel"
                     aria-labelledby="tab-single-age-tab">
-                    @include('public.partials.table-heading', [
-                        'title' => $tabs['single-age'],
-                        'areaDescriptor' => $areaDescriptor,
-                        'periodLabel' => $periodLabel,
-                    ])
+                    <div class="mb-4 flex flex-wrap gap-3 items-start justify-between">
+                        <div class="flex-1 min-w-[280px]">
+                            @include('public.partials.table-heading', [
+                                'title' => $tabs['single-age'],
+                                'areaDescriptor' => $areaDescriptor,
+                                'periodLabel' => $periodLabel,
+                                'fullscreenRoute' => 'public.charts.fullscreen',
+                                'showDownloadButtons' => false,
+                            ])
+                        </div>
+                        <div class="flex-shrink-0">
+                            @include('public.partials.chart-download-button', ['category' => 'single-age'])
+                        </div>
+                    </div>
                     @php
                         $chart = $charts['single-age'] ?? null;
                         $chartHeight = '650px';
@@ -364,11 +402,20 @@
                 {{-- Tab grafik pendidikan --}}
                 <div class="dk-tab-pane hidden" id="tab-education" role="tabpanel"
                     aria-labelledby="tab-education-tab">
-                    @include('public.partials.table-heading', [
-                        'title' => $tabs['education'],
-                        'areaDescriptor' => $areaDescriptor,
-                        'periodLabel' => $periodLabel,
-                    ])
+                    <div class="mb-4 flex flex-wrap gap-3 items-start justify-between">
+                        <div class="flex-1 min-w-[280px]">
+                            @include('public.partials.table-heading', [
+                                'title' => $tabs['education'],
+                                'areaDescriptor' => $areaDescriptor,
+                                'periodLabel' => $periodLabel,
+                                'fullscreenRoute' => 'public.charts.fullscreen',
+                                'showDownloadButtons' => false,
+                            ])
+                        </div>
+                        <div class="flex-shrink-0">
+                            @include('public.partials.chart-download-button', ['category' => 'education'])
+                        </div>
+                    </div>
                     @php
                         $chart = $charts['education'] ?? null;
                         $chartHeight = '600px';
@@ -398,11 +445,20 @@
                 {{-- Tab grafik pekerjaan --}}
                 <div class="dk-tab-pane hidden" id="tab-occupation" role="tabpanel"
                     aria-labelledby="tab-occupation-tab">
-                    @include('public.partials.table-heading', [
-                        'title' => $tabs['occupation'],
-                        'areaDescriptor' => $areaDescriptor,
-                        'periodLabel' => $periodLabel,
-                    ])
+                    <div class="mb-4 flex flex-wrap gap-3 items-start justify-between">
+                        <div class="flex-1 min-w-[280px]">
+                            @include('public.partials.table-heading', [
+                                'title' => $tabs['occupation'],
+                                'areaDescriptor' => $areaDescriptor,
+                                'periodLabel' => $periodLabel,
+                                'fullscreenRoute' => 'public.charts.fullscreen',
+                                'showDownloadButtons' => false,
+                            ])
+                        </div>
+                        <div class="flex-shrink-0">
+                            @include('public.partials.chart-download-button', ['category' => 'occupation'])
+                        </div>
+                    </div>
                     @php
                         $chart = $charts['occupation'] ?? null;
                         $chartHeight = '700px';
@@ -432,11 +488,20 @@
                 {{-- Tab grafik status perkawinan --}}
                 <div class="dk-tab-pane hidden" id="tab-marital" role="tabpanel"
                     aria-labelledby="tab-marital-tab">
-                    @include('public.partials.table-heading', [
-                        'title' => $tabs['marital'],
-                        'areaDescriptor' => $areaDescriptor,
-                        'periodLabel' => $periodLabel,
-                    ])
+                    <div class="mb-4 flex flex-wrap gap-3 items-start justify-between">
+                        <div class="flex-1 min-w-[280px]">
+                            @include('public.partials.table-heading', [
+                                'title' => $tabs['marital'],
+                                'areaDescriptor' => $areaDescriptor,
+                                'periodLabel' => $periodLabel,
+                                'fullscreenRoute' => 'public.charts.fullscreen',
+                                'showDownloadButtons' => false,
+                            ])
+                        </div>
+                        <div class="flex-shrink-0">
+                            @include('public.partials.chart-download-button', ['category' => 'marital'])
+                        </div>
+                    </div>
                     @php
                         $chart = $charts['marital'] ?? null;
                         $chartHeight = '600px';
@@ -466,11 +531,20 @@
                 {{-- Tab grafik kartu keluarga --}}
                 <div class="dk-tab-pane hidden" id="tab-kk" role="tabpanel"
                     aria-labelledby="tab-kk-tab">
-                    @include('public.partials.table-heading', [
-                        'title' => $tabs['kk'],
-                        'areaDescriptor' => $areaDescriptor,
-                        'periodLabel' => $periodLabel,
-                    ])
+                    <div class="mb-4 flex flex-wrap gap-3 items-start justify-between">
+                        <div class="flex-1 min-w-[280px]">
+                            @include('public.partials.table-heading', [
+                                'title' => $tabs['kk'],
+                                'areaDescriptor' => $areaDescriptor,
+                                'periodLabel' => $periodLabel,
+                                'fullscreenRoute' => 'public.charts.fullscreen',
+                                'showDownloadButtons' => false,
+                            ])
+                        </div>
+                        <div class="flex-shrink-0">
+                            @include('public.partials.chart-download-button', ['category' => 'kk'])
+                        </div>
+                    </div>
                     @php
                         $chart = $charts['kk'] ?? null;
                         $chartHeight = '600px';
@@ -500,11 +574,20 @@
                 {{-- Tab grafik kepala keluarga --}}
                 <div class="dk-tab-pane hidden" id="tab-household" role="tabpanel"
                     aria-labelledby="tab-household-tab">
-                    @include('public.partials.table-heading', [
-                        'title' => $tabs['household'],
-                        'areaDescriptor' => $areaDescriptor,
-                        'periodLabel' => $periodLabel,
-                    ])
+                    <div class="mb-4 flex flex-wrap gap-3 items-start justify-between">
+                        <div class="flex-1 min-w-[280px]">
+                            @include('public.partials.table-heading', [
+                                'title' => $tabs['household'],
+                                'areaDescriptor' => $areaDescriptor,
+                                'periodLabel' => $periodLabel,
+                                'fullscreenRoute' => 'public.charts.fullscreen',
+                                'showDownloadButtons' => false,
+                            ])
+                        </div>
+                        <div class="flex-shrink-0">
+                            @include('public.partials.chart-download-button', ['category' => 'household'])
+                        </div>
+                    </div>
                     @php
                         $chart = $charts['household'] ?? null;
                         $chartHeight = '600px';
@@ -534,11 +617,20 @@
                 {{-- Tab grafik agama --}}
                 <div class="dk-tab-pane hidden" id="tab-religion" role="tabpanel"
                     aria-labelledby="tab-religion-tab">
-                    @include('public.partials.table-heading', [
-                        'title' => $tabs['religion'],
-                        'areaDescriptor' => $areaDescriptor,
-                        'periodLabel' => $periodLabel,
-                    ])
+                    <div class="mb-4 flex flex-wrap gap-3 items-start justify-between">
+                        <div class="flex-1 min-w-[280px]">
+                            @include('public.partials.table-heading', [
+                                'title' => $tabs['religion'],
+                                'areaDescriptor' => $areaDescriptor,
+                                'periodLabel' => $periodLabel,
+                                'fullscreenRoute' => 'public.charts.fullscreen',
+                                'showDownloadButtons' => false,
+                            ])
+                        </div>
+                        <div class="flex-shrink-0">
+                            @include('public.partials.chart-download-button', ['category' => 'religion'])
+                        </div>
+                    </div>
                     @php
                         $chart = $charts['religion'] ?? null;
                         $chartHeight = '600px';
@@ -568,11 +660,20 @@
                 {{-- Tab grafik wajib KTP --}}
                 <div class="dk-tab-pane hidden" id="tab-wajib-ktp" role="tabpanel"
                     aria-labelledby="tab-wajib-ktp-tab">
-                    @include('public.partials.table-heading', [
-                        'title' => $tabs['wajib-ktp'],
-                        'areaDescriptor' => $areaDescriptor,
-                        'periodLabel' => $periodLabel,
-                    ])
+                    <div class="mb-4 flex flex-wrap gap-3 items-start justify-between">
+                        <div class="flex-1 min-w-[280px]">
+                            @include('public.partials.table-heading', [
+                                'title' => $tabs['wajib-ktp'],
+                                'areaDescriptor' => $areaDescriptor,
+                                'periodLabel' => $periodLabel,
+                                'fullscreenRoute' => 'public.charts.fullscreen',
+                                'showDownloadButtons' => false,
+                            ])
+                        </div>
+                        <div class="flex-shrink-0">
+                            @include('public.partials.chart-download-button', ['category' => 'wajib-ktp'])
+                        </div>
+                    </div>
                     @php
                         $chart = $charts['wajib-ktp'] ?? null;
                         $chartHeight = '600px';
@@ -793,6 +894,23 @@
                 }, 50);
             };
 
+            // Function untuk update fullscreen button URL
+            function updateFullscreenButtons() {
+                var activePane = document.querySelector('.dk-tab-pane.active');
+                if (activePane) {
+                    var category = activePane.id.replace('tab-', '');
+                    var fullscreenButtons = document.querySelectorAll('.js-fullscreen-btn');
+                    fullscreenButtons.forEach(function(btn) {
+                        var baseUrl = btn.getAttribute('data-base-url');
+                        if (baseUrl) {
+                            var url = new URL(baseUrl, window.location.origin);
+                            url.searchParams.set('category', category);
+                            btn.href = url.toString();
+                        }
+                    });
+                }
+            }
+
             // Helper function untuk show tab
             function showTab(targetId) {
                 // Hide all tab panes
@@ -862,12 +980,20 @@
                     url.searchParams.set('category', category);
                     window.history.pushState({}, '', url.toString());
                     
+                    // Update fullscreen button URL
+                    updateFullscreenButtons();
+                    
                     // Initialize chart untuk tab yang aktif
                     setTimeout(function() {
                         ensureChart(category);
                     }, 150);
                 });
             });
+
+            // Inisialisasi URL fullscreen button setelah tab diaktifkan
+            setTimeout(function() {
+                updateFullscreenButtons();
+            }, 100);
 
             // Initialize chart untuk tab aktif saat halaman dimuat
             setTimeout(function() {
@@ -877,4 +1003,4 @@
     </script>
 @endpush
 
-
+@include('public.partials.download-modal', ['type' => 'chart'])

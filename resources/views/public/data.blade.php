@@ -1,5 +1,21 @@
 @extends('layouts.dukcapil', ['title' => 'Data Agregat'])
 
+@push('styles')
+    <style>
+        /* Pastikan table heading memiliki jarak yang cukup dengan konten di bawahnya */
+        .dk-table-heading {
+            margin-bottom: 2rem;
+        }
+        
+        /* Tambahkan jarak tambahan antara label dan tabel pada layar kecil */
+        @media (max-width: 640px) {
+            .dk-table-heading {
+                margin-bottom: 1.5rem;
+            }
+        }
+    </style>
+@endpush
+
 @section('content')
     @php
         $tabs = [
@@ -32,7 +48,7 @@
                         <div class="sm:col-span-1 md:col-span-1 lg:col-span-1">
                             <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Tahun</label>
                             <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" name="year" onchange="this.form.submit()">
-                                <option value="">Terbaru</option>
+                                <option value="">Pilih Tahun</option>
                                 @foreach ($years as $year)
                                     <option value="{{ $year }}" {{ (int) ($selectedYear ?? 0) === $year ? 'selected' : '' }}>
                                     {{ $year }}
@@ -42,8 +58,8 @@
                         </div>
                         <div class="sm:col-span-1 md:col-span-1 lg:col-span-1">
                             <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Semester</label>
-                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" name="semester" onchange="this.form.submit()">
-                                <option value="">Terbaru</option>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" name="semester" onchange="this.form.submit()" {{ !$selectedYear ? 'disabled' : '' }}>
+                                <option value="">Pilih Semester</option>
                                 @forelse ($semesterOptions as $option)
                                     <option value="{{ $option }}" {{ (int) ($selectedSemester ?? 0) === $option ? 'selected' : '' }}>
                                         Semester {{ $option }}
@@ -89,7 +105,11 @@
     {{-- Tampilkan pesan jika belum ada dataset yang dipilih atau diunggah --}}
     @if (!$period)
         <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 dk-card">
-            <strong class="text-yellow-800">Data belum tersedia.</strong> <span class="text-yellow-700">Unggah dataset terlebih dahulu untuk menampilkan ringkasan agregat.</span>
+            @if (empty($periods))
+                <strong class="text-yellow-800">Data belum tersedia.</strong> <span class="text-yellow-700">Unggah dataset terlebih dahulu untuk menampilkan ringkasan agregat.</span>
+            @else
+                <strong class="text-yellow-800">Pilih Filter.</strong> <span class="text-yellow-700">Silakan pilih tahun, semester, kecamatan, atau desa/kelurahan untuk menampilkan ringkasan agregat.</span>
+            @endif
         </div>
     @else
         {{-- Inisialisasi variabel bantu untuk menyusun informasi tabel dan label tampilan --}}
@@ -100,8 +120,8 @@
             if ($areaColumn === 'SEMUA' || $areaColumn === 'Wilayah') {
                 $areaColumn = 'Kecamatan';
             }
-            $districtName = $selectedDistrict ? optional($districts->firstWhere('id', (int) $selectedDistrict))->name : null;
-            $villageName = $selectedVillage ? optional($villages->firstWhere('id', (int) $selectedVillage))->name : null;
+            $districtName = isset($selectedDistrict) && $selectedDistrict ? optional($districts->firstWhere('id', (int) $selectedDistrict))->name : null;
+            $villageName = isset($selectedVillage) && $selectedVillage ? optional($villages->firstWhere('id', (int) $selectedVillage))->name : null;
             $kabupatenName = config('app.region_name', 'Kabupaten Madiun');
             $areaSegments = [$kabupatenName];
             if ($districtName) {
@@ -113,11 +133,13 @@
             }
             $areaDescriptor = implode(' > ', array_filter($areaSegments));
             $periodLabelParts = [];
-            if (!empty($period['semester'])) {
-                $periodLabelParts[] = 'Semester ' . $period['semester'];
-            }
-            if (!empty($period['year'])) {
-                $periodLabelParts[] = 'Tahun ' . $period['year'];
+            if (isset($period) && is_array($period)) {
+                if (isset($period['semester']) && !empty($period['semester'])) {
+                    $periodLabelParts[] = 'Semester ' . $period['semester'];
+                }
+                if (isset($period['year']) && !empty($period['year'])) {
+                    $periodLabelParts[] = 'Tahun ' . $period['year'];
+                }
             }
             $periodLabel = !empty($periodLabelParts) ? implode(' ', $periodLabelParts) : null;
         @endphp
@@ -145,8 +167,10 @@
                         'title' => $tabs['gender'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
+                        'showDownloadButtons' => true,
+                        'activeCategory' => 'gender',
                     ])
-                    <div class="overflow-x-auto dk-table-scroll">
+                    <div class="overflow-x-auto dk-table-scroll relative">
                         <table class="w-full text-sm dk-table mb-0">
                             <thead>
                                 <tr>
@@ -160,14 +184,18 @@
                             <tbody>
                                 @forelse ($areaRows as $index => $row)
                                     @php
-                                        $isHighlighted = !empty($row['highlight']);
+                                        $isHighlighted = isset($row['highlight']) && !empty($row['highlight']);
+                                        $rowName = isset($row['name']) ? $row['name'] : '-';
+                                        $rowMale = isset($row['male']) ? $row['male'] : 0;
+                                        $rowFemale = isset($row['female']) ? $row['female'] : 0;
+                                        $rowTotal = isset($row['total']) ? $row['total'] : 0;
                                     @endphp
                                     <tr class="{{ $isHighlighted ? 'bg-gray-100' : '' }}">
                                         <td>{{ $index + 1 }}</td>
-                                        <td>{{ \Illuminate\Support\Str::title($row['name']) }}</td>
-                                        <td class="text-right">{{ number_format($row['male']) }}</td>
-                                        <td class="text-right">{{ number_format($row['female']) }}</td>
-                                        <td class="text-right font-semibold">{{ number_format($row['total']) }}</td>
+                                        <td>{{ \Illuminate\Support\Str::title($rowName) }}</td>
+                                        <td class="text-right">{{ number_format($rowMale) }}</td>
+                                        <td class="text-right">{{ number_format($rowFemale) }}</td>
+                                        <td class="text-right font-semibold">{{ number_format($rowTotal) }}</td>
                                     </tr>
                                 @empty
                                     <tr>
@@ -196,6 +224,8 @@
                         'title' => $tabs['age'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
+                        'showDownloadButtons' => true,
+                        'activeCategory' => 'age',
                     ])
                     <div class="overflow-x-auto dk-table-scroll">
                         <table class="w-full text-sm dk-table mb-0">
@@ -210,12 +240,18 @@
                             </thead>
                             <tbody>
                                 @forelse ($ageGroups as $index => $row)
+                                    @php
+                                        $rowLabel = isset($row['label']) ? $row['label'] : '-';
+                                        $rowMale = isset($row['male']) ? $row['male'] : 0;
+                                        $rowFemale = isset($row['female']) ? $row['female'] : 0;
+                                        $rowTotal = isset($row['total']) ? $row['total'] : 0;
+                                    @endphp
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $row['label'] }}</td>
-                                        <td class="text-right">{{ number_format($row['male']) }}</td>
-                                        <td class="text-right">{{ number_format($row['female']) }}</td>
-                                        <td class="text-right font-semibold">{{ number_format($row['total']) }}</td>
+                                        <td>{{ $rowLabel }}</td>
+                                        <td class="text-right">{{ number_format($rowMale) }}</td>
+                                        <td class="text-right">{{ number_format($rowFemale) }}</td>
+                                        <td class="text-right font-semibold">{{ number_format($rowTotal) }}</td>
                                     </tr>
                                 @empty
                                     <tr>
@@ -223,7 +259,7 @@
                                     </tr>
                                 @endforelse
                             </tbody>
-                            @if (!empty($ageGroups))
+                            @if (!empty($ageGroups) && is_array($ageGroups))
                                 @php
                                     $ageMale = array_sum(array_column($ageGroups, 'male'));
                                     $ageFemale = array_sum(array_column($ageGroups, 'female'));
@@ -239,6 +275,7 @@
                                 </tfoot>
                             @endif
                         </table>
+                        
                     </div>
                 </div>
 
@@ -249,12 +286,15 @@
                         'title' => $tabs['education'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
+                        'showDownloadButtons' => true,
+                        'activeCategory' => 'education',
                     ])
                     <div class="overflow-x-auto dk-table-scroll">
                         @include('public.partials.matrix-table', [
                             'matrix' => $educationMatrix,
                             'emptyMessage' => 'Data pendidikan belum tersedia.'
                         ])
+                        
                     </div>
                 </div>
 
@@ -265,6 +305,8 @@
                         'title' => $tabs['occupation'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
+                        'showDownloadButtons' => true,
+                        'activeCategory' => 'occupation',
                     ])
                     <div class="overflow-x-auto dk-table-scroll">
                         <table class="w-full text-sm dk-table mb-0">
@@ -279,12 +321,18 @@
                             </thead>
                             <tbody>
                                 @forelse ($topOccupations as $item)
+                                    @php
+                                        $itemLabel = isset($item['label']) ? $item['label'] : '-';
+                                        $itemMale = isset($item['male']) ? $item['male'] : 0;
+                                        $itemFemale = isset($item['female']) ? $item['female'] : 0;
+                                        $itemTotal = isset($item['total']) ? $item['total'] : 0;
+                                    @endphp
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $item['label'] }}</td>
-                                        <td class="text-right">{{ number_format($item['male']) }}</td>
-                                        <td class="text-right">{{ number_format($item['female']) }}</td>
-                                        <td class="text-right font-semibold">{{ number_format($item['total']) }}</td>
+                                        <td>{{ $itemLabel }}</td>
+                                        <td class="text-right">{{ number_format($itemMale) }}</td>
+                                        <td class="text-right">{{ number_format($itemFemale) }}</td>
+                                        <td class="text-right font-semibold">{{ number_format($itemTotal) }}</td>
                                     </tr>
                                 @empty
                                     <tr>
@@ -294,9 +342,9 @@
                             </tbody>
                             @if (!empty($topOccupations))
                                 @php
-                                    $jobMale = array_sum(array_column($topOccupations, 'male'));
-                                    $jobFemale = array_sum(array_column($topOccupations, 'female'));
-                                    $jobTotal = array_sum(array_column($topOccupations, 'total'));
+                                    $jobMale = is_array($topOccupations) ? array_sum(array_column($topOccupations, 'male')) : 0;
+                                    $jobFemale = is_array($topOccupations) ? array_sum(array_column($topOccupations, 'female')) : 0;
+                                    $jobTotal = is_array($topOccupations) ? array_sum(array_column($topOccupations, 'total')) : 0;
                                 @endphp
                                 <tfoot>
                                     <tr>
@@ -308,6 +356,7 @@
                                 </tfoot>
                             @endif
                         </table>
+                        
                     </div>
                 </div>
 
@@ -318,6 +367,8 @@
                         'title' => $tabs['single-age'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
+                        'showDownloadButtons' => true,
+                        'activeCategory' => 'single-age',
                     ])
                     <div class="overflow-x-auto dk-table-scroll">
                         <table class="w-full text-sm dk-table mb-0">
@@ -332,12 +383,18 @@
                             </thead>
                             <tbody>
                                 @forelse ($singleAges as $row)
+                                    @php
+                                        $rowLabel = isset($row['label']) ? $row['label'] : '-';
+                                        $rowMale = isset($row['male']) ? $row['male'] : 0;
+                                        $rowFemale = isset($row['female']) ? $row['female'] : 0;
+                                        $rowTotal = isset($row['total']) ? $row['total'] : 0;
+                                    @endphp
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $row['label'] }}</td>
-                                        <td class="text-right">{{ number_format($row['male']) }}</td>
-                                        <td class="text-right">{{ number_format($row['female']) }}</td>
-                                        <td class="text-right font-semibold">{{ number_format($row['total']) }}</td>
+                                        <td>{{ $rowLabel }}</td>
+                                        <td class="text-right">{{ number_format($rowMale) }}</td>
+                                        <td class="text-right">{{ number_format($rowFemale) }}</td>
+                                        <td class="text-right font-semibold">{{ number_format($rowTotal) }}</td>
                                     </tr>
                                 @empty
                                     <tr>
@@ -345,7 +402,7 @@
                                     </tr>
                                 @endforelse
                             </tbody>
-                            @if (!empty($singleAges))
+                            @if (!empty($singleAges) && is_array($singleAges))
                                 @php
                                 $singleMale = array_sum(array_column($singleAges, 'male'));
                                 $singleFemale = array_sum(array_column($singleAges, 'female'));
@@ -361,6 +418,7 @@
                                 </tfoot>
                             @endif
                         </table>
+                        
                     </div>
                 </div>
 
@@ -371,12 +429,15 @@
                         'title' => $tabs['wajib-ktp'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
+                        'showDownloadButtons' => true,
+                        'activeCategory' => 'wajib-ktp',
                     ])
                     <div class="overflow-x-auto dk-table-scroll">
                         @include('public.partials.matrix-table', [
                             'matrix' => $wajibKtpMatrix,
                             'emptyMessage' => 'Data wajib KTP belum tersedia.'
                         ])
+                        
                     </div>
                 </div>
 
@@ -387,12 +448,15 @@
                         'title' => $tabs['marital'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
+                        'showDownloadButtons' => true,
+                        'activeCategory' => 'marital',
                     ])
                     <div class="overflow-x-auto dk-table-scroll">
                         @include('public.partials.matrix-table', [
                             'matrix' => $maritalMatrix,
                             'emptyMessage' => 'Data status perkawinan belum tersedia.'
                         ])
+                        
                     </div>
                 </div>
 
@@ -403,12 +467,15 @@
                         'title' => $tabs['kk'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
+                        'showDownloadButtons' => true,
+                        'activeCategory' => 'kk',
                     ])
                     <div class="overflow-x-auto dk-table-scroll">
                         @include('public.partials.matrix-table', [
                             'matrix' => $kkMatrix,
                             'emptyMessage' => 'Data kartu keluarga belum tersedia.'
                         ])
+                        
                     </div>
                 </div>
 
@@ -419,12 +486,15 @@
                         'title' => $tabs['household'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
+                        'showDownloadButtons' => true,
+                        'activeCategory' => 'household',
                     ])
                     <div class="overflow-x-auto dk-table-scroll">
                         @include('public.partials.matrix-table', [
                             'matrix' => $headHouseholdMatrix,
                             'emptyMessage' => 'Data kepala keluarga belum tersedia.'
                         ])
+                        
                     </div>
                 </div>
 
@@ -435,15 +505,18 @@
                         'title' => $tabs['religion'],
                         'areaDescriptor' => $areaDescriptor,
                         'periodLabel' => $periodLabel,
+                        'showDownloadButtons' => true,
+                        'activeCategory' => 'religion',
                     ])
                     <div class="overflow-x-auto dk-table-scroll">
                         @include('public.partials.matrix-table', [
                             'matrix' => $religionMatrix,
                             'emptyMessage' => 'Data agama belum tersedia.'
                         ])
+                        
                     </div>
                 </div>
-                </div>
+            </div>
         </div>
     @endif
 @endsection
@@ -479,6 +552,23 @@
                     });
                     targetTab.classList.remove('hidden');
                     targetTab.classList.add('show', 'active');
+                }
+            }
+            
+            // Function untuk update fullscreen button URL (didefinisikan sebelum digunakan)
+            function updateFullscreenButtons() {
+                var activePane = document.querySelector('.dk-tab-pane.active');
+                if (activePane) {
+                    var category = activePane.id.replace('tab-', '');
+                    var fullscreenButtons = document.querySelectorAll('.js-fullscreen-btn');
+                    fullscreenButtons.forEach(function(btn) {
+                        var baseUrl = btn.getAttribute('data-base-url');
+                        if (baseUrl) {
+                            var url = new URL(baseUrl, window.location.origin);
+                            url.searchParams.set('category', category);
+                            btn.href = url.toString();
+                        }
+                    });
                 }
             }
             
@@ -530,6 +620,9 @@
                     url.searchParams.set('category', category);
                     window.history.pushState({}, '', url.toString());
                     
+                    // Update download buttons URLs
+                    updateDownloadButtons(category);
+                    
                     // Update breadcrumb jika ada
                     var breadcrumbCategoryText = document.querySelector('.breadcrumb-category-text');
                     if (breadcrumbCategoryText) {
@@ -540,6 +633,7 @@
                             'education': 'Pendidikan',
                             'occupation': 'Pekerjaan',
                             'marital': 'Status Perkawinan',
+                            'kk': 'Kartu Keluarga',
                             'household': 'Kepala Keluarga',
                             'religion': 'Agama',
                             'wajib-ktp': 'Wajib KTP'
@@ -548,6 +642,50 @@
                     }
                 });
             });
+
+            // Function to update download buttons URLs
+            function updateDownloadButtons(category) {
+                var activePane = document.querySelector('.dk-tab-pane.active');
+                if (!activePane) return;
+                
+                var downloadSection = activePane.querySelector('.mt-4.flex.flex-wrap');
+                if (!downloadSection) return;
+                
+                var currentQuery = new URLSearchParams(window.location.search);
+                currentQuery.set('category', category);
+                
+                var pdfButton = downloadSection.querySelector('.js-download-btn[data-download-format="pdf"]');
+                var excelButton = downloadSection.querySelector('.js-download-btn[data-download-format="excel"]');
+                
+                if (pdfButton) {
+                    var pdfUrl = '{{ route("public.data.download.pdf", []) }}?' + currentQuery.toString();
+                    pdfButton.setAttribute('data-download-url', pdfUrl);
+                    // Remove handler flag to allow re-attachment
+                    pdfButton.removeAttribute('data-handler-attached');
+                    
+                    var pdfYear = currentQuery.get('year') || pdfButton.getAttribute('data-year-default') || '{{ $period['year'] ?? now()->year }}';
+                    var pdfSemester = currentQuery.get('semester') || pdfButton.getAttribute('data-semester-default') || '{{ $period['semester'] ?? 1 }}';
+                    var pdfLabelBase = 'data-' + category + '-' + pdfYear + '-s' + pdfSemester;
+                    pdfButton.setAttribute('data-download-label', pdfLabelBase + '.pdf');
+                }
+                
+                if (excelButton) {
+                    var excelUrl = '{{ route("public.data.download.excel", []) }}?' + currentQuery.toString();
+                    excelButton.setAttribute('data-download-url', excelUrl);
+                    // Remove handler flag to allow re-attachment
+                    excelButton.removeAttribute('data-handler-attached');
+                    
+                    var excelYear = currentQuery.get('year') || excelButton.getAttribute('data-year-default') || '{{ $period['year'] ?? now()->year }}';
+                    var excelSemester = currentQuery.get('semester') || excelButton.getAttribute('data-semester-default') || '{{ $period['semester'] ?? 1 }}';
+                    var excelLabelBase = 'data-' + category + '-' + excelYear + '-s' + excelSemester;
+                    excelButton.setAttribute('data-download-label', excelLabelBase + '.xlsx');
+                }
+                
+                // Re-attach handlers after URL update
+                if (typeof window.attachDirectHandlers === 'function') {
+                    window.attachDirectHandlers();
+                }
+            }
 
             // Fungsi untuk mengatur scrollbar tabel berdasarkan jumlah baris
             function setupTableScroll() {
@@ -598,37 +736,11 @@
                 });
             }
 
-            // Inisialisasi URL fullscreen button saat halaman dimuat
-            var activeTabPane = document.querySelector('.dk-tab-pane.active');
-            if (activeTabPane) {
-                var category = activeTabPane.id.replace('tab-', '');
-                var fullscreenButtons = document.querySelectorAll('.js-fullscreen-btn');
-                fullscreenButtons.forEach(function(btn) {
-                    var baseUrl = btn.getAttribute('data-base-url');
-                    if (baseUrl) {
-                        var url = new URL(baseUrl, window.location.origin);
-                        url.searchParams.set('category', category);
-                        btn.href = url.toString();
-                    }
-                });
-            }
-
-            // Function untuk update fullscreen button URL
-            function updateFullscreenButtons() {
-                var activePane = document.querySelector('.dk-tab-pane.active');
-                if (activePane) {
-                    var category = activePane.id.replace('tab-', '');
-                    var fullscreenButtons = document.querySelectorAll('.js-fullscreen-btn');
-                    fullscreenButtons.forEach(function(btn) {
-                        var baseUrl = btn.getAttribute('data-base-url');
-                        if (baseUrl) {
-                            var url = new URL(baseUrl, window.location.origin);
-                            url.searchParams.set('category', category);
-                            btn.href = url.toString();
-                        }
-                    });
-                }
-            }
+            // Inisialisasi URL fullscreen button setelah tab diaktifkan
+            // Tunggu sedikit untuk memastikan DOM sudah ter-render
+            setTimeout(function() {
+                updateFullscreenButtons();
+            }, 100);
 
             // Wrap showTab untuk menambahkan side effects
             var originalShowTab = showTab;
@@ -654,3 +766,6 @@
         });
     </script>
 @endpush
+
+@include('public.partials.download-modal', ['type' => 'table'])
+

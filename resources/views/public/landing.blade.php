@@ -245,11 +245,13 @@
             'districts' => ['by_code' => [], 'by_slug' => []],
             'villages' => ['by_code' => [], 'by_slug' => []],
         ];
+        $districtsForMap = $districtsForMap ?? [];
     @endphp
 
     <script>
         (function () {
             const mapStats = @json($mapStats);
+            const districtsData = @json($districtsForMap);
 
             function ensureStats(section) {
                 section = section || {};
@@ -318,6 +320,9 @@
             map.createPane('labelPane');
             map.getPane('labelPane').style.zIndex = 650;
             map.getPane('labelPane').style.pointerEvents = 'none';
+
+            const districtLabelLayer = L.layerGroup().addTo(map);
+            districtLabelLayer.setZIndex(650);
 
             L.control.scale({ imperial: false, maxWidth: 160 }).addTo(map);
 
@@ -407,7 +412,6 @@
             let kecLayer = null;
             let kelLayer = null;
             let hoverHighlightLayer = null;
-            const districtLabelLayer = L.layerGroup().addTo(map);
             const villageLabelLayer = L.layerGroup().addTo(map);
 
             function ensureLayerOrder() {
@@ -683,6 +687,128 @@
                 };
             }
 
+            function createDistrictLabel(feature, districtName) {
+                const center = computeFeatureCenter(feature);
+                if (!center) return null;
+
+                const labelDiv = document.createElement('div');
+                labelDiv.textContent = districtName;
+                labelDiv.style.cssText = `
+                    background: rgba(255, 255, 255, 0.92);
+                    color: #007151;
+                    padding: 5px 12px;
+                    border-radius: 6px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    white-space: nowrap;
+                    pointer-events: none;
+                    border: 1.5px solid rgba(0, 113, 81, 0.3);
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+                    text-align: center;
+                    user-select: none;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                    letter-spacing: 0.02em;
+                `;
+
+                const labelIcon = L.divIcon({
+                    html: labelDiv,
+                    className: 'district-label-icon',
+                    iconSize: null,
+                    iconAnchor: [0, 0]
+                });
+
+                return L.marker(center, {
+                    icon: labelIcon,
+                    pane: 'labelPane',
+                    interactive: false,
+                    zIndexOffset: 0
+                });
+            }
+
+            function addDistrictLabels(layer, filterFn) {
+                if (!window.kec || !districtsData || !Array.isArray(districtsData) || districtsData.length === 0) {
+                    districtLabelLayer.clearLayers();
+                    return;
+                }
+                
+                if (!layer || !map.hasLayer(layer)) {
+                    return;
+                }
+                
+                districtLabelLayer.clearLayers();
+                
+                const mapBounds = map.getBounds();
+                if (!mapBounds || !mapBounds.isValid()) {
+                    return;
+                }
+                
+                window.kec.features.forEach((feature) => {
+                    if (!feature || !feature.properties) return;
+                    
+                    if (typeof filterFn === 'function' && !filterFn(feature)) {
+                        return;
+                    }
+                    
+                    const center = computeFeatureCenter(feature);
+                    if (!center || !mapBounds.contains(center)) {
+                        return;
+                    }
+                    
+                    const props = feature.properties;
+                    const featureCode = props.kd_kecamatan;
+                    const featureName = props.nm_kecamatan;
+                    
+                    let districtName = null;
+                    let matchedDistrict = null;
+                    
+                    if (featureCode) {
+                        const aliases = codeAliases(featureCode);
+                        for (let i = 0; i < aliases.length && !matchedDistrict; i++) {
+                            matchedDistrict = districtsData.find(d => {
+                                if (!d || !d.code) return false;
+                                const districtAliases = codeAliases(d.code);
+                                return districtAliases.some(da => aliases.indexOf(da) !== -1);
+                            });
+                            if (matchedDistrict) {
+                                districtName = matchedDistrict.name;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!matchedDistrict && featureName) {
+                        const featureSlug = normalizeName(featureName);
+                        if (featureSlug) {
+                            const variants = slugVariants(featureSlug);
+                            for (let j = 0; j < variants.length && !matchedDistrict; j++) {
+                                matchedDistrict = districtsData.find(d => {
+                                    if (!d || !d.name) return false;
+                                    const districtSlug = normalizeName(d.name);
+                                    if (!districtSlug) return false;
+                                    const districtVariants = slugVariants(districtSlug);
+                                    return districtVariants.some(dv => variants.indexOf(dv) !== -1);
+                                });
+                                if (matchedDistrict) {
+                                    districtName = matchedDistrict.name;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (!districtName && featureName) {
+                        districtName = featureName;
+                    }
+                    
+                    if (districtName) {
+                        const label = createDistrictLabel(feature, districtName);
+                        if (label) {
+                            districtLabelLayer.addLayer(label);
+                        }
+                    }
+                });
+            }
+
             function createKecamatanLayer(filterFn) {
                 if (!window.kec) return L.layerGroup();
                 const options = {
@@ -793,10 +919,19 @@
             function renderKabupatenOverview() {
                 removeLayer(kecLayer);
                 removeLayer(kelLayer);
+                districtLabelLayer.clearLayers();
+                villageLabelLayer.clearLayers();
                 kecLayer = createKecamatanLayer(null);
                 kelLayer = null;
                 addInteractiveLayers(kecLayer);
                 fitToLayers(kecLayer);
+                map.whenReady(function() {
+                    setTimeout(function() {
+                        if (kecLayer && map.hasLayer(kecLayer)) {
+                            addDistrictLabels(kecLayer, null);
+                        }
+                    }, 600);
+                });
             }
 
             function renderSelectedDistrict(selectionState) {
@@ -835,6 +970,18 @@
                 }
                 addInteractiveLayers([kecLayer, kelLayer]);
                 fitToLayers([kelLayer, kecLayer]);
+                
+                if (kelLayer && kelLayer.getLayers && kelLayer.getLayers().length > 0) {
+                    districtLabelLayer.clearLayers();
+                } else {
+                    map.whenReady(function() {
+                        setTimeout(function() {
+                            if (kecLayer && map.hasLayer(kecLayer)) {
+                                addDistrictLabels(kecLayer, selectionState.filterFn);
+                            }
+                        }, 600);
+                    });
+                }
             }
 
             function rebuildDistrictLayers(filterState) {
@@ -880,199 +1027,247 @@
             L.control.layers(baseLayers, {}, { collapsed: true, position: 'topright' }).addTo(map);
 
             rebuildDistrictLayers(currentDistrictFilter);
+            
+            map.on('zoomend', function() {
+                if (kecLayer && !kelLayer) {
+                    setTimeout(function() {
+                        const currentFilter = currentDistrictFilter && currentDistrictFilter.code 
+                            ? buildSelectedDistrictState(currentDistrictFilter) 
+                            : null;
+                        const filterFn = currentFilter ? currentFilter.filterFn : null;
+                        addDistrictLabels(kecLayer, filterFn);
+                    }, 200);
+                }
+            });
+            
+            map.on('moveend', function() {
+                if (kecLayer && !kelLayer) {
+                    setTimeout(function() {
+                        const currentFilter = currentDistrictFilter && currentDistrictFilter.code 
+                            ? buildSelectedDistrictState(currentDistrictFilter) 
+                            : null;
+                        const filterFn = currentFilter ? currentFilter.filterFn : null;
+                        addDistrictLabels(kecLayer, filterFn);
+                    }, 200);
+                }
+            });
         })();
 
         @if (!empty($populationGrowth['labels']) && count($populationGrowth['labels']) > 0)
         // Population Growth Chart
-        (function() {
-            const growthData = @json($populationGrowth);
-            const canvas = document.getElementById('population-growth-chart');
-            
-            if (!canvas || !growthData.labels || growthData.labels.length === 0) {
-                return;
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tunggu sedikit untuk memastikan Chart.js sudah dimuat
+            setTimeout(function() {
+                // Pastikan Chart.js sudah dimuat
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js is not loaded');
+                    return;
+                }
 
-            const ctx = canvas.getContext('2d');
-            
-            // Proses data untuk menghandle null values dengan benar
-            // Growth rate dihitung dengan membandingkan periode sebelumnya
-            // Null di periode pertama adalah normal (tidak ada periode sebelumnya untuk dibandingkan)
-            const processedGrowthRates = growthData.growthRates.map((rate, index) => {
-                return rate === null ? null : rate;
-            });
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: growthData.labels,
-                    datasets: [
-                        {
-                            label: 'Jumlah Penduduk',
-                            data: growthData.data,
-                            borderColor: '#007151',
-                            backgroundColor: 'rgba(0, 113, 81, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            yAxisID: 'y',
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                        },
-                        {
-                            label: 'Laju Pertumbuhan (%)',
-                            data: processedGrowthRates,
-                            borderColor: '#00a876',
-                            backgroundColor: 'rgba(0, 168, 118, 0.1)',
-                            borderWidth: 2,
-                            fill: false,
-                            tension: 0.4,
-                            yAxisID: 'y1',
-                            borderDash: [5, 5],
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            spanGaps: true, // Hubungkan titik meskipun ada null (untuk menampilkan garis kontinyu)
-                            // Jika spanGaps: false, garis akan terputus di titik null
-                            // Jika spanGaps: true, garis akan terhubung bahkan jika ada nilai null di tengah
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: {
-                                usePointStyle: true,
-                                padding: 15,
-                                font: {
-                                    size: 12,
-                                    family: "'Inter', 'Poppins', sans-serif"
+                const growthData = @json($populationGrowth);
+                const canvas = document.getElementById('population-growth-chart');
+                
+                if (!canvas) {
+                    console.error('Canvas element not found');
+                    return;
+                }
+
+                if (!growthData || !growthData.labels || growthData.labels.length === 0) {
+                    console.error('Growth data is empty or invalid', growthData);
+                    return;
+                }
+
+                // Validasi data
+                if (!growthData.data || !Array.isArray(growthData.data) || growthData.data.length === 0) {
+                    console.error('Growth data.data is empty or invalid', growthData);
+                    return;
+                }
+
+                console.log('Initializing population growth chart with data:', growthData);
+
+                const ctx = canvas.getContext('2d');
+                
+                // Proses data untuk menghandle null values dengan benar
+                // Growth rate dihitung dengan membandingkan periode sebelumnya
+                // Null di periode pertama adalah normal (tidak ada periode sebelumnya untuk dibandingkan)
+                const processedGrowthRates = (growthData.growthRates || []).map((rate, index) => {
+                    return rate === null ? null : rate;
+                });
+                
+                try {
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: growthData.labels || [],
+                            datasets: [
+                                {
+                                    label: 'Jumlah Penduduk',
+                                    data: growthData.data || [],
+                                    borderColor: '#007151',
+                                    backgroundColor: 'rgba(0, 113, 81, 0.1)',
+                                    borderWidth: 2,
+                                    fill: true,
+                                    tension: 0.4,
+                                    yAxisID: 'y',
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6,
                                 },
-                                // Hapus generateLabels custom yang menyebabkan masalah
-                            }
+                                {
+                                    label: 'Laju Pertumbuhan (%)',
+                                    data: processedGrowthRates,
+                                    borderColor: '#00a876',
+                                    backgroundColor: 'rgba(0, 168, 118, 0.1)',
+                                    borderWidth: 2,
+                                    fill: false,
+                                    tension: 0.4,
+                                    yAxisID: 'y1',
+                                    borderDash: [5, 5],
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6,
+                                    spanGaps: true, // Hubungkan titik meskipun ada null (untuk menampilkan garis kontinyu)
+                                }
+                            ]
                         },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 12,
-                            titleFont: {
-                                size: 13,
-                                weight: 'bold'
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
                             },
-                            bodyFont: {
-                                size: 12
-                            },
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 15,
+                                        font: {
+                                            size: 12,
+                                            family: "'Inter', 'Poppins', sans-serif"
+                                        },
                                     }
-                                    if (context.datasetIndex === 0) {
-                                        // Jumlah Penduduk
-                                        label += new Intl.NumberFormat('id-ID').format(context.parsed.y);
-                                    } else {
-                                        // Laju Pertumbuhan (%)
-                                        const value = context.parsed.y;
-                                        if (value === null || value === undefined || isNaN(value)) {
-                                            label += '-';
-                                        } else {
-                                            label += value.toFixed(2) + '%';
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    padding: 12,
+                                    titleFont: {
+                                        size: 13,
+                                        weight: 'bold'
+                                    },
+                                    bodyFont: {
+                                        size: 12
+                                    },
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.datasetIndex === 0) {
+                                                // Jumlah Penduduk
+                                                label += new Intl.NumberFormat('id-ID').format(context.parsed.y);
+                                            } else {
+                                                // Laju Pertumbuhan (%)
+                                                const value = context.parsed.y;
+                                                if (value === null || value === undefined || isNaN(value)) {
+                                                    label += '-';
+                                                } else {
+                                                    label += value.toFixed(2) + '%';
+                                                }
+                                            }
+                                            return label;
+                                        },
+                                        filter: function(tooltipItem) {
+                                            // Tampilkan tooltip bahkan jika value null (untuk informatif)
+                                            return true;
                                         }
                                     }
-                                    return label;
-                                },
-                                filter: function(tooltipItem) {
-                                    // Tampilkan tooltip bahkan jika value null (untuk informatif)
-                                    return true;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            display: true,
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                font: {
-                                    size: 11,
-                                    family: "'Inter', 'Poppins', sans-serif"
-                                },
-                                color: '#6b7280'
-                            }
-                        },
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            beginAtZero: false,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            },
-                            ticks: {
-                                font: {
-                                    size: 11,
-                                    family: "'Inter', 'Poppins', sans-serif"
-                                },
-                                color: '#6b7280',
-                                callback: function(value) {
-                                    return new Intl.NumberFormat('id-ID').format(value);
                                 }
                             },
-                            title: {
-                                display: true,
-                                text: 'Jumlah Penduduk',
-                                font: {
-                                    size: 12,
-                                    weight: 'bold',
-                                    family: "'Inter', 'Poppins', sans-serif"
-                                },
-                                color: '#374151'
-                            }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            beginAtZero: false, // Ubah menjadi false agar skala lebih natural
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                            ticks: {
-                                font: {
-                                    size: 11,
-                                    family: "'Inter', 'Poppins', sans-serif"
-                                },
-                                color: '#6b7280',
-                                callback: function(value) {
-                                    if (value === null || isNaN(value)) {
-                                        return '';
+                            scales: {
+                                x: {
+                                    display: true,
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        font: {
+                                            size: 11,
+                                            family: "'Inter', 'Poppins', sans-serif"
+                                        },
+                                        color: '#6b7280'
                                     }
-                                    return value.toFixed(2) + '%';
-                                }
-                            },
-                            title: {
-                                display: true,
-                                text: 'Laju Pertumbuhan (%)',
-                                font: {
-                                    size: 12,
-                                    weight: 'bold',
-                                    family: "'Inter', 'Poppins', sans-serif"
                                 },
-                                color: '#374151'
+                                y: {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'left',
+                                    beginAtZero: false,
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.05)'
+                                    },
+                                    ticks: {
+                                        font: {
+                                            size: 11,
+                                            family: "'Inter', 'Poppins', sans-serif"
+                                        },
+                                        color: '#6b7280',
+                                        callback: function(value) {
+                                            return new Intl.NumberFormat('id-ID').format(value);
+                                        }
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: 'Jumlah Penduduk',
+                                        font: {
+                                            size: 12,
+                                            weight: 'bold',
+                                            family: "'Inter', 'Poppins', sans-serif"
+                                        },
+                                        color: '#374151'
+                                    }
+                                },
+                                y1: {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'right',
+                                    beginAtZero: false,
+                                    grid: {
+                                        drawOnChartArea: false,
+                                    },
+                                    ticks: {
+                                        font: {
+                                            size: 11,
+                                            family: "'Inter', 'Poppins', sans-serif"
+                                        },
+                                        color: '#6b7280',
+                                        callback: function(value) {
+                                            if (value === null || isNaN(value)) {
+                                                return '';
+                                            }
+                                            return value.toFixed(2) + '%';
+                                        }
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: 'Laju Pertumbuhan (%)',
+                                        font: {
+                                            size: 12,
+                                            weight: 'bold',
+                                            family: "'Inter', 'Poppins', sans-serif"
+                                        },
+                                        color: '#374151'
+                                    }
+                                }
                             }
                         }
-                    }
+                    });
+                } catch (error) {
+                    console.error('Error initializing chart:', error);
                 }
-            });
-        })();
+            }, 100);
+        });
         @endif
     </script>
 @endpush

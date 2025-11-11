@@ -9,11 +9,30 @@
         integrity="sha512-31on1Uwx1PcT6zG17Q6C7GdYr387cMGX5CujjJVOk+3O8VjMBYPWaFzx5b9mzfFh1YgUo10xXMYN9bB+FsSjVg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        .table-wrapper::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
-<body class="m-0 p-5 bg-slate-200 font-sans">
-    <a href="{{ route('public.data', request()->query()) }}" class="fixed top-5 right-5 z-[1000] bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-600 text-sm no-underline transition-all duration-200 shadow-md hover:bg-slate-50 hover:text-[#007151] hover:border-[#007151] focus:outline-none focus:ring-2 focus:ring-[#007151]">
-        <i class="fas fa-times mr-1"></i> Tutup
+<body class="m-0 p-0 min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 font-sans">
+    <a href="{{ route('public.data', request()->query()) }}" class="fixed top-6 right-6 z-[1000] bg-white border-2 border-slate-300 rounded-xl px-5 py-3 text-slate-700 text-sm font-medium no-underline inline-flex items-center gap-2 transition-all duration-200 shadow-md hover:bg-primary hover:text-white hover:border-primary hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 md:top-4 md:right-4 md:px-4 md:py-2.5 md:text-xs" title="Kembali ke halaman utama">
+        <i class="fas fa-times"></i>
+        <span>Tutup</span>
     </a>
+    
+    <div class="max-w-full mx-auto p-8 md:p-4">
     
     @php
         $tabs = [
@@ -23,6 +42,7 @@
             'education' => 'Pendidikan',
             'occupation' => 'Pekerjaan',
             'marital' => 'Status Perkawinan',
+            'kk' => 'Kartu Keluarga',
             'household' => 'Kepala Keluarga',
             'religion' => 'Agama',
             'wajib-ktp' => 'Wajib KTP',
@@ -36,9 +56,10 @@
             $areaSegments[] = 'Kecamatan ' . \Illuminate\Support\Str::title($districtName);
             $areaSegments[] = $villageName ? ('Desa/Kelurahan ' . \Illuminate\Support\Str::title($villageName)) : 'Semua Desa/Kelurahan';
         } else {
+            $areaSegments[] = 'Semua Kecamatan';
             $areaSegments[] = 'Semua Desa/Kelurahan';
         }
-        $areaDescriptor = implode(' • ', array_filter($areaSegments));
+        $areaDescriptor = implode(' > ', array_filter($areaSegments));
         $periodLabelParts = [];
         if (!empty($period['semester'])) {
             $periodLabelParts[] = 'Semester ' . $period['semester'];
@@ -50,19 +71,20 @@
         $areaRows = $areaTable['rows'] ?? [];
         $areaTotals = $areaTable['totals'] ?? ['male' => 0, 'female' => 0, 'total' => 0];
         $areaColumn = $areaTable['column'] ?? 'Wilayah';
+        if ($areaColumn === 'SEMUA' || $areaColumn === 'Wilayah') {
+            $areaColumn = 'Kecamatan';
+        }
     @endphp
     
-    <div class="max-w-full bg-white rounded-2xl shadow-2xl p-8">
-        <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-300">
-            <div>
-                <h4 class="m-0 text-xl font-semibold text-[#007151] mb-2">{{ $categoryLabel }}</h4>
-                @if (!empty($areaDescriptor))
-                    <p class="text-xs text-gray-500 mb-1">{{ $areaDescriptor }}</p>
-                @endif
-                @if ($periodLabel)
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{{ $periodLabel }}</span>
-                @endif
-            </div>
+    <div class="bg-white rounded-2xl shadow-2xl p-10 md:p-6 mt-4">
+        <div class="border-b-2 border-slate-200 pb-6 mb-8">
+            <h1 class="text-3xl md:text-2xl font-bold text-primary m-0 mb-3 leading-tight">{{ $categoryLabel }}</h1>
+            @if (!empty($areaDescriptor))
+                <p class="text-sm text-slate-500 my-2 leading-relaxed">{{ $areaDescriptor }}</p>
+            @endif
+            @if ($periodLabel)
+                <span class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-2">{{ $periodLabel }}</span>
+            @endif
         </div>
 
         @if (!$period)
@@ -70,7 +92,7 @@
                 <strong class="text-yellow-800">Data belum tersedia.</strong> <span class="text-yellow-700">Unggah dataset terlebih dahulu untuk menampilkan ringkasan agregat.</span>
             </div>
         @else
-            <div class="overflow-x-auto w-full">
+            <div class="overflow-x-auto w-full -webkit-overflow-scrolling-touch table-wrapper">
                 @if ($category === 'gender')
                     <table class="w-full text-sm dk-table mb-0">
                         <thead>
@@ -262,9 +284,19 @@
                         'matrix' => $religionMatrix,
                         'emptyMessage' => 'Data agama belum tersedia.'
                     ])
+                @elseif ($category === 'kk')
+                    @include('public.partials.matrix-table', [
+                        'matrix' => $kkMatrix,
+                        'emptyMessage' => 'Data kartu keluarga belum tersedia.'
+                    ])
+                @else
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <strong class="text-yellow-800">Kategori tidak ditemukan.</strong> <span class="text-yellow-700">Kategori "{{ $category }}" belum didukung.</span>
+                    </div>
                 @endif
             </div>
         @endif
+    </div>
     </div>
 
 </body>

@@ -9,6 +9,461 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
     
+    {{-- Download Modal Script - Load early to ensure function and event listeners are available --}}
+    <script>
+    (function() {
+        'use strict';
+        
+        // Define openDownloadModal function early (before DOM is ready)
+        // This function MUST be available immediately when page loads
+        window.openDownloadModal = function(type, format, url, label) {
+            console.log('=== openDownloadModal CALLED ===');
+            console.log('Parameters:', {type: type, format: format, url: url});
+            console.log('Document ready state:', document.readyState);
+            
+            // Helper function to show modal
+            function showModal(modalElement) {
+                console.log('=== showModal function called ===');
+                console.log('Modal element:', modalElement);
+                
+                try {
+                    // Remove hidden class
+                    console.log('Step 1: Removing hidden class');
+                    modalElement.classList.remove('hidden');
+                    
+                    // Remove inline display:none
+                    console.log('Step 2: Checking inline styles');
+                    if (modalElement.style.display === 'none') {
+                        console.log('Found inline display:none, removing...');
+                        modalElement.style.removeProperty('display');
+                    }
+                    
+                    // Remove hidden attribute
+                    console.log('Step 3: Removing hidden attribute');
+                    modalElement.removeAttribute('hidden');
+                    
+                    // Force show with !important
+                    console.log('Step 4: Setting display:block with !important');
+                    modalElement.style.setProperty('display', 'flex', 'important');
+                    modalElement.style.setProperty('visibility', 'visible', 'important');
+                    modalElement.style.setProperty('opacity', '1', 'important');
+                    modalElement.style.setProperty('z-index', '99999', 'important');
+                    modalElement.style.setProperty('position', 'fixed', 'important');
+                    modalElement.style.setProperty('top', '0', 'important');
+                    modalElement.style.setProperty('left', '0', 'important');
+                    modalElement.style.setProperty('right', '0', 'important');
+                    modalElement.style.setProperty('bottom', '0', 'important');
+                    modalElement.style.setProperty('width', '100%', 'important');
+                    modalElement.style.setProperty('height', '100%', 'important');
+                    
+                    // Also ensure overlay is visible
+                    var overlay = document.getElementById('downloadModalOverlay');
+                    if (overlay) {
+                        console.log('Ensuring overlay is visible');
+                        overlay.style.setProperty('display', 'block', 'important');
+                        overlay.style.setProperty('opacity', '0.75', 'important');
+                        overlay.style.setProperty('z-index', '99998', 'important');
+                        overlay.style.setProperty('position', 'fixed', 'important');
+                        overlay.style.setProperty('top', '0', 'important');
+                        overlay.style.setProperty('left', '0', 'important');
+                        overlay.style.setProperty('right', '0', 'important');
+                        overlay.style.setProperty('bottom', '0', 'important');
+                        overlay.style.setProperty('width', '100%', 'important');
+                        overlay.style.setProperty('height', '100%', 'important');
+                        overlay.classList.remove('hidden');
+                    } else {
+                        console.warn('Overlay not found!');
+                    }
+                    
+                    // Find modal content panel by ID first, then fallback
+                    var modalPanel = document.getElementById('downloadModalPanel');
+                    if (!modalPanel) {
+                        // Fallback: try to find by class
+                        modalPanel = modalElement.querySelector('.inline-block');
+                        if (!modalPanel) {
+                            // Try to find any white panel
+                            var panels = modalElement.querySelectorAll('div[class*="bg-white"]');
+                            if (panels.length > 0) {
+                                modalPanel = panels[0]; // Get the first one (should be the panel)
+                            }
+                        }
+                    }
+                    if (modalPanel) {
+                        console.log('Modal panel found, ensuring visibility:', modalPanel);
+                        modalPanel.style.setProperty('display', 'inline-block', 'important');
+                        modalPanel.style.setProperty('visibility', 'visible', 'important');
+                        modalPanel.style.setProperty('opacity', '1', 'important');
+                        modalPanel.style.setProperty('z-index', '100000', 'important');
+                        modalPanel.style.setProperty('position', 'relative', 'important');
+                        modalPanel.classList.remove('hidden');
+                    } else {
+                        console.warn('Modal panel not found!');
+                    }
+                    
+                    // Ensure all child divs are visible too
+                    var allChildren = modalElement.querySelectorAll('div');
+                    console.log('Found', allChildren.length, 'child divs in modal');
+                    allChildren.forEach(function(child, index) {
+                        var childComputed = window.getComputedStyle(child);
+                        if (childComputed.display === 'none' && !child.id.includes('Overlay')) {
+                            console.log('Child', index, 'is hidden, making visible');
+                            child.style.setProperty('display', '', 'important');
+                        }
+                    });
+                    
+                    // Update form fields
+                    console.log('Step 5: Updating form fields');
+                    var downloadType = document.getElementById('downloadType');
+                    var downloadFormat = document.getElementById('downloadFormat');
+                    var downloadUrl = document.getElementById('downloadUrl');
+                    var downloadForm = document.getElementById('downloadForm');
+                    var titleElement = document.getElementById('download-modal-title');
+                    var downloadLabelInput = document.getElementById('downloadLabel');
+                    
+                    if (downloadType) downloadType.value = type || 'table';
+                    if (downloadFormat) downloadFormat.value = format || 'pdf';
+                    if (downloadUrl) downloadUrl.value = url || '';
+                    if (downloadForm) {
+                        downloadForm.setAttribute('action', url || '#');
+                        downloadForm.setAttribute('method', 'GET');
+                    }
+                    if (downloadLabelInput) {
+                        downloadLabelInput.value = (label || '').trim();
+                    }
+                    
+                    if (titleElement) {
+                        if (type === 'table') {
+                            titleElement.textContent = format === 'excel' ? 'Download Data Agregat (Excel)' : 'Download Data Agregat (PDF)';
+                        } else if (type === 'chart') {
+                            titleElement.textContent = 'Download Grafik Data (PDF)';
+                        } else if (type === 'compare') {
+                            titleElement.textContent = 'Download Perbandingan Data (PDF)';
+                        } else {
+                            titleElement.textContent = 'Download Data Agregat';
+                        }
+                    }
+                    
+                    // Prevent body scroll
+                    console.log('Step 6: Preventing body scroll');
+                    document.body.style.overflow = 'hidden';
+                    document.documentElement.style.overflow = 'hidden';
+                    
+                    // Force reflow
+                    console.log('Step 7: Forcing reflow');
+                    void modalElement.offsetHeight;
+                    if (modalPanel) void modalPanel.offsetHeight;
+                    
+                    // Verify modal and children
+                    var computed = window.getComputedStyle(modalElement);
+                    console.log('=== MODAL STATE AFTER SHOW ===');
+                    console.log('Modal computed display:', computed.display);
+                    console.log('Modal computed visibility:', computed.visibility);
+                    console.log('Modal computed opacity:', computed.opacity);
+                    console.log('Modal computed z-index:', computed.zIndex);
+                    console.log('Modal computed position:', computed.position);
+                    console.log('Modal computed top:', computed.top);
+                    console.log('Modal computed left:', computed.left);
+                    console.log('Modal computed width:', computed.width);
+                    console.log('Modal computed height:', computed.height);
+                    console.log('Has hidden class:', modalElement.classList.contains('hidden'));
+                    console.log('Inline display:', modalElement.style.display);
+                    
+                    if (modalPanel) {
+                        var panelComputed = window.getComputedStyle(modalPanel);
+                        console.log('=== MODAL PANEL STATE ===');
+                        console.log('Panel computed display:', panelComputed.display);
+                        console.log('Panel computed visibility:', panelComputed.visibility);
+                        console.log('Panel computed opacity:', panelComputed.opacity);
+                        console.log('Panel computed z-index:', panelComputed.zIndex);
+                    }
+                    
+                    if (overlay) {
+                        var overlayComputed = window.getComputedStyle(overlay);
+                        console.log('=== OVERLAY STATE ===');
+                        console.log('Overlay computed display:', overlayComputed.display);
+                        console.log('Overlay computed opacity:', overlayComputed.opacity);
+                        console.log('Overlay computed z-index:', overlayComputed.zIndex);
+                    }
+                    
+                    // Double check after a moment
+                    setTimeout(function() {
+                        var finalComputed = window.getComputedStyle(modalElement);
+                        console.log('=== AFTER 50ms TIMEOUT ===');
+                        console.log('Final computed display:', finalComputed.display);
+                        console.log('Modal in viewport?', modalElement.getBoundingClientRect());
+                        
+                        if (finalComputed.display === 'none' || modalElement.classList.contains('hidden')) {
+                            console.error('MODAL STILL HIDDEN! Forcing again...');
+                            modalElement.classList.remove('hidden');
+                            modalElement.style.setProperty('display', 'flex', 'important');
+                            modalElement.style.setProperty('visibility', 'visible', 'important');
+                            modalElement.style.setProperty('opacity', '1', 'important');
+                            modalElement.style.setProperty('z-index', '99999', 'important');
+                        } else {
+                            console.log('✅ MODAL SHOULD BE VISIBLE!');
+                            console.log('Modal bounding rect:', JSON.stringify(modalElement.getBoundingClientRect()));
+                            console.log('If modal is not visible, check:');
+                            console.log('1. Is it behind another element?');
+                            console.log('2. Is it outside viewport?');
+                            console.log('3. Are child elements hidden?');
+                        }
+                    }, 50);
+                    
+                    return true;
+                } catch (err) {
+                    console.error('Error in showModal:', err);
+                    console.error('Error stack:', err.stack);
+                    return false;
+                }
+            }
+            
+            // Main logic
+            try {
+                // Wait for DOM if not ready
+                if (document.readyState === 'loading') {
+                    console.log('DOM still loading, waiting 50ms...');
+                    setTimeout(function() {
+                        window.openDownloadModal(type, format, url, label);
+                    }, 50);
+                    return false;
+                }
+                
+                console.log('DOM ready, searching for modal...');
+                
+                // Try to find modal - with retry logic
+                var modal = document.getElementById('downloadModal');
+                var retryCount = 0;
+                var maxRetries = 10;
+                
+                while (!modal && retryCount < maxRetries) {
+                    console.log('Modal not found, retry', retryCount + 1, 'of', maxRetries);
+                    // Wait a bit and try again
+                    if (retryCount > 0) {
+                        // This shouldn't happen in sync, but just in case
+                        break;
+                    }
+                    modal = document.getElementById('downloadModal');
+                    retryCount++;
+                }
+                
+                if (!modal) {
+                    console.error('❌ Download modal NOT FOUND after', maxRetries, 'attempts');
+                    console.error('Searching for elements with "download" in ID...');
+                    var allDownloadElements = document.querySelectorAll('[id*="download"]');
+                    console.error('Found elements:', allDownloadElements.length);
+                    allDownloadElements.forEach(function(el, idx) {
+                        console.error('Element', idx + ':', el.id, el.tagName, el.className);
+                    });
+                    
+                    // Try to wait a bit more and show modal
+                    console.log('Waiting 200ms and trying again...');
+                    setTimeout(function() {
+                        var retryModal = document.getElementById('downloadModal');
+                        if (retryModal) {
+                            console.log('✅ Modal found on retry!');
+                            showModal(retryModal);
+                        } else {
+                            console.error('❌ Modal still not found after retry');
+                            alert('Modal download tidak ditemukan. Silakan refresh halaman.');
+                        }
+                    }, 200);
+                    return false;
+                }
+                
+                console.log('✅ Modal found!', modal);
+                console.log('Modal tag:', modal.tagName);
+                console.log('Modal ID:', modal.id);
+                console.log('Modal classes:', modal.className);
+                
+                // Show the modal
+                var success = showModal(modal);
+                
+                if (!success) {
+                    console.error('Failed to show modal');
+                    alert('Gagal menampilkan modal download. Silakan refresh halaman.');
+                }
+                
+                return false;
+            } catch (error) {
+                console.error('❌ ERROR in openDownloadModal:', error);
+                console.error('Error name:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                alert('Terjadi kesalahan: ' + error.message);
+                return false;
+            }
+        };
+        
+        // ULTRA AGGRESSIVE event handling - use mousedown to catch BEFORE click
+        function getDownloadLabelFromButton(btn) {
+            if (!btn) {
+                return '';
+            }
+            var labelAttr = btn.getAttribute('data-download-label');
+            if (labelAttr && labelAttr.trim().length) {
+                return labelAttr.trim();
+            }
+            var ariaLabel = btn.getAttribute('aria-label');
+            if (ariaLabel && ariaLabel.trim().length) {
+                return ariaLabel.trim();
+            }
+            return (btn.textContent || '').trim();
+        }
+        
+        function handleDownloadEvent(e) {
+            var target = e.target;
+            var downloadBtn = null;
+            
+            // Walk up DOM tree to find download button
+            while (target && target !== document && target !== document.documentElement && target !== document.body) {
+                if (target.classList && target.classList.contains('js-download-btn')) {
+                    downloadBtn = target;
+                    break;
+                }
+                target = target.parentNode || target.parentElement;
+            }
+            
+            if (downloadBtn) {
+                console.log('Download button clicked - preventing navigation', downloadBtn);
+                
+                // STOP EVERYTHING IMMEDIATELY
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                // Cancel for all browsers
+                if (e.cancelBubble !== undefined) e.cancelBubble = true;
+                if (e.returnValue !== undefined) e.returnValue = false;
+                
+                // Get data
+                var type = downloadBtn.getAttribute('data-download-type');
+                var format = downloadBtn.getAttribute('data-download-format');
+                var url = downloadBtn.getAttribute('data-download-url');
+                var label = getDownloadLabelFromButton(downloadBtn);
+                
+                console.log('Download button data:', {type: type, format: format, url: url});
+                
+                if (type && format && url) {
+                    // Open modal immediately - no delay
+                    if (typeof window.openDownloadModal === 'function') {
+                        console.log('Calling openDownloadModal');
+                        window.openDownloadModal(type, format, url, label);
+                    } else {
+                        console.error('openDownloadModal not available');
+                        alert('Fungsi download belum tersedia. Silakan refresh halaman.');
+                    }
+                } else {
+                    console.error('Missing download button attributes');
+                }
+                
+                return false;
+            }
+        }
+        
+        // Register on MOUSEDOWN (fires BEFORE click) with capture phase
+        // This is the earliest we can catch the event
+        if (document.addEventListener) {
+            document.addEventListener('mousedown', handleDownloadEvent, true);
+            document.addEventListener('click', handleDownloadEvent, true);
+            document.addEventListener('touchstart', handleDownloadEvent, true);
+            // Also on window
+            window.addEventListener('mousedown', handleDownloadEvent, true);
+            window.addEventListener('click', handleDownloadEvent, true);
+            
+            console.log('Download event listeners registered');
+        }
+        
+        // Setup direct handlers when DOM is ready
+        // Make function global so it can be called from other scripts
+        function attachDirectHandlers() {
+            var buttons = document.querySelectorAll('.js-download-btn');
+            console.log('Found download buttons:', buttons.length);
+            
+            buttons.forEach(function(btn) {
+                // Skip if already has our custom handler
+                if (btn.hasAttribute('data-handler-attached')) {
+                    return;
+                }
+                
+                // Mark as handled
+                btn.setAttribute('data-handler-attached', 'true');
+                
+                // Add handler that prevents everything
+                function handler(e) {
+                    console.log('Direct handler called for button', btn, 'Event type:', e.type);
+                    
+                    // Check if it's a keyboard event (Enter or Space)
+                    if (e.type === 'keydown') {
+                        if (e.key !== 'Enter' && e.key !== ' ') {
+                            return;
+                        }
+                    }
+                    
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    
+                    var type = btn.getAttribute('data-download-type');
+                    var format = btn.getAttribute('data-download-format');
+                    var url = btn.getAttribute('data-download-url');
+                    var label = getDownloadLabelFromButton(btn);
+                    
+                    console.log('Direct handler data:', {type: type, format: format, url: url});
+                    
+                    if (type && format && url && typeof window.openDownloadModal === 'function') {
+                        console.log('Calling openDownloadModal from direct handler');
+                        window.openDownloadModal(type, format, url, label);
+                    } else {
+                        console.error('Cannot open modal:', {
+                            hasType: !!type,
+                            hasFormat: !!format,
+                            hasUrl: !!url,
+                            hasFunction: typeof window.openDownloadModal === 'function'
+                        });
+                    }
+                    
+                    return false;
+                }
+                
+                // Attach to multiple events including keyboard
+                ['mousedown', 'click', 'touchstart', 'keydown'].forEach(function(eventType) {
+                    btn.addEventListener(eventType, handler, true);
+                });
+                
+                // Make span focusable and handle keyboard
+                btn.setAttribute('tabindex', '0');
+                btn.style.cursor = 'pointer';
+                
+                console.log('Direct handlers attached to button:', btn);
+            });
+        }
+        
+        // Make function global
+        window.attachDirectHandlers = attachDirectHandlers;
+        
+        // Run immediately and also on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM Content Loaded - attaching handlers');
+                attachDirectHandlers();
+            });
+        } else {
+            console.log('DOM already loaded - attaching handlers immediately');
+            attachDirectHandlers();
+        }
+        
+        // Also run after a short delay to catch dynamically added buttons
+        setTimeout(function() {
+            console.log('Timeout 100ms - re-attaching handlers');
+            attachDirectHandlers();
+        }, 100);
+        setTimeout(function() {
+            console.log('Timeout 500ms - re-attaching handlers');
+            attachDirectHandlers();
+        }, 500);
+    })();
+    </script>
+    
     <style>
         /* Icon color styling untuk sidebar navigation */
         .sidebar-nav-icon {
@@ -65,7 +520,7 @@
                     data-sidebar-nav-item
                 >
                     <img src="{{ asset('img/home.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
-                    <span class="whitespace-nowrap" data-sidebar-nav-text>Home</span>
+                    <span class="whitespace-nowrap" data-sidebar-nav-text>Beranda</span>
                 </a>
                 
                 <a 
@@ -95,17 +550,17 @@
                     data-sidebar-nav-item
                 >
                     <img src="{{ asset('img/compare.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
-                    <span class="whitespace-nowrap" data-sidebar-nav-text>Compare</span>
+                    <span class="whitespace-nowrap" data-sidebar-nav-text>Perbandingan</span>
                 </a>
                 
                 <a 
-                    href="{{ url('/terms') }}"
-                    class="sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->is('terms') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
-                    title="Terms"
+                    href="{{ route('public.terms') }}"
+                    class="sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.terms') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
+                    title="Syarat & Ketentuan"
                     data-sidebar-nav-item
                 >
                     <img src="{{ asset('img/terms.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
-                    <span class="whitespace-nowrap" data-sidebar-nav-text>Terms</span>
+                    <span class="whitespace-nowrap" data-sidebar-nav-text>Syarat & Ketentuan</span>
                 </a>
             </div>
         </nav>
@@ -186,7 +641,7 @@
                 class="mobile-menu-link sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.landing') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
             >
                 <img src="{{ asset('img/home.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
-                <span>Home</span>
+                <span>Beranda</span>
             </a>
             
             <a 
@@ -210,15 +665,15 @@
                 class="mobile-menu-link sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.compare') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
             >
                 <img src="{{ asset('img/compare.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
-                <span>Compare</span>
+                <span>Perbandingan</span>
             </a>
             
             <a 
-                href="{{ url('/terms') }}"
-                class="mobile-menu-link sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->is('terms') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
+                href="{{ route('public.terms') }}"
+                class="mobile-menu-link sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.terms') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
             >
                 <img src="{{ asset('img/terms.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
-                <span>Terms</span>
+                <span>Syarat & Ketentuan</span>
             </a>
         </nav>
         
@@ -269,42 +724,54 @@
                                 'active' => false
                             ];
                             
-                            // Tambahkan kategori tab aktif jika ada
-                            $category = request()->query('category', 'gender');
-                            $categoryLabels = [
-                                'gender' => 'Jenis Kelamin',
-                                'age' => 'Kelompok Umur',
-                                'single-age' => 'Umur Tunggal',
-                                'education' => 'Pendidikan',
-                                'occupation' => 'Pekerjaan',
-                                'marital' => 'Status Perkawinan',
-                                'household' => 'Kepala Keluarga',
-                                'religion' => 'Agama',
-                                'wajib-ktp' => 'Wajib KTP',
-                                'kk' => 'Kartu Keluarga',
-                            ];
-                            $categoryLabel = $categoryLabels[$category] ?? 'Jenis Kelamin';
+                            // Cek apakah tahun dan semester sudah dipilih (data sudah ditampilkan)
+                            $yearInput = request()->query('year');
+                            $semesterInput = request()->query('semester');
+                            $hasYear = !empty($yearInput) && $yearInput !== '';
+                            $hasSemester = !empty($semesterInput) && $semesterInput !== '';
+                            $hasData = $hasYear && $hasSemester;
                             
-                            if (request()->routeIs('public.data.fullscreen')) {
-                                $breadcrumbs[] = [
-                                    'label' => $categoryLabel,
-                                    'route' => null,
-                                    'icon' => 'table',
-                                    'active' => false
+                            // Tambahkan kategori tab aktif hanya jika data sudah dipilih
+                            if ($hasData) {
+                                $category = request()->query('category', 'gender');
+                                $categoryLabels = [
+                                    'gender' => 'Jenis Kelamin',
+                                    'age' => 'Kelompok Umur',
+                                    'single-age' => 'Umur Tunggal',
+                                    'education' => 'Pendidikan',
+                                    'occupation' => 'Pekerjaan',
+                                    'marital' => 'Status Perkawinan',
+                                    'household' => 'Kepala Keluarga',
+                                    'religion' => 'Agama',
+                                    'wajib-ktp' => 'Wajib KTP',
+                                    'kk' => 'Kartu Keluarga',
                                 ];
-                                $breadcrumbs[] = [
-                                    'label' => 'Fullscreen',
-                                    'route' => null,
-                                    'icon' => 'maximize',
-                                    'active' => true
-                                ];
+                                $categoryLabel = $categoryLabels[$category] ?? 'Jenis Kelamin';
+                                
+                                if (request()->routeIs('public.data.fullscreen')) {
+                                    $breadcrumbs[] = [
+                                        'label' => $categoryLabel,
+                                        'route' => null,
+                                        'icon' => 'table',
+                                        'active' => false
+                                    ];
+                                    $breadcrumbs[] = [
+                                        'label' => 'Fullscreen',
+                                        'route' => null,
+                                        'icon' => 'maximize',
+                                        'active' => true
+                                    ];
+                                } else {
+                                    $breadcrumbs[] = [
+                                        'label' => $categoryLabel,
+                                        'route' => null,
+                                        'icon' => 'table',
+                                        'active' => true
+                                    ];
+                                }
                             } else {
-                                $breadcrumbs[] = [
-                                    'label' => $categoryLabel,
-                                    'route' => null,
-                                    'icon' => 'table',
-                                    'active' => true
-                                ];
+                                // Jika data belum dipilih, Tabel menjadi active
+                                $breadcrumbs[count($breadcrumbs) - 1]['active'] = true;
                             }
                         }
                         
@@ -317,61 +784,89 @@
                                 'active' => false
                             ];
                             
-                            // Tambahkan kategori tab aktif jika ada
-                            $category = request()->query('category', 'gender');
-                            $categoryLabels = [
-                                'gender' => 'Jenis Kelamin',
-                                'age' => 'Kelompok Umur',
-                                'single-age' => 'Umur Tunggal',
-                                'education' => 'Pendidikan',
-                                'occupation' => 'Pekerjaan',
-                                'marital' => 'Status Perkawinan',
-                                'household' => 'Kepala Keluarga',
-                                'religion' => 'Agama',
-                                'wajib-ktp' => 'Wajib KTP',
-                                'kk' => 'Kartu Keluarga',
-                            ];
-                            $categoryLabel = $categoryLabels[$category] ?? 'Jenis Kelamin';
+                            // Cek apakah tahun dan semester sudah dipilih (data sudah ditampilkan)
+                            $yearInput = request()->query('year');
+                            $semesterInput = request()->query('semester');
+                            $hasYear = !empty($yearInput) && $yearInput !== '';
+                            $hasSemester = !empty($semesterInput) && $semesterInput !== '';
+                            $hasData = $hasYear && $hasSemester;
                             
-                            $breadcrumbs[] = [
-                                'label' => $categoryLabel,
-                                'route' => null,
-                                'icon' => 'chart',
-                                'active' => true
-                            ];
+                            // Tambahkan kategori tab aktif hanya jika data sudah dipilih
+                            if ($hasData) {
+                                $category = request()->query('category', 'gender');
+                                $categoryLabels = [
+                                    'gender' => 'Jenis Kelamin',
+                                    'age' => 'Kelompok Umur',
+                                    'single-age' => 'Umur Tunggal',
+                                    'education' => 'Pendidikan',
+                                    'occupation' => 'Pekerjaan',
+                                    'marital' => 'Status Perkawinan',
+                                    'household' => 'Kepala Keluarga',
+                                    'religion' => 'Agama',
+                                    'wajib-ktp' => 'Wajib KTP',
+                                    'kk' => 'Kartu Keluarga',
+                                ];
+                                $categoryLabel = $categoryLabels[$category] ?? 'Jenis Kelamin';
+                                
+                                $breadcrumbs[] = [
+                                    'label' => $categoryLabel,
+                                    'route' => null,
+                                    'icon' => 'chart',
+                                    'active' => true
+                                ];
+                            } else {
+                                // Jika data belum dipilih, Grafik menjadi active
+                                $breadcrumbs[count($breadcrumbs) - 1]['active'] = true;
+                            }
                         }
                         
                         // Perbandingan/Compare
                         if (request()->routeIs('public.compare')) {
                             $breadcrumbs[] = [
-                                'label' => 'Tabel',
-                                'route' => 'public.data',
-                                'icon' => 'table',
+                                'label' => 'Perbandingan',
+                                'route' => 'public.compare',
+                                'icon' => 'chart',
                                 'active' => false
                             ];
                             
-                            // Tambahkan kategori tab aktif jika ada
-                            $category = request()->query('category', 'gender');
-                            $categoryLabels = [
-                                'gender' => 'Jenis Kelamin',
-                                'age' => 'Kelompok Umur',
-                                'single-age' => 'Umur Tunggal',
-                                'education' => 'Pendidikan',
-                                'occupation' => 'Pekerjaan',
-                                'marital' => 'Status Perkawinan',
-                                'household' => 'Kepala Keluarga',
-                                'religion' => 'Agama',
-                                'wajib-ktp' => 'Wajib KTP',
-                                'kk' => 'Kartu Keluarga',
-                            ];
-                            $categoryLabel = $categoryLabels[$category] ?? 'Jenis Kelamin';
+                            // Cek apakah primary year, primary semester, compare year, dan compare semester sudah dipilih
+                            $primaryYear = request()->query('year');
+                            $primarySemester = request()->query('semester');
+                            $compareYear = request()->query('compare_year');
+                            $compareSemester = request()->query('compare_semester');
+                            $hasPrimaryYear = !empty($primaryYear) && $primaryYear !== '';
+                            $hasPrimarySemester = !empty($primarySemester) && $primarySemester !== '';
+                            $hasCompareYear = !empty($compareYear) && $compareYear !== '';
+                            $hasCompareSemester = !empty($compareSemester) && $compareSemester !== '';
+                            $hasData = $hasPrimaryYear && $hasPrimarySemester && $hasCompareYear && $hasCompareSemester;
                             
-                            $breadcrumbs[] = [
-                                'label' => $categoryLabel,
-                                'route' => null,
-                                'icon' => 'table',
-                                'active' => true
-                            ];
+                            // Tambahkan kategori tab aktif hanya jika data sudah dipilih
+                            if ($hasData) {
+                                $category = request()->query('category', 'gender');
+                                $categoryLabels = [
+                                    'gender' => 'Jenis Kelamin',
+                                    'age' => 'Kelompok Umur',
+                                    'single-age' => 'Umur Tunggal',
+                                    'education' => 'Pendidikan',
+                                    'occupation' => 'Pekerjaan',
+                                    'marital' => 'Status Perkawinan',
+                                    'household' => 'Kepala Keluarga',
+                                    'religion' => 'Agama',
+                                    'wajib-ktp' => 'Wajib KTP',
+                                    'kk' => 'Kartu Keluarga',
+                                ];
+                                $categoryLabel = $categoryLabels[$category] ?? 'Jenis Kelamin';
+                                
+                                $breadcrumbs[] = [
+                                    'label' => $categoryLabel,
+                                    'route' => null,
+                                    'icon' => 'chart',
+                                    'active' => true
+                                ];
+                            } else {
+                                // Jika data belum dipilih, Perbandingan menjadi active
+                                $breadcrumbs[count($breadcrumbs) - 1]['active'] = true;
+                            }
                         }
                     }
                 @endphp
@@ -455,6 +950,41 @@
             @yield('content')
         </div>
     </main>
+    
+    <!-- Website Footer -->
+    <footer id="website-footer" class="bg-white border-t border-gray-200 p-3 lg:p-4 lg:ml-64 transition-all duration-300 ease-in-out">
+        <div class="flex flex-row items-center justify-between flex-wrap gap-x-3 gap-y-2">
+            <div class="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+                Copyright © 2025 
+                <a href="{{ url('/') }}" class="text-[#007151] hover:underline" target="_blank" rel="noopener">Serdadu</a>
+                <a href="https://dukcapil.madiunkab.go.id" class="text-[#007151] hover:underline" target="_blank" rel="noopener">Dukcapil Kab. Madiun</a>
+                <span class="mx-2">|</span>
+                <a href="{{ route('public.terms') }}" class="text-[#007151] hover:underline">Syarat & Ketentuan</a>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="https://www.youtube.com/@dukcapilkabupatenmadiun" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-red-600 transition-colors" aria-label="YouTube" title="YouTube">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                </a>
+                <a href="https://www.instagram.com/dukcapil.kabupatenmadiun/" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-pink-600 transition-colors" aria-label="Instagram" title="Instagram">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                </a>
+                <a href="https://www.facebook.com/people/Dukcapil-Kabupaten-Madiun/pfbid0FrM8jLzQi6zH5TC1nsCn95UHWCA3mWbr94B7x7zF73dpLZhPhNtWDcYSgdNcViXLl/?mibextid=LQQJ4d" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-blue-600 transition-colors" aria-label="Facebook" title="Facebook">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                </a>
+                <a href="https://x.com/Capil_Kab_Mdn" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-gray-900 transition-colors" aria-label="X (Twitter)" title="X (Twitter)">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </footer>
 
     @stack('scripts')
     
@@ -466,6 +996,7 @@
             // Desktop Sidebar
             const desktopSidebar = document.getElementById('desktop-sidebar');
             const mainContent = document.getElementById('main-content');
+            const websiteFooter = document.getElementById('website-footer');
             
             const sidebarText = document.querySelector('[data-sidebar-text]');
             const sidebarNav = document.querySelector('[data-sidebar-nav]');
@@ -511,6 +1042,10 @@
                     desktopSidebar.classList.add('w-20');
                     mainContent.classList.remove('lg:ml-64');
                     mainContent.classList.add('lg:ml-20');
+                    if (websiteFooter) {
+                        websiteFooter.classList.remove('lg:ml-64');
+                        websiteFooter.classList.add('lg:ml-20');
+                    }
                     
                     // Hide text elements
                     if (sidebarText) sidebarText.style.display = 'none';
@@ -545,6 +1080,10 @@
                     desktopSidebar.classList.add('w-64');
                     mainContent.classList.remove('lg:ml-20');
                     mainContent.classList.add('lg:ml-64');
+                    if (websiteFooter) {
+                        websiteFooter.classList.remove('lg:ml-20');
+                        websiteFooter.classList.add('lg:ml-64');
+                    }
                     
                     // Show text elements
                     if (sidebarText) sidebarText.style.display = '';
