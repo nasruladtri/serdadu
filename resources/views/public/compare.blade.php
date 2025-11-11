@@ -390,7 +390,7 @@
                                         role="button"
                                         tabindex="0"
                                         aria-label="Download PDF">
-                                        <img src="{{ Vite::asset('resources/img/pdf.png') }}" alt="PDF icon" class="w-5 h-5 object-contain">
+                                        <img src="{{ asset('img/pdf.png') }}" alt="PDF icon" class="w-5 h-5 object-contain">
                                     </span>
                                 </div>
                             </div>
