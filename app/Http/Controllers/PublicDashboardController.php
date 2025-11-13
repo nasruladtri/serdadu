@@ -188,56 +188,6 @@ class PublicDashboardController extends Controller
         ] = $this->prepareFilterContext($request);
 
         $category = $request->get('category', 'gender');
-        $regionName = config('app.region_name', 'Kabupaten Madiun');
-        $primaryDistrictName = $primaryDistrict ? Str::title(optional($districts->firstWhere('id', $primaryDistrict))->name ?? '') : null;
-        $compareDistrictName = $compareDistrict ? Str::title(optional($districts->firstWhere('id', $compareDistrict))->name ?? '') : null;
-        $primaryVillageName = $primaryVillage ? Str::title(Village::where('id', $primaryVillage)->value('name') ?? '') : null;
-        $compareVillageName = $compareVillage ? Str::title(Village::where('id', $compareVillage)->value('name') ?? '') : null;
-
-        $primaryAreaSegments = [$regionName];
-        if ($primaryDistrictName) {
-            $primaryAreaSegments[] = 'Kecamatan ' . $primaryDistrictName;
-            $primaryAreaSegments[] = $primaryVillageName ? 'Desa/Kelurahan ' . $primaryVillageName : 'Semua Desa/Kelurahan';
-        } else {
-            $primaryAreaSegments[] = 'Semua Kecamatan';
-            $primaryAreaSegments[] = 'Semua Desa/Kelurahan';
-        }
-        $primaryAreaDescriptor = implode(' > ', array_filter($primaryAreaSegments));
-
-        $compareAreaSegments = [$regionName];
-        if ($compareDistrictName) {
-            $compareAreaSegments[] = 'Kecamatan ' . $compareDistrictName;
-            $compareAreaSegments[] = $compareVillageName ? 'Desa/Kelurahan ' . $compareVillageName : 'Semua Desa/Kelurahan';
-        } else {
-            $compareAreaSegments[] = 'Semua Kecamatan';
-            $compareAreaSegments[] = 'Semua Desa/Kelurahan';
-        }
-        $compareAreaDescriptor = implode(' > ', array_filter($compareAreaSegments));
-        $regionName = config('app.region_name', 'Kabupaten Madiun');
-        $primaryDistrictName = $primaryDistrict ? Str::title($districts->firstWhere('id', $primaryDistrict)->name ?? '') : null;
-        $compareDistrictName = $compareDistrict ? Str::title($districts->firstWhere('id', $compareDistrict)->name ?? '') : null;
-        $primaryVillageName = $primaryVillage ? Str::title(Village::where('id', $primaryVillage)->value('name') ?? '') : null;
-        $compareVillageName = $compareVillage ? Str::title(Village::where('id', $compareVillage)->value('name') ?? '') : null;
-
-        $primaryAreaSegments = [$regionName];
-        if ($primaryDistrictName) {
-            $primaryAreaSegments[] = 'Kecamatan ' . $primaryDistrictName;
-            $primaryAreaSegments[] = $primaryVillageName ? 'Desa/Kelurahan ' . $primaryVillageName : 'Semua Desa/Kelurahan';
-        } else {
-            $primaryAreaSegments[] = 'Semua Kecamatan';
-            $primaryAreaSegments[] = 'Semua Desa/Kelurahan';
-        }
-        $primaryAreaDescriptor = implode(' > ', array_filter($primaryAreaSegments));
-
-        $compareAreaSegments = [$regionName];
-        if ($compareDistrictName) {
-            $compareAreaSegments[] = 'Kecamatan ' . $compareDistrictName;
-            $compareAreaSegments[] = $compareVillageName ? 'Desa/Kelurahan ' . $compareVillageName : 'Semua Desa/Kelurahan';
-        } else {
-            $compareAreaSegments[] = 'Semua Kecamatan';
-            $compareAreaSegments[] = 'Semua Desa/Kelurahan';
-        }
-        $compareAreaDescriptor = implode(' > ', array_filter($compareAreaSegments));
 
         $gender = $period ? $this->genderSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0];
         $wajibKtp = $period ? $this->wajibKtpSummary($period, $filters) : ['male' => 0, 'female' => 0, 'total' => 0];
@@ -573,16 +523,16 @@ class PublicDashboardController extends Controller
 
         $chartsNeedingTags = [
             'age',
-            'single-age',
-            'education',
-            'occupation',
             'marital',
             'household',
             'religion',
         ];
 
-        $chartsAngledTags = [
+        $chartsAngledTags = [];
+
+        $horizontalChartKeys = [
             'single-age',
+            'education',
             'occupation',
         ];
 
@@ -639,6 +589,7 @@ class PublicDashboardController extends Controller
             'chartTitles' => $chartTitles,
             'chartsNeedingTags' => $chartsNeedingTags,
             'chartsAngledTags' => $chartsAngledTags,
+            'horizontalChartKeys' => $horizontalChartKeys,
         ]);
     }
 
@@ -876,16 +827,16 @@ class PublicDashboardController extends Controller
 
         $chartsNeedingTags = [
             'age',
-            'single-age',
-            'education',
-            'occupation',
             'marital',
             'household',
             'religion',
         ];
 
-        $chartsAngledTags = [
+        $chartsAngledTags = [];
+
+        $horizontalChartKeys = [
             'single-age',
+            'education',
             'occupation',
         ];
 
@@ -942,6 +893,7 @@ class PublicDashboardController extends Controller
             'chartTitles' => $chartTitles,
             'chartsNeedingTags' => $chartsNeedingTags,
             'chartsAngledTags' => $chartsAngledTags,
+            'horizontalChartKeys' => $horizontalChartKeys,
             'category' => $category,
         ]);
     }
@@ -2044,13 +1996,19 @@ class PublicDashboardController extends Controller
             (int) ($summary['female'] ?? 0),
             (int) ($summary['total'] ?? 0),
         ];
+        $colors = ['#377dff', '#ff5c8d', '#28a745'];
 
         return [
             'title' => $title,
             'labels' => $labels,
             'datasets' => [
-                $this->makeDataset('Wajib KTP', $data, ['#377dff', '#ff5c8d', '#6c63ff']),
+                $this->makeDataset('Wajib KTP', $data, $colors),
             ],
+            'legendItems' => array_map(
+                fn($label, $color) => ['label' => $label, 'color' => $color],
+                $labels,
+                $colors
+            ),
         ];
     }
 
@@ -2062,13 +2020,19 @@ class PublicDashboardController extends Controller
             (int) ($summary['total_printed'] ?? 0),
             (int) ($summary['total_not_printed'] ?? 0),
         ];
+        $colors = ['#28a745', '#377dff', '#ffc107'];
 
         return [
             'title' => $title,
             'labels' => $labels,
             'datasets' => [
-                $this->makeDataset('Kartu Keluarga', $data, ['#377dff', '#28a745', '#ffc107']),
+                $this->makeDataset('Kartu Keluarga', $data, $colors),
             ],
+            'legendItems' => array_map(
+                fn($label, $color) => ['label' => $label, 'color' => $color],
+                $labels,
+                $colors
+            ),
         ];
     }
 
@@ -2093,7 +2057,7 @@ class PublicDashboardController extends Controller
             'datasets' => [
                 $this->makeDataset('Laki-laki', $male, '#377dff'),
                 $this->makeDataset('Perempuan', $female, '#ff5c8d'),
-                $this->makeDataset('Total', $total, '#6c63ff'),
+                $this->makeDataset('Total', $total, '#28a745'),
             ],
         ];
     }

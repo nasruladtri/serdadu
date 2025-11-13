@@ -72,6 +72,9 @@
             @php
                 $chart = $charts[$category] ?? null;
                 $chartHeight = '700px';
+                if ($category === 'single-age' && $chart && !empty($chart['labels']) && is_array($chart['labels'])) {
+                    $chartHeight = max(1100, count($chart['labels']) * 16) . 'px';
+                }
             @endphp
             @if (!$chart || empty($chart['labels']))
                 <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -266,17 +269,26 @@
                     
                     // Buat legend di bawah chart
                     const legendElement = document.getElementById('legend-' + key);
-                    if (legendElement && config.datasets) {
+                    if (legendElement) {
                         legendElement.innerHTML = '';
-                        config.datasets.forEach((dataset) => {
-                            const color = Array.isArray(dataset.backgroundColor) 
-                                ? dataset.backgroundColor[0] 
-                                : dataset.backgroundColor;
+                        const legendItems = Array.isArray(config.legendItems) && config.legendItems.length
+                            ? config.legendItems
+                            : (config.datasets || []).map((dataset) => ({
+                                label: dataset.label || '',
+                                color: Array.isArray(dataset.backgroundColor)
+                                    ? dataset.backgroundColor[0]
+                                    : dataset.backgroundColor
+                            }));
+
+                        legendItems.forEach((item) => {
+                            if (!item || !item.label) {
+                                return;
+                            }
                             const legendItem = document.createElement('div');
                             legendItem.className = 'flex items-center gap-2 text-sm text-slate-700';
                             legendItem.innerHTML = `
-                                <div class="w-4 h-4 rounded flex-shrink-0" style="background-color: ${color};"></div>
-                                <span>${dataset.label || ''}</span>
+                                <div class="w-4 h-4 rounded flex-shrink-0" style="background-color: ${item.color || '#999'};"></div>
+                                <span>${item.label}</span>
                             `;
                             legendElement.appendChild(legendItem);
                         });

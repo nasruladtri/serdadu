@@ -9,6 +9,21 @@
         integrity="sha512-31on1Uwx1PcT6zG17Q6C7GdYr387cMGX5CujjJVOk+3O8VjMBYPWaFzx5b9mzfFh1YgUo10xXMYN9bB+FsSjVg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        .compare-chart-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        @media (min-width: 1024px) {
+            .compare-chart-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 2rem;
+            }
+        }
+    </style>
 </head>
 <body class="m-0 p-0 min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 font-sans">
     <a href="{{ route('public.compare', request()->query()) }}" class="fixed top-6 right-6 z-[1000] bg-white border-2 border-slate-300 rounded-xl px-5 py-3 text-slate-700 text-sm font-medium no-underline inline-flex items-center gap-2 transition-all duration-200 shadow-md hover:bg-primary hover:text-white hover:border-primary hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 md:top-4 md:right-4 md:px-4 md:py-2.5 md:text-xs" title="Kembali ke halaman perbandingan">
@@ -113,10 +128,17 @@
             @php
                 $primaryChart = $primaryCharts[$category] ?? null;
                 $compareChart = $compareCharts[$category] ?? null;
-                $chartHeight = in_array($category, ['single-age', 'occupation']) ? '700px' : '600px';
+                $primaryLabelCount = isset($primaryChart['labels']) && is_array($primaryChart['labels']) ? count($primaryChart['labels']) : 0;
+                $compareLabelCount = isset($compareChart['labels']) && is_array($compareChart['labels']) ? count($compareChart['labels']) : 0;
+                $singleAgeLabelCount = max($primaryLabelCount, $compareLabelCount);
+                $chartHeight = match ($category) {
+                    'single-age' => $singleAgeLabelCount ? max(1100, $singleAgeLabelCount * 16) . 'px' : '700px',
+                    'occupation' => max(900, max($singleAgeLabelCount, 1) * 22) . 'px',
+                    default => '600px',
+                };
             @endphp
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-6">
+            <div class="compare-chart-grid grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-6">
                 {{-- Primary Chart (Left) --}}
                 <div class="flex-1 flex flex-col min-h-0 w-full">
                     <div class="relative flex-1 flex flex-col min-h-0 w-full bg-gradient-to-br from-white via-slate-50 to-white rounded-2xl p-8 md:p-4 shadow-sm border border-slate-200">
@@ -178,6 +200,8 @@
             const chartsNeedingTags = @json($chartsNeedingTags);
             const chartsAngledTags = @json($chartsAngledTags);
             const chartInstances = {};
+            const chartsWithValueLabels = Object.keys(primaryCharts || {});
+            const totalLabelTargets = ['Total', 'Jumlah Penduduk', 'Wajib KTP', 'Kartu Keluarga'];
             const category = @json($category);
             const primaryLabel = @json($primaryLabel);
             const compareLabel = @json($compareLabel);
@@ -248,7 +272,60 @@
                 }
             };
 
-            Chart.register(categoryTagPlugin);
+            const valueLabelPlugin = {
+                id: 'valueLabelPlugin',
+                afterDatasetsDraw(chart, args, pluginOptions) {
+                    if (!pluginOptions?.show) {
+                        return;
+                    }
+                    const horizontal = typeof pluginOptions.horizontal === 'boolean'
+                        ? pluginOptions.horizontal
+                        : chart.config?.options?.indexAxis === 'y';
+                    const targetLabels = Array.isArray(pluginOptions.targetLabels) && pluginOptions.targetLabels.length
+                        ? pluginOptions.targetLabels
+                        : null;
+                    const { ctx } = chart;
+                    ctx.save();
+                    ctx.font = pluginOptions.font || '10px "Inter", "Poppins", sans-serif';
+                    ctx.fillStyle = pluginOptions.color || '#1f2937';
+                    chart.data.datasets.forEach((dataset, datasetIndex) => {
+                        const meta = chart.getDatasetMeta(datasetIndex);
+                        if (meta.hidden) {
+                            return;
+                        }
+                        if (targetLabels && (!dataset?.label || !targetLabels.includes(dataset.label))) {
+                            return;
+                        }
+                        meta.data.forEach((element, index) => {
+                            const rawValue = dataset.data?.[index];
+                            if (rawValue === null || rawValue === undefined) {
+                                return;
+                            }
+                            const numericValue = Number(rawValue);
+                            if (!Number.isFinite(numericValue)) {
+                                return;
+                            }
+                            const formatted = new Intl.NumberFormat('id-ID').format(numericValue);
+                            const position = element.tooltipPosition();
+                            let x = position.x;
+                            let y = position.y;
+                            if (horizontal) {
+                                x += 6;
+                                ctx.textAlign = 'left';
+                                ctx.textBaseline = 'middle';
+                            } else {
+                                y -= 6;
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'bottom';
+                            }
+                            ctx.fillText(formatted, x, y);
+                        });
+                    });
+                    ctx.restore();
+                }
+            };
+
+            Chart.register(categoryTagPlugin, valueLabelPlugin);
 
             function renderChart(chartKey, canvas, config, label) {
                 if (chartInstances[chartKey]) return;
@@ -261,6 +338,7 @@
                     const datasets = config.datasets || [];
                     const needsTags = chartsNeedingTags.includes(key);
                     const angledTags = chartsAngledTags.includes(key);
+                    const showValueLabels = chartsWithValueLabels.includes(key);
                     const longestLabel = labels.reduce((max, label) => Math.max(max, (label || '').length), 0);
                     const bottomPadding = angledTags
                         ? Math.min(260, Math.max(160, longestLabel * 6 + 32))
@@ -317,6 +395,11 @@
                                 categoryTagPlugin: {
                                     labels: labels,
                                     angled: angledTags
+                                },
+                                valueLabelPlugin: {
+                                    show: showValueLabels,
+                                    horizontal: false,
+                                    targetLabels: totalLabelTargets
                                 }
                             }
                         }
@@ -326,15 +409,24 @@
                     const legendElement = document.getElementById('legend-' + chartKey);
                     if (legendElement) {
                         legendElement.innerHTML = '';
-                        datasets.forEach((dataset) => {
-                            const color = Array.isArray(dataset.backgroundColor) 
-                                ? dataset.backgroundColor[0] 
-                                : dataset.backgroundColor;
+                        const legendItems = Array.isArray(config.legendItems) && config.legendItems.length
+                            ? config.legendItems
+                            : datasets.map((dataset) => ({
+                                label: dataset.label || '',
+                                color: Array.isArray(dataset.backgroundColor)
+                                    ? dataset.backgroundColor[0]
+                                    : dataset.backgroundColor
+                            }));
+
+                        legendItems.forEach((item) => {
+                            if (!item || !item.label) {
+                                return;
+                            }
                             const legendItem = document.createElement('div');
                             legendItem.className = 'flex items-center gap-2 text-sm text-slate-700';
                             legendItem.innerHTML = `
-                                <div class="w-4 h-4 rounded flex-shrink-0" style="background-color: ${color};"></div>
-                                <span>${dataset.label || ''}</span>
+                                <div class="w-4 h-4 rounded flex-shrink-0" style="background-color: ${item.color || '#999'};"></div>
+                                <span>${item.label}</span>
                             `;
                             legendElement.appendChild(legendItem);
                         });
@@ -365,4 +457,3 @@
 
 </body>
 </html>
-

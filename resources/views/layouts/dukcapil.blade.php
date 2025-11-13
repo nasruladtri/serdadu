@@ -483,10 +483,40 @@
             filter: brightness(0) invert(1);
             opacity: 1;
         }
+
+        .breadcrumb-icon-image {
+            display: inline-block;
+        }
+
+        .breadcrumb-icon-chart {
+            filter: invert(1); /* turn dark background into white, bars into black */
+        }
+
+        .breadcrumb-icon-compare {
+            filter: brightness(0); /* make white arrows visible on white background */
+        }
+
+        .breadcrumb-icon-terms {
+            filter: brightness(0);
+        }
     </style>
 </head>
 
 <body class="bg-gray-50 antialiased" data-sidebar-state>
+    @php
+        $breadcrumbIcon = function ($relativePath) {
+            $assetUrl = asset($relativePath);
+            $fullPath = public_path($relativePath);
+            if (file_exists($fullPath)) {
+                $assetUrl .= '?v=' . filemtime($fullPath);
+            }
+            return $assetUrl;
+        };
+
+        $compareIconAsset = $breadcrumbIcon('img/compare.png');
+        $chartIconAsset = $breadcrumbIcon('img/bar-stats.png');
+        $termsIconAsset = $breadcrumbIcon('img/terms.png');
+    @endphp
     <!-- Sidebar Desktop -->
     <aside 
         id="desktop-sidebar"
@@ -539,7 +569,7 @@
                     title="Grafik"
                     data-sidebar-nav-item
                 >
-                    <img src="{{ asset('img/bar-stats.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
+                    <img src="{{ $chartIconAsset }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
                     <span class="whitespace-nowrap" data-sidebar-nav-text>Grafik</span>
                 </a>
                 
@@ -549,7 +579,7 @@
                     title="Compare"
                     data-sidebar-nav-item
                 >
-                    <img src="{{ asset('img/compare.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
+                    <img src="{{ $compareIconAsset }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
                     <span class="whitespace-nowrap" data-sidebar-nav-text>Perbandingan</span>
                 </a>
                 
@@ -656,7 +686,7 @@
                 href="{{ route('public.charts') }}"
                 class="mobile-menu-link sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.charts') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
             >
-                <img src="{{ asset('img/bar-stats.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
+                <img src="{{ $chartIconAsset }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
                 <span>Grafik</span>
             </a>
             
@@ -664,7 +694,7 @@
                 href="{{ route('public.compare') }}"
                 class="mobile-menu-link sidebar-nav-link flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('public.compare') ? 'bg-[#007151] text-white active' : 'text-gray-700 hover:bg-gray-100' }}"
             >
-                <img src="{{ asset('img/compare.png') }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
+                <img src="{{ $compareIconAsset }}" alt="" class="sidebar-nav-icon w-5 h-5 flex-shrink-0">
                 <span>Perbandingan</span>
             </a>
             
@@ -825,7 +855,7 @@
                             $breadcrumbs[] = [
                                 'label' => 'Perbandingan',
                                 'route' => 'public.compare',
-                                'icon' => 'chart',
+                                'icon' => 'compare',
                                 'active' => false
                             ];
                             
@@ -860,7 +890,7 @@
                                 $breadcrumbs[] = [
                                     'label' => $categoryLabel,
                                     'route' => null,
-                                    'icon' => 'chart',
+                                    'icon' => 'compare',
                                     'active' => true
                                 ];
                             } else {
@@ -868,22 +898,31 @@
                                 $breadcrumbs[count($breadcrumbs) - 1]['active'] = true;
                             }
                         }
+
+                        // Syarat & Ketentuan
+                        if (request()->routeIs('public.terms')) {
+                            $breadcrumbs[] = [
+                                'label' => 'Syarat & Ketentuan',
+                                'route' => 'public.terms',
+                                'icon' => 'terms',
+                                'active' => true
+                            ];
+                        }
                     }
                 @endphp
                 
-                @if(count($breadcrumbs) > 1)
-                    <button 
-                        onclick="window.history.back()" 
-                        class="flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#007151] focus:ring-offset-2"
-                        title="Kembali"
-                        aria-label="Kembali"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                        </svg>
-                    </button>
-                    <span class="text-gray-300">|</span>
-                @endif
+                @php $canGoBack = count($breadcrumbs) > 1; @endphp
+                <button 
+                    @if($canGoBack) onclick="window.history.back()" @else disabled aria-disabled="true" @endif
+                    class="flex items-center justify-center w-7 h-7 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#007151] focus:ring-offset-2 {{ $canGoBack ? 'text-gray-500 hover:text-gray-700 hover:bg-gray-100' : 'text-gray-300 cursor-default' }}"
+                    title="Kembali"
+                    aria-label="Kembali"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                <span class="text-gray-300">|</span>
                 
                 <ol class="flex items-center gap-2">
                     @foreach($breadcrumbs as $index => $breadcrumb)
@@ -897,7 +936,7 @@
                             @if($breadcrumb['route'] && !$breadcrumb['active'])
                                 <a 
                                     href="{{ route($breadcrumb['route']) }}" 
-                                    class="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors {{ (isset($categoryLabel) && $breadcrumb['label'] === $categoryLabel) ? 'breadcrumb-category' : '' }}"
+                                    class="flex items-center gap-1.5 text-gray-600 text-sm hover:text-gray-900 transition-colors {{ (isset($categoryLabel) && $breadcrumb['label'] === $categoryLabel) ? 'breadcrumb-category' : '' }}"
                                 >
                                     @if($breadcrumb['icon'] === 'home')
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -908,9 +947,11 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                                         </svg>
                                     @elseif($breadcrumb['icon'] === 'chart')
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                        </svg>
+                                        <img src="{{ $chartIconAsset }}" alt="Ikon Grafik" class="w-4 h-4 object-contain breadcrumb-icon-image breadcrumb-icon-chart">
+                                    @elseif($breadcrumb['icon'] === 'compare')
+                                        <img src="{{ $compareIconAsset }}" alt="Ikon Perbandingan" class="w-4 h-4 object-contain breadcrumb-icon-image breadcrumb-icon-compare">
+                                    @elseif($breadcrumb['icon'] === 'terms')
+                                        <img src="{{ $termsIconAsset }}" alt="Ikon Syarat & Ketentuan" class="w-4 h-4 object-contain breadcrumb-icon-image breadcrumb-icon-terms">
                                     @elseif($breadcrumb['icon'] === 'maximize')
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
@@ -919,7 +960,7 @@
                                     <span>{{ $breadcrumb['label'] }}</span>
                                 </a>
                             @else
-                                <span class="flex items-center gap-1.5 text-gray-900 font-medium {{ isset($categoryLabel) && $breadcrumb['label'] === $categoryLabel ? 'breadcrumb-category' : '' }}">
+                                <span class="flex items-center gap-1.5 text-gray-900 text-sm font-medium {{ isset($categoryLabel) && $breadcrumb['label'] === $categoryLabel ? 'breadcrumb-category' : '' }}">
                                     @if($breadcrumb['icon'] === 'home')
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
@@ -929,9 +970,11 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                                         </svg>
                                     @elseif($breadcrumb['icon'] === 'chart')
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                        </svg>
+                                        <img src="{{ $chartIconAsset }}" alt="Ikon Grafik" class="w-4 h-4 object-contain breadcrumb-icon-image breadcrumb-icon-chart">
+                                    @elseif($breadcrumb['icon'] === 'compare')
+                                        <img src="{{ $compareIconAsset }}" alt="Ikon Perbandingan" class="w-4 h-4 object-contain breadcrumb-icon-image breadcrumb-icon-compare">
+                                    @elseif($breadcrumb['icon'] === 'terms')
+                                        <img src="{{ $termsIconAsset }}" alt="Ikon Syarat & Ketentuan" class="w-4 h-4 object-contain breadcrumb-icon-image breadcrumb-icon-terms">
                                     @elseif($breadcrumb['icon'] === 'maximize')
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
@@ -953,15 +996,15 @@
     
     <!-- Website Footer -->
     <footer id="website-footer" class="bg-white border-t border-gray-200 p-3 lg:p-4 lg:ml-64 transition-all duration-300 ease-in-out">
-        <div class="flex flex-row items-center justify-between flex-wrap gap-x-3 gap-y-2">
-            <div class="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+        <div class="flex flex-col gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+            <div class="text-xs text-gray-500 whitespace-normal sm:whitespace-nowrap">
                 Copyright © 2025 
                 <a href="{{ url('/') }}" class="text-[#007151] hover:underline" target="_blank" rel="noopener">Serdadu</a>
                 <a href="https://dukcapil.madiunkab.go.id" class="text-[#007151] hover:underline" target="_blank" rel="noopener">Dukcapil Kab. Madiun</a>
                 <span class="mx-2">|</span>
                 <a href="{{ route('public.terms') }}" class="text-[#007151] hover:underline">Syarat & Ketentuan</a>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center justify-center gap-2 sm:justify-end">
                 <a href="https://www.youtube.com/@dukcapilkabupatenmadiun" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-red-600 transition-colors" aria-label="YouTube" title="YouTube">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>

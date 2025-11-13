@@ -694,20 +694,22 @@
                 const labelDiv = document.createElement('div');
                 labelDiv.textContent = districtName;
                 labelDiv.style.cssText = `
-                    background: rgba(255, 255, 255, 0.92);
-                    color: #007151;
-                    padding: 5px 12px;
-                    border-radius: 6px;
-                    font-size: 13px;
+                    background: rgba(255, 255, 255, 0.9);
+                    color: #004934;
+                    padding: 2px 7px;
+                    border-radius: 3px;
+                    font-size: 9px;
                     font-weight: 600;
                     white-space: nowrap;
                     pointer-events: none;
-                    border: 1.5px solid rgba(0, 113, 81, 0.3);
-                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+                    border: 0.7px solid rgba(0, 113, 81, 0.35);
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
                     text-align: center;
                     user-select: none;
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
                     letter-spacing: 0.02em;
+                    text-transform: uppercase;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
                 `;
 
                 const labelIcon = L.divIcon({
@@ -722,6 +724,77 @@
                     pane: 'labelPane',
                     interactive: false,
                     zIndexOffset: 0
+                });
+            }
+
+            function createVillageLabel(feature, villageName) {
+                const center = computeFeatureCenter(feature);
+                if (!center) return null;
+
+                const labelDiv = document.createElement('div');
+                labelDiv.textContent = villageName;
+                labelDiv.style.cssText = `
+                    background: rgba(0, 73, 124, 0.92);
+                    color: #f4fbff;
+                    padding: 2px 5px;
+                    border-radius: 3px;
+                    font-size: 8px;
+                    font-weight: 600;
+                    white-space: nowrap;
+                    pointer-events: none;
+                    border: 0.7px solid rgba(0, 0, 0, 0.25);
+                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+                    text-align: center;
+                    user-select: none;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                    letter-spacing: 0.02em;
+                    text-transform: uppercase;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+                `;
+
+                const labelIcon = L.divIcon({
+                    html: labelDiv,
+                    className: 'village-label-icon',
+                    iconSize: null,
+                    iconAnchor: [0, 0]
+                });
+
+                return L.marker(center, {
+                    icon: labelIcon,
+                    pane: 'labelPane',
+                    interactive: false,
+                    zIndexOffset: 0
+                });
+            }
+
+            function addVillageLabels(layer) {
+                if (!layer || !map.hasLayer(layer)) {
+                    villageLabelLayer.clearLayers();
+                    return;
+                }
+
+                villageLabelLayer.clearLayers();
+                const bounds = map.getBounds();
+                const boundsValid = bounds && typeof bounds.isValid === 'function' ? bounds.isValid() : false;
+
+                layer.eachLayer(childLayer => {
+                    const feature = childLayer && childLayer.feature ? childLayer.feature : null;
+                    if (!feature || !feature.properties) return;
+
+                    const center = computeFeatureCenter(feature);
+                    if (!center) {
+                        return;
+                    }
+                    if (bounds && boundsValid && !bounds.contains(center)) {
+                        return;
+                    }
+
+                    const props = feature.properties;
+                    const name = props.nm_kelurahan || props.nm_desa || props.nm_desa_kelurahan || 'Desa';
+                    const label = createVillageLabel(feature, name);
+                    if (label) {
+                        villageLabelLayer.addLayer(label);
+                    }
                 });
             }
 
@@ -973,6 +1046,13 @@
                 
                 if (kelLayer && kelLayer.getLayers && kelLayer.getLayers().length > 0) {
                     districtLabelLayer.clearLayers();
+                    map.whenReady(function() {
+                        setTimeout(function() {
+                            if (kelLayer && map.hasLayer(kelLayer)) {
+                                addVillageLabels(kelLayer);
+                            }
+                        }, 400);
+                    });
                 } else {
                     map.whenReady(function() {
                         setTimeout(function() {

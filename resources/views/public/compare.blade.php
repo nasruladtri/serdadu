@@ -82,6 +82,20 @@
             background-color: #fef3c7;
             color: #92400e;
         }
+
+        .compare-chart-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        @media (min-width: 1024px) {
+            .compare-chart-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 1.5rem;
+            }
+        }
     </style>
 @endpush
 
@@ -353,12 +367,22 @@
                         {{-- Header dengan tombol fullscreen dan download --}}
                         <div class="mb-4 flex flex-wrap gap-3 items-start justify-between">
                             <div>
-                                <h6 class="dk-card__title mb-1 text-base sm:text-lg font-semibold text-gray-900">{{ $label }}</h6>
-                                <p class="text-xs text-gray-500 mb-0">Perbandingan {{ strtolower($label) }} antara data utama dan data pembanding</p>
-                                <p class="text-xs text-gray-500 mb-0">Wilayah Data Utama: {{ $primaryAreaDescriptor }}</p>
-                                <p class="text-xs text-gray-500 mb-0">Wilayah Data Pembanding: {{ $compareAreaDescriptor }}</p>
+                                <div class="space-y-1">
+                                    <h6 class="text-lg font-semibold text-gray-900 tracking-tight">{{ $label }}</h6>
+                                    <p class="text-sm text-gray-500">Perbandingan {{ strtolower($label) }} antara data utama dan data pembanding.</p>
+                                </div>
+                                <div class="mt-2 space-y-1 text-sm text-gray-600">
+                                    <div class="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                                        <span class="font-medium text-gray-700">Wilayah Data Utama:</span>
+                                        <span class="text-gray-500">{{ $primaryAreaDescriptor }}</span>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                                        <span class="font-medium text-gray-700">Wilayah Data Pembanding:</span>
+                                        <span class="text-gray-500">{{ $compareAreaDescriptor }}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="flex flex-wrap gap-3 items-center justify-end text-right">
+                            <div class="flex flex-wrap sm:flex-nowrap items-center justify-end gap-3 text-right w-full lg:w-auto lg:ml-auto">
                                 @php
                                     $fullscreenUrl = route('public.compare.fullscreen', array_merge(request()->query(), ['category' => $key]));
                                     $downloadUrl = route('public.compare.download.pdf', array_merge(request()->query(), ['category' => $key]));
@@ -374,10 +398,7 @@
                                         }
                                     }
                                 @endphp
-                                <a href="{{ $fullscreenUrl }}" target="_blank" class="inline-flex items-center px-3 py-1.5 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 js-fullscreen-btn" data-base-url="{{ route('public.compare.fullscreen', request()->query()) }}" title="Buka di tab baru (Fullscreen)">
-                                    <i class="fas fa-expand mr-1"></i> Fullscreen
-                                </a>
-                                <div class="flex items-center gap-2">
+                                <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 justify-end">
                                     <span class="text-sm font-semibold text-gray-600 whitespace-nowrap leading-tight">Download:</span>
                                     <span 
                                         class="js-download-btn inline-flex items-center px-4 py-1.5 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer select-none"
@@ -393,6 +414,10 @@
                                         <img src="{{ asset('img/pdf.png') }}" alt="PDF icon" class="w-5 h-5 object-contain">
                                     </span>
                                 </div>
+                                <a href="{{ $fullscreenUrl }}" target="_blank" class="inline-flex items-center justify-center w-10 h-10 border border-green-300 rounded-lg shadow-sm bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dk-table-heading__fullscreen-btn js-fullscreen-btn ml-0 sm:ml-4" data-base-url="{{ route('public.compare.fullscreen', request()->query()) }}" title="Buka di tab baru (Fullscreen)">
+                                    <img src="{{ asset('img/maximize.png') }}" alt="" class="w-5 h-5 object-contain" aria-hidden="true">
+                                    <span class="sr-only">Buka di tab baru (Fullscreen)</span>
+                                </a>
                             </div>
                         </div>
                         
@@ -400,10 +425,17 @@
                         @php
                             $primaryChart = $primaryCharts[$key] ?? null;
                             $compareChart = $compareCharts[$key] ?? null;
-                            $chartHeight = in_array($key, ['single-age', 'occupation']) ? '700px' : '600px';
+                            $primaryLabelCount = isset($primaryChart['labels']) && is_array($primaryChart['labels']) ? count($primaryChart['labels']) : 0;
+                            $compareLabelCount = isset($compareChart['labels']) && is_array($compareChart['labels']) ? count($compareChart['labels']) : 0;
+                            $singleAgeLabelCount = max($primaryLabelCount, $compareLabelCount);
+                            $chartHeight = match ($key) {
+                                'single-age' => $singleAgeLabelCount ? max(1100, $singleAgeLabelCount * 16) . 'px' : '700px',
+                                'occupation' => max(900, max($singleAgeLabelCount, 1) * 22) . 'px',
+                                default => '600px',
+                            };
                         @endphp
 
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                        <div class="compare-chart-grid grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                             {{-- Primary Chart (Left) --}}
                             <div class="chart-wrapper-container">
                                 <div class="chart-wrapper bg-gradient-to-br from-white via-gray-50 to-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 md:p-6 shadow-sm border border-gray-100">
@@ -547,10 +579,14 @@
             const compareCharts = @json($compareCharts);
             const chartsNeedingTags = @json($chartsNeedingTags);
             const chartsAngledTags = @json($chartsAngledTags);
+            const horizontalChartKeys = ['single-age', 'education', 'occupation'];
             const chartInstances = {};
+            const chartsWithValueLabels = Object.keys(primaryCharts || {});
+            const totalLabelTargets = ['Total', 'Jumlah Penduduk', 'Wajib KTP', 'Kartu Keluarga'];
 
             const primaryLabel = @json($primaryLabel);
             const compareLabel = @json($compareLabel);
+            const formatNumber = (value) => new Intl.NumberFormat('id-ID').format(value);
 
             // Category tag plugin
             const categoryTagPlugin = {
@@ -559,7 +595,7 @@
                     const chartKey = chart.canvas.dataset.chartKey;
                     // Extract the base key (remove 'primary-' or 'compare-' prefix)
                     const key = chartKey.replace('primary-', '').replace('compare-', '');
-                    if (!chartsNeedingTags.includes(key)) return;
+                    if (!chartsNeedingTags.includes(key) || horizontalChartKeys.includes(key)) return;
                     
                     const labels = pluginOptions?.labels ?? chart.config.data.labels;
                     if (!labels || !labels.length) return;
@@ -594,7 +630,60 @@
             };
 
             if (typeof Chart !== 'undefined') {
-                Chart.register(categoryTagPlugin);
+                const valueLabelPlugin = {
+                    id: 'valueLabelPlugin',
+                    afterDatasetsDraw(chart, args, pluginOptions) {
+                        if (!pluginOptions?.show) {
+                            return;
+                        }
+                        const { ctx } = chart;
+                        ctx.save();
+                        ctx.font = pluginOptions.font || '10px "Inter", "Poppins", sans-serif';
+                        ctx.fillStyle = pluginOptions.color || '#1f2937';
+                        const horizontal = typeof pluginOptions.horizontal === 'boolean'
+                            ? pluginOptions.horizontal
+                            : chart.config?.options?.indexAxis === 'y';
+                        const targetLabels = Array.isArray(pluginOptions.targetLabels) && pluginOptions.targetLabels.length
+                            ? pluginOptions.targetLabels
+                            : null;
+                        chart.data.datasets.forEach((dataset, datasetIndex) => {
+                            const meta = chart.getDatasetMeta(datasetIndex);
+                            if (meta.hidden) {
+                                return;
+                            }
+                            if (targetLabels && (!dataset?.label || !targetLabels.includes(dataset.label))) {
+                                return;
+                            }
+                            meta.data.forEach((element, index) => {
+                                const rawValue = dataset.data?.[index];
+                                if (rawValue === null || rawValue === undefined) {
+                                    return;
+                                }
+                                const numericValue = Number(rawValue);
+                                if (!Number.isFinite(numericValue)) {
+                                    return;
+                                }
+                                const formatted = formatNumber(numericValue);
+                                const position = element.tooltipPosition();
+                                let x = position.x;
+                                let y = position.y;
+                                if (horizontal) {
+                                    x += 6;
+                                    ctx.textAlign = 'left';
+                                    ctx.textBaseline = 'middle';
+                                } else {
+                                    y -= 6;
+                                    ctx.textAlign = 'center';
+                                    ctx.textBaseline = 'bottom';
+                                }
+                                ctx.fillText(formatted, x, y);
+                            });
+                        });
+                        ctx.restore();
+                    }
+                };
+
+                Chart.register(categoryTagPlugin, valueLabelPlugin);
             }
 
             function ensureChart(key) {
@@ -628,12 +717,16 @@
                     canvas.dataset.chartKey = chartKey;
                     const labels = config.labels || [];
                     const datasets = config.datasets || [];
-                    const needsTags = chartsNeedingTags.includes(key);
+                    const isHorizontal = horizontalChartKeys.includes(key);
+                    const showValueLabels = chartsWithValueLabels.includes(key);
+                    const needsTags = chartsNeedingTags.includes(key) && !isHorizontal;
                     const angledTags = chartsAngledTags.includes(key);
                     const longestLabel = labels.reduce((max, label) => Math.max(max, (label || '').length), 0);
-                    const bottomPadding = angledTags
-                        ? Math.min(260, Math.max(160, longestLabel * 6 + 32))
-                        : (needsTags ? 70 : 16);
+                    const bottomPadding = isHorizontal
+                        ? 36
+                        : angledTags
+                            ? Math.min(260, Math.max(160, longestLabel * 6 + 32))
+                            : (needsTags ? 70 : 16);
 
                     chartInstances[chartKey] = new Chart(ctx, {
                         type: 'bar',
@@ -644,31 +737,52 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            indexAxis: isHorizontal ? 'y' : 'x',
                             layout: {
                                 padding: {
                                     bottom: bottomPadding
                                 }
                             },
                             scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        callback(value) {
-                                            return new Intl.NumberFormat('id-ID').format(value);
+                                y: isHorizontal
+                                    ? {
+                                        beginAtZero: false,
+                                        grid: { drawBorder: false },
+                                        ticks: {
+                                            autoSkip: false,
+                                            padding: 4,
+                                            font: { size: key === 'single-age' ? 9 : 11 },
+                                            color: '#4b5563'
                                         }
                                     }
-                                },
-                                x: {
-                                    ticks: {
-                                        autoSkip: false,
-                                        maxRotation: 45,
-                                        minRotation: 0,
-                                        callback(value, index, ticks) {
-                                            const label = (ticks[index] && ticks[index].label) || '';
-                                            return label.length > 20 ? label.substring(0, 20) + '…' : label;
+                                    : {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            callback(value) {
+                                                return formatNumber(value);
+                                            }
+                                        }
+                                    },
+                                x: isHorizontal
+                                    ? {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            callback(value) {
+                                                return formatNumber(value);
+                                            }
                                         }
                                     }
-                                }
+                                    : {
+                                        ticks: {
+                                            autoSkip: false,
+                                            maxRotation: 45,
+                                            minRotation: 0,
+                                            callback(value, index, ticks) {
+                                                const label = (ticks[index] && ticks[index].label) || '';
+                                                return label.length > 20 ? label.substring(0, 20) + '…' : label;
+                                            }
+                                        }
+                                    }
                             },
                             plugins: {
                                 legend: {
@@ -678,14 +792,21 @@
                                     callbacks: {
                                         label(context) {
                                             const label = context.dataset.label || '';
-                                            const raw = context.parsed.y ?? context.parsed;
-                                            return `${label}: ${new Intl.NumberFormat('id-ID').format(raw)}`;
+                                            const raw = isHorizontal
+                                                ? (context.parsed.x ?? context.parsed)
+                                                : (context.parsed.y ?? context.parsed);
+                                            return `${label}: ${formatNumber(raw)}`;
                                         }
                                     }
                                 },
                                 categoryTagPlugin: {
                                     labels: labels,
                                     angled: angledTags
+                                },
+                                valueLabelPlugin: {
+                                    show: showValueLabels,
+                                    horizontal: isHorizontal,
+                                    targetLabels: totalLabelTargets
                                 }
                             }
                         }
@@ -695,15 +816,24 @@
                     const legendElement = document.getElementById('legend-' + chartKey);
                     if (legendElement) {
                         legendElement.innerHTML = '';
-                        datasets.forEach((dataset) => {
-                            const color = Array.isArray(dataset.backgroundColor) 
-                                ? dataset.backgroundColor[0] 
-                                : dataset.backgroundColor;
+                        const legendItems = Array.isArray(config.legendItems) && config.legendItems.length
+                            ? config.legendItems
+                            : datasets.map((dataset) => ({
+                                label: dataset.label || '',
+                                color: Array.isArray(dataset.backgroundColor)
+                                    ? dataset.backgroundColor[0]
+                                    : dataset.backgroundColor
+                            }));
+
+                        legendItems.forEach((item) => {
+                            if (!item || !item.label) {
+                                return;
+                            }
                             const legendItem = document.createElement('div');
                             legendItem.className = 'chart-legend-item';
                             legendItem.innerHTML = `
-                                <div class="chart-legend-color" style="background-color: ${color};"></div>
-                                <span>${dataset.label || ''}</span>
+                                <div class="chart-legend-color" style="background-color: ${item.color || '#999'};"></div>
+                                <span>${item.label}</span>
                             `;
                             legendElement.appendChild(legendItem);
                         });

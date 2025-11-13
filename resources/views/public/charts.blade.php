@@ -280,11 +280,9 @@
                                 'areaDescriptor' => $areaDescriptor,
                                 'periodLabel' => $periodLabel,
                                 'fullscreenRoute' => 'public.charts.fullscreen',
+                                'customDownloads' => view('public.partials.chart-download-button', ['category' => 'gender'])->render(),
                                 'showDownloadButtons' => false,
                             ])
-                        </div>
-                        <div class="flex-shrink-0">
-                            @include('public.partials.chart-download-button', ['category' => 'gender'])
                         </div>
                     </div>
                     @php
@@ -323,11 +321,9 @@
                                 'areaDescriptor' => $areaDescriptor,
                                 'periodLabel' => $periodLabel,
                                 'fullscreenRoute' => 'public.charts.fullscreen',
+                                'customDownloads' => view('public.partials.chart-download-button', ['category' => 'age'])->render(),
                                 'showDownloadButtons' => false,
                             ])
-                        </div>
-                        <div class="flex-shrink-0">
-                            @include('public.partials.chart-download-button', ['category' => 'age'])
                         </div>
                     </div>
                     @php
@@ -366,16 +362,18 @@
                                 'areaDescriptor' => $areaDescriptor,
                                 'periodLabel' => $periodLabel,
                                 'fullscreenRoute' => 'public.charts.fullscreen',
+                                'customDownloads' => view('public.partials.chart-download-button', ['category' => 'single-age'])->render(),
                                 'showDownloadButtons' => false,
+                                'description' => 'Visualisasi ' . strtolower($tabs['single-age']) . ' untuk wilayah dan periode yang dipilih.'
                             ])
-                        </div>
-                        <div class="flex-shrink-0">
-                            @include('public.partials.chart-download-button', ['category' => 'single-age'])
                         </div>
                     </div>
                     @php
                         $chart = $charts['single-age'] ?? null;
                         $chartHeight = '650px';
+                        if ($chart && !empty($chart['labels']) && is_array($chart['labels'])) {
+                            $chartHeight = max(1100, count($chart['labels']) * 16) . 'px';
+                        }
                     @endphp
                     @if (!$chart || empty($chart['labels']))
                         <div class="flex flex-col items-center justify-center py-16 px-4 sm:py-20 md:py-24 text-center">
@@ -409,11 +407,10 @@
                                 'areaDescriptor' => $areaDescriptor,
                                 'periodLabel' => $periodLabel,
                                 'fullscreenRoute' => 'public.charts.fullscreen',
+                                'customDownloads' => view('public.partials.chart-download-button', ['category' => 'education'])->render(),
                                 'showDownloadButtons' => false,
+                                'description' => 'Gambaran tingkat pendidikan penduduk berdasarkan filter yang diterapkan.'
                             ])
-                        </div>
-                        <div class="flex-shrink-0">
-                            @include('public.partials.chart-download-button', ['category' => 'education'])
                         </div>
                     </div>
                     @php
@@ -452,16 +449,18 @@
                                 'areaDescriptor' => $areaDescriptor,
                                 'periodLabel' => $periodLabel,
                                 'fullscreenRoute' => 'public.charts.fullscreen',
+                                'customDownloads' => view('public.partials.chart-download-button', ['category' => 'occupation'])->render(),
                                 'showDownloadButtons' => false,
+                                'description' => 'Distribusi pekerjaan penduduk pada wilayah dan periode terpilih.'
                             ])
-                        </div>
-                        <div class="flex-shrink-0">
-                            @include('public.partials.chart-download-button', ['category' => 'occupation'])
                         </div>
                     </div>
                     @php
                         $chart = $charts['occupation'] ?? null;
                         $chartHeight = '700px';
+                        if ($chart && !empty($chart['labels']) && is_array($chart['labels'])) {
+                            $chartHeight = max(900, count($chart['labels']) * 22) . 'px';
+                        }
                     @endphp
                     @if (!$chart || empty($chart['labels']))
                         <div class="flex flex-col items-center justify-center py-16 px-4 sm:py-20 md:py-24 text-center">
@@ -495,11 +494,9 @@
                                 'areaDescriptor' => $areaDescriptor,
                                 'periodLabel' => $periodLabel,
                                 'fullscreenRoute' => 'public.charts.fullscreen',
+                                'customDownloads' => view('public.partials.chart-download-button', ['category' => 'marital'])->render(),
                                 'showDownloadButtons' => false,
                             ])
-                        </div>
-                        <div class="flex-shrink-0">
-                            @include('public.partials.chart-download-button', ['category' => 'marital'])
                         </div>
                     </div>
                     @php
@@ -538,11 +535,9 @@
                                 'areaDescriptor' => $areaDescriptor,
                                 'periodLabel' => $periodLabel,
                                 'fullscreenRoute' => 'public.charts.fullscreen',
+                                'customDownloads' => view('public.partials.chart-download-button', ['category' => 'kk'])->render(),
                                 'showDownloadButtons' => false,
                             ])
-                        </div>
-                        <div class="flex-shrink-0">
-                            @include('public.partials.chart-download-button', ['category' => 'kk'])
                         </div>
                     </div>
                     @php
@@ -581,11 +576,9 @@
                                 'areaDescriptor' => $areaDescriptor,
                                 'periodLabel' => $periodLabel,
                                 'fullscreenRoute' => 'public.charts.fullscreen',
+                                'customDownloads' => view('public.partials.chart-download-button', ['category' => 'household'])->render(),
                                 'showDownloadButtons' => false,
                             ])
-                        </div>
-                        <div class="flex-shrink-0">
-                            @include('public.partials.chart-download-button', ['category' => 'household'])
                         </div>
                     </div>
                     @php
@@ -624,11 +617,9 @@
                                 'areaDescriptor' => $areaDescriptor,
                                 'periodLabel' => $periodLabel,
                                 'fullscreenRoute' => 'public.charts.fullscreen',
+                                'customDownloads' => view('public.partials.chart-download-button', ['category' => 'religion'])->render(),
                                 'showDownloadButtons' => false,
                             ])
-                        </div>
-                        <div class="flex-shrink-0">
-                            @include('public.partials.chart-download-button', ['category' => 'religion'])
                         </div>
                     </div>
                     @php
@@ -667,11 +658,9 @@
                                 'areaDescriptor' => $areaDescriptor,
                                 'periodLabel' => $periodLabel,
                                 'fullscreenRoute' => 'public.charts.fullscreen',
+                                'customDownloads' => view('public.partials.chart-download-button', ['category' => 'wajib-ktp'])->render(),
                                 'showDownloadButtons' => false,
                             ])
-                        </div>
-                        <div class="flex-shrink-0">
-                            @include('public.partials.chart-download-button', ['category' => 'wajib-ktp'])
                         </div>
                     </div>
                     @php
@@ -712,6 +701,10 @@
             const chartsNeedingTags = @json($chartsNeedingTags);
             const chartsAngledTags = @json($chartsAngledTags);
             const chartInstances = {};
+            const chartsWithValueLabels = Object.keys(chartConfigs || {});
+            const totalLabelTargets = ['Total', 'Jumlah Penduduk', 'Wajib KTP', 'Kartu Keluarga'];
+            const horizontalChartKeys = ['single-age', 'education', 'occupation'];
+            const formatNumber = (value) => new Intl.NumberFormat('id-ID').format(value);
 
             // Chart.js custom plugin untuk category tags
             const categoryTagPlugin = {
@@ -785,7 +778,61 @@
                 }
             };
 
-            Chart.register(categoryTagPlugin);
+            const valueLabelPlugin = {
+                id: 'valueLabelPlugin',
+                afterDatasetsDraw(chart, args, pluginOptions) {
+                    if (!pluginOptions?.show) {
+                        return;
+                    }
+                    const { ctx } = chart;
+                    ctx.save();
+                    ctx.font = pluginOptions.font || '10px "Inter", "Poppins", sans-serif';
+                    ctx.fillStyle = pluginOptions.color || '#1f2937';
+                    ctx.textBaseline = 'middle';
+                    const horizontal = typeof pluginOptions.horizontal === 'boolean'
+                        ? pluginOptions.horizontal
+                        : chart.config?.options?.indexAxis === 'y';
+                    const targetLabels = Array.isArray(pluginOptions.targetLabels) && pluginOptions.targetLabels.length
+                        ? pluginOptions.targetLabels
+                        : null;
+                    chart.data.datasets.forEach((dataset, datasetIndex) => {
+                        const meta = chart.getDatasetMeta(datasetIndex);
+                        if (meta.hidden) {
+                            return;
+                        }
+                         if (targetLabels && (!dataset?.label || !targetLabels.includes(dataset.label))) {
+                             return;
+                         }
+                        meta.data.forEach((element, index) => {
+                            const rawValue = dataset.data?.[index];
+                            if (rawValue === null || rawValue === undefined) {
+                                return;
+                            }
+                            const numericValue = Number(rawValue);
+                            if (!Number.isFinite(numericValue)) {
+                                return;
+                            }
+                            const formatted = new Intl.NumberFormat('id-ID').format(numericValue);
+                            const position = element.tooltipPosition();
+                            let x = position.x;
+                            let y = position.y;
+                            if (horizontal) {
+                                x += 6;
+                                ctx.textAlign = 'left';
+                                ctx.textBaseline = 'middle';
+                            } else {
+                                y -= 6;
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'bottom';
+                            }
+                            ctx.fillText(formatted, x, y);
+                        });
+                    });
+                    ctx.restore();
+                }
+            };
+
+            Chart.register(categoryTagPlugin, valueLabelPlugin);
 
             // Fungsi untuk memastikan chart di-initialize
             const ensureChart = (key) => {
@@ -811,13 +858,17 @@
                 setTimeout(() => {
                     const ctx = canvas.getContext('2d');
                     canvas.dataset.chartKey = key;
-                    const needsTags = chartsNeedingTags.includes(key);
+                    const isHorizontal = horizontalChartKeys.includes(key);
+                    const needsTags = chartsNeedingTags.includes(key) && !isHorizontal;
                     const angledTags = chartsAngledTags.includes(key);
                     const longestLabel = config.labels.reduce((max, label) => Math.max(max, (label || '').length), 0);
-                    const bottomPadding = angledTags
-                        ? Math.min(260, Math.max(160, longestLabel * 6 + 32))
-                        : (needsTags ? 70 : 16);
+                    const bottomPadding = isHorizontal
+                        ? 36
+                        : angledTags
+                            ? Math.min(260, Math.max(160, longestLabel * 6 + 32))
+                            : (needsTags ? 70 : 16);
 
+                    const showValueLabels = chartsWithValueLabels.includes(key);
                     chartInstances[key] = new Chart(ctx, {
                         type: 'bar',
                         data: {
@@ -827,31 +878,52 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            indexAxis: isHorizontal ? 'y' : 'x',
                             layout: {
                                 padding: {
                                     bottom: bottomPadding
                                 }
                             },
                             scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        callback(value) {
-                                            return new Intl.NumberFormat('id-ID').format(value);
+                                y: isHorizontal
+                                    ? {
+                                        beginAtZero: false,
+                                        grid: { drawBorder: false },
+                                        ticks: {
+                                            autoSkip: false,
+                                            padding: 4,
+                        font: { size: key === 'single-age' ? 9 : 11 },
+                                            color: '#4b5563'
                                         }
                                     }
-                                },
-                                x: {
-                                    ticks: {
-                                        autoSkip: false,
-                                        maxRotation: 45,
-                                        minRotation: 0,
-                                        callback(value, index, ticks) {
-                                            const label = (ticks[index] && ticks[index].label) || '';
-                                            return label.length > 20 ? label.substring(0, 20) + '…' : label;
+                                    : {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            callback(value) {
+                                                return formatNumber(value);
+                                            }
+                                        }
+                                    },
+                                x: isHorizontal
+                                    ? {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            callback(value) {
+                                                return formatNumber(value);
+                                            }
                                         }
                                     }
-                                }
+                                    : {
+                                        ticks: {
+                                            autoSkip: false,
+                                            maxRotation: 45,
+                                            minRotation: 0,
+                                            callback(value, index, ticks) {
+                                                const label = (ticks[index] && ticks[index].label) || '';
+                                                return label.length > 20 ? label.substring(0, 20) + '…' : label;
+                                            }
+                                        }
+                                    }
                             },
                             plugins: {
                                 legend: {
@@ -861,14 +933,21 @@
                                     callbacks: {
                                         label(context) {
                                             const label = context.dataset.label || '';
-                                            const raw = context.parsed.y ?? context.parsed;
-                                            return `${label}: ${new Intl.NumberFormat('id-ID').format(raw)}`;
+                                            const raw = isHorizontal
+                                                ? (context.parsed.x ?? context.parsed)
+                                                : (context.parsed.y ?? context.parsed);
+                                            return `${label}: ${formatNumber(raw)}`;
                                         }
                                     }
                                 },
                                 categoryTagPlugin: {
                                     labels: config.labels,
                                     angled: angledTags
+                                },
+                                valueLabelPlugin: {
+                                    show: showValueLabels,
+                                    horizontal: isHorizontal,
+                                    targetLabels: totalLabelTargets
                                 }
                             }
                         }
@@ -876,17 +955,26 @@
                     
                     // Buat legend di bawah chart
                     const legendElement = document.getElementById('legend-' + key);
-                    if (legendElement && config.datasets) {
+                    if (legendElement) {
                         legendElement.innerHTML = '';
-                        config.datasets.forEach((dataset) => {
-                            const color = Array.isArray(dataset.backgroundColor) 
-                                ? dataset.backgroundColor[0] 
-                                : dataset.backgroundColor;
+                        const legendItems = Array.isArray(config.legendItems) && config.legendItems.length
+                            ? config.legendItems
+                            : (config.datasets || []).map((dataset) => ({
+                                label: dataset.label || '',
+                                color: Array.isArray(dataset.backgroundColor)
+                                    ? dataset.backgroundColor[0]
+                                    : dataset.backgroundColor
+                            }));
+
+                        legendItems.forEach((item) => {
+                            if (!item || !item.label) {
+                                return;
+                            }
                             const legendItem = document.createElement('div');
                             legendItem.className = 'chart-legend-item';
                             legendItem.innerHTML = `
-                                <div class="chart-legend-color" style="background-color: ${color};"></div>
-                                <span>${dataset.label || ''}</span>
+                                <div class="chart-legend-color" style="background-color: ${item.color || '#999'};"></div>
+                                <span>${item.label}</span>
                             `;
                             legendElement.appendChild(legendItem);
                         });

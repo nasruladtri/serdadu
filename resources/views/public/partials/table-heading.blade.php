@@ -2,9 +2,14 @@
     $title = $title ?? '';
     $areaDescriptor = $areaDescriptor ?? '';
     $periodLabel = $periodLabel ?? null;
+    $description = $description ?? null;
+    $secondaryAreaDescriptor = $secondaryAreaDescriptor ?? null;
+    $areaLabel = $areaLabel ?? 'Wilayah';
+    $secondaryAreaLabel = $secondaryAreaLabel ?? null;
     $categoryOptions = $categoryOptions ?? [];
     $activeCategory = $activeCategory ?? null;
     $fullscreenRoute = $fullscreenRoute ?? 'public.data.fullscreen';
+    $customDownloads = $customDownloads ?? null;
     $dropdownId = null;
 
     if (!empty($categoryOptions)) {
@@ -15,14 +20,36 @@
     }
 @endphp
 
-<div class="dk-table-heading mb-3">
+<div class="dk-table-heading mb-4">
     <div class="dk-table-heading__info">
-        <h6 class="dk-card__title mb-1">{{ $title }}</h6>
-        @if (!empty($areaDescriptor))
-                    <p class="text-xs text-gray-500 mb-0">{{ $areaDescriptor }}</p>
-        @endif
+        <div class="space-y-1">
+            <h6 class="text-lg font-semibold text-gray-900 tracking-tight">{{ $title }}</h6>
+            @if (!empty($description))
+                <p class="text-sm text-gray-500 leading-relaxed">{{ $description }}</p>
+            @endif
+        </div>
+        <div class="mt-3 space-y-1 text-sm text-gray-600">
+            @if (!empty($areaDescriptor))
+                <div class="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                    <span class="font-medium text-gray-700">{{ $areaLabel }}:</span>
+                    <span class="text-gray-500">{{ $areaDescriptor }}</span>
+                </div>
+            @endif
+            @if (!empty($secondaryAreaDescriptor))
+                <div class="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                    <span class="font-medium text-gray-700">{{ $secondaryAreaLabel ?? 'Wilayah Pembanding' }}:</span>
+                    <span class="text-gray-500">{{ $secondaryAreaDescriptor }}</span>
+                </div>
+            @endif
+            @if (!empty($periodLabel))
+                <div class="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                    <span class="font-medium text-gray-700">Periode:</span>
+                    <span class="text-gray-500">{{ $periodLabel }}</span>
+                </div>
+            @endif
+        </div>
     </div>
-    <div class="dk-table-heading__actions flex flex-col md:flex-row md:items-center md:justify-end gap-3 w-full md:w-auto">
+    <div class="dk-table-heading__actions flex flex-col md:flex-row md:items-center md:justify-end gap-3 w-full md:w-auto md:ml-auto">
         @if (!empty($categoryOptions))
             <div class="dk-table-heading__dropdown">
                 <label for="{{ $dropdownId }}" class="block text-xs font-medium text-gray-500 uppercase mb-1">Kategori</label>
@@ -39,20 +66,14 @@
                 </select>
             </div>
         @endif
-        <div class="flex flex-wrap gap-3 items-center justify-end w-full md:w-auto">
-            @if (!empty($periodLabel))
-                <div class="dk-table-heading__badge">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dk-table-heading__chip">{{ $periodLabel }}</span>
-                </div>
-            @endif
+        <div class="flex flex-wrap sm:flex-nowrap items-center justify-end gap-3 w-full">
             @php
                 $currentTabPane = $activeCategory ?? 'tab-gender';
                 $fullscreenUrl = route($fullscreenRoute, array_merge(request()->query(), ['category' => str_replace('tab-', '', $currentTabPane)]));
             @endphp
-            <a href="{{ $fullscreenUrl }}" target="_blank" class="inline-flex items-center px-3 py-1.5 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dk-table-heading__fullscreen-btn js-fullscreen-btn" data-base-url="{{ route($fullscreenRoute, request()->query()) }}" title="Buka di tab baru (Fullscreen)">
-                <i class="fas fa-expand mr-1"></i> Fullscreen
-            </a>
-            @if (isset($showDownloadButtons) && $showDownloadButtons)
+            @if (!empty($customDownloads))
+                {!! $customDownloads !!}
+            @elseif (isset($showDownloadButtons) && $showDownloadButtons)
                 @php
                     $downloadCategory = $activeCategory ?? request()->query('category', 'gender');
                     $downloadQuery = array_merge(request()->query(), ['category' => $downloadCategory]);
@@ -62,7 +83,7 @@
                     $defaultSemester = request()->query('semester', $period['semester'] ?? 1);
                     $downloadLabelBase = 'data-' . $downloadCategory . '-' . $defaultYear . '-s' . $defaultSemester;
                 @endphp
-                <div class="dk-table-heading__downloads flex flex-wrap gap-2 items-center justify-end text-right">
+                <div class="dk-table-heading__downloads flex flex-wrap sm:flex-nowrap items-center gap-2 justify-end">
                     <span class="text-sm font-semibold text-gray-600 whitespace-nowrap leading-tight">Download:</span>
                     <span 
                         class="js-download-btn inline-flex items-center px-4 py-1.5 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer select-none"
@@ -92,6 +113,10 @@
                     </span>
                 </div>
             @endif
+            <a href="{{ $fullscreenUrl }}" target="_blank" class="inline-flex items-center justify-center w-10 h-10 border border-green-300 rounded-lg shadow-sm bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dk-table-heading__fullscreen-btn js-fullscreen-btn ml-0 sm:ml-4" data-base-url="{{ route($fullscreenRoute, request()->query()) }}" title="Buka di tab baru (Fullscreen)">
+                <img src="{{ asset('img/maximize.png') }}" alt="" class="w-5 h-5 object-contain" aria-hidden="true">
+                <span class="sr-only">Buka di tab baru (Fullscreen)</span>
+            </a>
         </div>
     </div>
 </div>
