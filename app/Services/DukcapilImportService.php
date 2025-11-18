@@ -23,6 +23,7 @@ class DukcapilImportService
     private array $genderRollups = [];
     /** @var array<int,array<int,array<int,array<string,array{male:int,female:int}>>>>> */
     private array $wajibKtpRollups = [];
+    private bool $hasDirectWajibKtpImport = false;
     private const AGE_GROUP_BUCKETS = [
         '00-04','05-09','10-14','15-19','20-24','25-29','30-34','35-39',
         '40-44','45-49','50-54','55-59','60-64','65-69','70-74','75+',
@@ -41,6 +42,7 @@ class DukcapilImportService
         $usedSemesters = [];
         $this->genderRollups = [];
         $this->wajibKtpRollups = [];
+        $this->hasDirectWajibKtpImport = false;
 
         $reader = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
 
@@ -57,6 +59,11 @@ class DukcapilImportService
 
             $rule  = $conf['sheets'][$ruleKey];
             $table = $rule['table'];
+
+            if ($table === 'pop_wajib_ktp') {
+                $this->hasDirectWajibKtpImport = true;
+                $this->wajibKtpRollups = [];
+            }
 
             $rows_ok = 0; $rows_fail = 0; $errors = []; $bulk = [];
 
@@ -282,19 +289,18 @@ class DukcapilImportService
     {
         $this->primeCaches();
 
-        $dCode = $row['district_code'] ?? null;
-        $dName = $row['district_name'] ?? null;
-        if (!$dCode && !$dName) throw new \Exception('district_code/name kosong');
-
-        $district = $this->fetchDistrict($dCode, $dName);
-
+        $district = $this->resolveDistrictFromRow($row);
         if (!$district) {
-            if ($dCode && $dName) {
-                $district = District::create(['code'=>$dCode,'name'=>$dName]);
-                $this->rememberDistrict($district);
-            } else {
-                throw new \Exception('Kecamatan tidak dikenali (butuh code & name)');
+            $looseVillage = $this->findVillageWithoutDistrict(
+                $row['village_code'] ?? null,
+                $row['village_name'] ?? null
+            );
+
+            if ($looseVillage) {
+                return [$looseVillage->district_id, $looseVillage->id];
             }
+
+            throw new \Exception('Kecamatan tidak dikenali (butuh code & name)');
         }
 
         $vCode = $row['village_code'] ?? null;
@@ -320,6 +326,29 @@ class DukcapilImportService
         }
 
         return [$district->id, $villageId];
+    }
+
+    private function resolveDistrictFromRow(array $row): ?District
+    {
+        $dCode = $row['district_code'] ?? null;
+        $dName = $row['district_name'] ?? null;
+
+        if (!$dCode && !$dName) {
+            return null;
+        }
+
+        $district = $this->fetchDistrict($dCode, $dName);
+
+        if (!$district) {
+            if ($dCode && $dName) {
+                $district = District::create(['code' => $dCode, 'name' => $dName]);
+                $this->rememberDistrict($district);
+            } else {
+                return null;
+            }
+        }
+
+        return $district;
     }
 
     /* ==================== TOTAL & LOG ===================== */
@@ -358,7 +387,9 @@ class DukcapilImportService
         // pop_age_group tidak digunakan untuk aggregasi gender untuk menghindari duplikasi/kesalahan
         if ($table === 'pop_single_age') {
             $this->addGenderAggregate($payload, 'single_age');
-            $this->addWajibKtpAggregate($payload);
+            if (!$this->hasDirectWajibKtpImport) {
+                $this->addWajibKtpAggregate($payload);
+            }
         }
     }
 
@@ -841,9 +872,12 @@ class DukcapilImportService
             'kelurahan'       => 'village_name',
             'kode_desa'       => 'village_code',
             'kodedesa'        => 'village_code',
-            'kode'            => 'region_code',
+            'wktp_lk'         => 'male',
+            'wktp_pr'         => 'female',
+            'wktp'            => 'total',
+            'kode'            => 'village_code',
             'kode_wilayah'    => 'region_code',
-            'wilayah'         => 'region_name',
+            'wilayah'         => 'village_name',
             'nama_wilayah'    => 'region_name',
             'kecamatan'       => 'district_name',
             'desa_kelurahan'  => 'village_name',
@@ -945,6 +979,12 @@ class DukcapilImportService
             'blm_cetak_kk_l'          => 'male_not_printed',
             'blm_cetak_kk_p'          => 'female_not_printed',
             'blm_cetak_kk_jml'        => 'total_not_printed',
+            'l_mmlk_kk_dinamis'       => 'male_printed',
+            'p_mmlk_kk_dinamis'       => 'female_printed',
+            'mmlk_kk_dinamis'         => 'total_printed',
+            'l_blm_mmlk_kk_dinamis'   => 'male_not_printed',
+            'p_blm_mmlk_kk_dinamis'   => 'female_not_printed',
+            'blm_mmlk_kk_dinamis'     => 'total_not_printed',
             'belum_cetak_kk_l'        => 'male_not_printed',
             'belum_cetak_kk_p'        => 'female_not_printed',
             'belum_cetak_kk_jml'      => 'total_not_printed',
@@ -953,6 +993,20 @@ class DukcapilImportService
             if (array_key_exists($from, $norm) && !array_key_exists($to, $norm)) {
                 $norm[$to] = $norm[$from];
             }
+        }
+
+        if (isset($norm['village_code']) && !isset($norm['region_code'])) {
+            $norm['region_code'] = $norm['village_code'];
+        }
+        if (isset($norm['region_code']) && !isset($norm['village_code'])) {
+            $norm['village_code'] = $norm['region_code'];
+        }
+
+        if (isset($norm['village_name']) && !isset($norm['region_name'])) {
+            $norm['region_name'] = $norm['village_name'];
+        }
+        if (isset($norm['region_name']) && !isset($norm['village_name'])) {
+            $norm['village_name'] = $norm['region_name'];
         }
 
         foreach (array_keys($norm) as $key) {
@@ -988,6 +1042,8 @@ class DukcapilImportService
                 $norm['village_code'] = $norm['district_code']
                     . str_pad($norm['village_code'], 4, '0', STR_PAD_LEFT);
             }
+        } elseif (!isset($norm['district_code']) && isset($norm['village_code']) && strlen($norm['village_code']) >= 6) {
+            $norm['district_code'] = substr($norm['village_code'], 0, 6);
         }
 
         $regionCode = $norm['region_code'] ?? null;
@@ -1141,6 +1197,63 @@ class DukcapilImportService
         }
 
         return $village;
+    }
+
+    private function findVillageWithoutDistrict(?string $code, ?string $name): ?Village
+    {
+        $code = $code ? trim($code) : null;
+        if ($code) {
+            $village = $this->villageCacheByCode[$code] ?? null;
+            if (!$village) {
+                $village = Village::where('code', $code)->first();
+                if ($village) {
+                    $this->rememberVillage($village);
+                }
+            }
+            if ($village) {
+                return $village;
+            }
+        }
+
+        $name = $name ? trim($name) : '';
+        if ($name === '') {
+            return null;
+        }
+
+        return $this->findVillageByNameOnly($name);
+    }
+
+    private function findVillageByNameOnly(string $name): ?Village
+    {
+        $normalized = strtolower($name);
+
+        $matches = [];
+        foreach ($this->villageCacheByName as $key => $candidate) {
+            $parts = explode('::', $key, 2);
+            if (($parts[1] ?? null) === $normalized) {
+                $matches[] = $candidate;
+            }
+        }
+
+        if (count($matches) === 1) {
+            return $matches[0];
+        }
+        if (count($matches) > 1) {
+            return null; // ambiguous
+        }
+
+        $found = Village::query()
+            ->whereRaw('LOWER(name) = ?', [$normalized])
+            ->limit(2)
+            ->get();
+
+        if ($found->count() === 1) {
+            $village = $found->first();
+            $this->rememberVillage($village);
+            return $village;
+        }
+
+        return null;
     }
 
     private function villageNameKey(int $districtId, string $name): string

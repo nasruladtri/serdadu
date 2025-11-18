@@ -25,7 +25,7 @@
         <div class="space-y-1">
             <h6 class="text-lg font-semibold text-gray-900 tracking-tight">{{ $title }}</h6>
             @if (!empty($description))
-                <p class="text-sm text-gray-500 leading-relaxed">{{ $description }}</p>
+                <p class="text-sm text-gray-500 leadingx`relaxed">{{ $description }}</p>
             @endif
         </div>
         <div class="mt-3 space-y-1 text-sm text-gray-600">
@@ -84,9 +84,9 @@
                     $downloadLabelBase = 'data-' . $downloadCategory . '-' . $defaultYear . '-s' . $defaultSemester;
                 @endphp
                 <div class="dk-table-heading__downloads flex flex-wrap sm:flex-nowrap items-center gap-2 justify-end">
-                    <span class="text-sm font-semibold text-gray-600 whitespace-nowrap leading-tight">Download:</span>
                     <span 
-                        class="js-download-btn inline-flex items-center px-4 py-1.5 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer select-none"
+                        class="js-download-btn inline-flex items-center justify-center w-12 h-12 p-1.5 border border-black/70 rounded-xl shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 cursor-pointer select-none transition"
+                        style="width:2.25rem;height:2.25rem;padding:0.55rem;"
                         data-download-type="table"
                         data-download-format="pdf"
                         data-download-url="{{ $pdfUrl }}"
@@ -96,10 +96,11 @@
                         role="button"
                         tabindex="0"
                         aria-label="Download PDF">
-                        <img src="{{ asset('img/pdf.png') }}" alt="PDF icon" class="w-5 h-5 object-contain">
+                        <img src="{{ asset('img/pdf.png') }}" alt="PDF icon" class="w-7 h-7 md:w-8 md:h-8 object-contain" style="width:1.3rem;height:1.3rem;">
                     </span>
                     <span 
-                        class="js-download-btn inline-flex items-center px-4 py-1.5 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer select-none"
+                        class="js-download-btn inline-flex items-center justify-center w-12 h-12 p-1.5 border border-black/70 rounded-xl shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 cursor-pointer select-none transition"
+                        style="width:2.25rem;height:2.25rem;padding:0.55rem;"
                         data-download-type="table"
                         data-download-format="excel"
                         data-download-url="{{ $excelUrl }}"
@@ -109,12 +110,12 @@
                         role="button"
                         tabindex="0"
                         aria-label="Download Excel">
-                        <img src="{{ asset('img/sheet.png') }}" alt="Excel icon" class="w-5 h-5 object-contain">
+                        <img src="{{ asset('img/sheet.png') }}" alt="Excel icon" class="w-7 h-7 md:w-8 md:h-8 object-contain" style="width:1.3rem;height:1.3rem;">
                     </span>
                 </div>
             @endif
-            <a href="{{ $fullscreenUrl }}" target="_blank" class="inline-flex items-center justify-center w-10 h-10 border border-green-300 rounded-lg shadow-sm bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dk-table-heading__fullscreen-btn js-fullscreen-btn ml-0 sm:ml-4" data-base-url="{{ route($fullscreenRoute, request()->query()) }}" title="Buka di tab baru (Fullscreen)">
-                <img src="{{ asset('img/maximize.png') }}" alt="" class="w-5 h-5 object-contain" aria-hidden="true">
+            <a href="{{ $fullscreenUrl }}" target="_blank" class="inline-flex items-center justify-center w-12 h-12 p-1.5 border border-black/70 rounded-xl shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition dk-table-heading__fullscreen-btn js-fullscreen-btn ml-0 sm:ml-4" style="width:2.25rem;height:2.25rem;padding:0.55rem;" data-base-url="{{ route($fullscreenRoute, request()->query()) }}" title="Buka di tab baru (Fullscreen)">
+                <img src="{{ asset('img/maximize.png') }}" alt="" class="w-7 h-7 md:w-8 md:h-8 object-contain" style="width:1.3rem;height:1.3rem;" aria-hidden="true">
                 <span class="sr-only">Buka di tab baru (Fullscreen)</span>
             </a>
         </div>

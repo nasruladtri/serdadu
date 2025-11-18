@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'Grafik Data - Layar Penuh' }}</title>
+    <title>{{ $title ?? 'Grafik Data - Fullscreen' }}</title>
     <link rel="icon" type="image/png" href="{{ asset('img/kabupaten-madiun.png') }}?v=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         integrity="sha512-31on1Uwx1PcT6zG17Q6C7GdYr387cMGX5CujjJVOk+3O8VjMBYPWaFzx5b9mzfFh1YgUo10xXMYN9bB+FsSjVg=="
@@ -30,49 +30,6 @@
             'religion' => 'Agama',
             'wajib-ktp' => 'Wajib KTP',
         ];
-        $axisDescriptions = [
-            'gender' => [
-                'horizontal' => 'Kategori jenis kelamin (Laki-laki dan Perempuan)',
-                'vertical' => 'Jumlah penduduk (jiwa)',
-            ],
-            'age' => [
-                'horizontal' => 'Kelompok umur (rentang 5 tahunan)',
-                'vertical' => 'Jumlah penduduk (jiwa)',
-            ],
-            'single-age' => [
-                'horizontal' => 'Umur tunggal (setiap tahun usia)',
-                'vertical' => 'Jumlah penduduk (jiwa)',
-            ],
-            'education' => [
-                'horizontal' => 'Jenjang pendidikan terakhir yang ditamatkan',
-                'vertical' => 'Jumlah penduduk (jiwa)',
-            ],
-            'occupation' => [
-                'horizontal' => 'Jenis pekerjaan penduduk',
-                'vertical' => 'Jumlah penduduk (jiwa)',
-            ],
-            'marital' => [
-                'horizontal' => 'Kategori status perkawinan',
-                'vertical' => 'Jumlah penduduk (jiwa)',
-            ],
-            'kk' => [
-                'horizontal' => 'Status penerbitan kartu keluarga',
-                'vertical' => 'Jumlah kartu keluarga',
-            ],
-            'household' => [
-                'horizontal' => 'Jenis kepala keluarga',
-                'vertical' => 'Jumlah kepala keluarga',
-            ],
-            'religion' => [
-                'horizontal' => 'Agama yang dianut penduduk',
-                'vertical' => 'Jumlah penduduk (jiwa)',
-            ],
-            'wajib-ktp' => [
-                'horizontal' => 'Kategori wajib KTP-el',
-                'vertical' => 'Jumlah penduduk (jiwa)',
-            ],
-        ];
-        $horizontalChartKeys = ['single-age', 'education', 'occupation'];
         $categoryLabel = $tabs[$category] ?? 'Grafik Data';
         $districtName = $selectedDistrict ? optional($districts->firstWhere('id', (int) $selectedDistrict))->name : null;
         $villageName = $selectedVillage ? optional($villages->firstWhere('id', (int) $selectedVillage))->name : null;
@@ -134,10 +91,6 @@
                         <div class="relative min-h-[600px] md:min-h-[400px] w-full flex-1" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                             <canvas id="chart-{{ $category }}" data-chart-key="{{ $category }}" class="w-full h-full"></canvas>
                         </div>
-                        @include('public.partials.chart-axis-labels', [
-                            'axis' => $axisDescriptions[$category] ?? [],
-                            'flipAxes' => in_array($category, $horizontalChartKeys),
-                        ])
                         <div class="flex flex-wrap gap-4 justify-center items-center mt-6 pt-4 border-t border-slate-200" id="legend-{{ $category }}"></div>
                     </div>
                 </div>
@@ -152,16 +105,15 @@
             const chartConfigs = @json($charts);
             const chartsNeedingTags = @json($chartsNeedingTags);
             const chartsAngledTags = @json($chartsAngledTags);
-            const horizontalChartKeys = @json($horizontalChartKeys);
             const chartInstances = {};
             const category = @json($category);
 
-            // Plugin kustom Chart.js untuk menampilkan label kategori
+            // Chart.js custom plugin untuk category tags
             const categoryTagPlugin = {
                 id: 'categoryTagPlugin',
                 afterDraw(chart, args, pluginOptions) {
                     const key = chart.canvas.dataset.chartKey;
-                    if (!chartsNeedingTags.includes(key) || horizontalChartKeys.includes(key)) {
+                    if (!chartsNeedingTags.includes(key)) {
                         return;
                     }
                     const labels = pluginOptions?.labels ?? chart.config.data.labels;
@@ -230,7 +182,7 @@
 
             Chart.register(categoryTagPlugin);
 
-            // Fungsi untuk memastikan grafik benar-benar terpasang
+            // Fungsi untuk memastikan chart di-initialize
             const ensureChart = (key) => {
                 if (chartInstances[key]) {
                     setTimeout(() => {
@@ -315,7 +267,7 @@
                         }
                     });
                     
-                    // Bangun legenda di bawah grafik
+                    // Buat legend di bawah chart
                     const legendElement = document.getElementById('legend-' + key);
                     if (legendElement) {
                         legendElement.innerHTML = '';
@@ -344,7 +296,7 @@
                 }, 50);
             };
 
-            // Inisialisasi grafik untuk kategori yang dipilih
+            // Initialize chart untuk kategori yang dipilih
             setTimeout(function() {
                 ensureChart(category);
             }, 300);
@@ -353,4 +305,5 @@
 
 </body>
 </html>
+
 

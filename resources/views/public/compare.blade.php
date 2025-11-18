@@ -113,6 +113,49 @@
             'religion' => 'Agama',
             'wajib-ktp' => 'Wajib KTP',
         ];
+        $axisDescriptions = [
+            'gender' => [
+                'horizontal' => 'Kategori jenis kelamin (Laki-laki dan Perempuan)',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'age' => [
+                'horizontal' => 'Kelompok umur (rentang 5 tahunan)',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'single-age' => [
+                'horizontal' => 'Umur tunggal (setiap tahun usia)',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'education' => [
+                'horizontal' => 'Jenjang pendidikan terakhir yang ditamatkan',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'occupation' => [
+                'horizontal' => 'Jenis pekerjaan penduduk',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'marital' => [
+                'horizontal' => 'Kategori status perkawinan',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'kk' => [
+                'horizontal' => 'Status penerbitan kartu keluarga',
+                'vertical' => 'Jumlah kartu keluarga',
+            ],
+            'household' => [
+                'horizontal' => 'Jenis kepala keluarga',
+                'vertical' => 'Jumlah kepala keluarga',
+            ],
+            'religion' => [
+                'horizontal' => 'Agama yang dianut penduduk',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'wajib-ktp' => [
+                'horizontal' => 'Kategori wajib KTP-el',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+        ];
+        $horizontalChartKeys = ['single-age', 'education', 'occupation'];
 
         $regionName = config('app.region_name', 'Kabupaten Madiun');
         $primaryDistrictName = $primaryDistrict ? optional($districts->firstWhere('id', (int) $primaryDistrict))->name : null;
@@ -399,9 +442,9 @@
                                     }
                                 @endphp
                                 <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 justify-end">
-                                    <span class="text-sm font-semibold text-gray-600 whitespace-nowrap leading-tight">Download:</span>
                                     <span 
-                                        class="js-download-btn inline-flex items-center px-4 py-1.5 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer select-none"
+                                        class="js-download-btn inline-flex items-center justify-center w-12 h-12 p-1.5 border border-black/70 rounded-xl shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 cursor-pointer select-none transition"
+                                        style="width:2.25rem;height:2.25rem;padding:0.55rem;"
                                         data-download-type="compare"
                                         data-download-format="pdf"
                                         data-download-url="{{ $downloadUrl }}"
@@ -411,11 +454,11 @@
                                         role="button"
                                         tabindex="0"
                                         aria-label="Download PDF">
-                                        <img src="{{ asset('img/pdf.png') }}" alt="PDF icon" class="w-5 h-5 object-contain">
+                                        <img src="{{ asset('img/pdf.png') }}" alt="PDF icon" class="w-7 h-7 md:w-8 md:h-8 object-contain" style="width:1.3rem;height:1.3rem;">
                                     </span>
                                 </div>
-                                <a href="{{ $fullscreenUrl }}" target="_blank" class="inline-flex items-center justify-center w-10 h-10 border border-green-300 rounded-lg shadow-sm bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dk-table-heading__fullscreen-btn js-fullscreen-btn ml-0 sm:ml-4" data-base-url="{{ route('public.compare.fullscreen', request()->query()) }}" title="Buka di tab baru (Fullscreen)">
-                                    <img src="{{ asset('img/maximize.png') }}" alt="" class="w-5 h-5 object-contain" aria-hidden="true">
+                                <a href="{{ $fullscreenUrl }}" target="_blank" class="inline-flex items-center justify-center w-12 h-12 p-1.5 border border-black/70 rounded-xl shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition dk-table-heading__fullscreen-btn js-fullscreen-btn ml-0 sm:ml-4" style="width:2.25rem;height:2.25rem;padding:0.55rem;" data-base-url="{{ route('public.compare.fullscreen', request()->query()) }}" title="Buka di tab baru (Fullscreen)">
+                                    <img src="{{ asset('img/maximize.png') }}" alt="" class="w-7 h-7 md:w-8 md:h-8 object-contain" style="width:1.3rem;height:1.3rem;" aria-hidden="true">
                                     <span class="sr-only">Buka di tab baru (Fullscreen)</span>
                                 </a>
                             </div>
@@ -455,6 +498,10 @@
                                         <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                             <canvas id="chart-primary-{{ $key }}" data-chart-key="primary-{{ $key }}" class="w-full h-full"></canvas>
                                         </div>
+                                        @include('public.partials.chart-axis-labels', [
+                                            'axis' => $axisDescriptions[$key] ?? [],
+                                            'flipAxes' => in_array($key, $horizontalChartKeys),
+                                        ])
                                         <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-primary-{{ $key }}"></div>
                                     @endif
                                 </div>
@@ -479,6 +526,10 @@
                                         <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                             <canvas id="chart-compare-{{ $key }}" data-chart-key="compare-{{ $key }}" class="w-full h-full"></canvas>
                                         </div>
+                                        @include('public.partials.chart-axis-labels', [
+                                            'axis' => $axisDescriptions[$key] ?? [],
+                                            'flipAxes' => in_array($key, $horizontalChartKeys),
+                                        ])
                                         <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-compare-{{ $key }}"></div>
                                     @endif
                                 </div>
@@ -579,7 +630,7 @@
             const compareCharts = @json($compareCharts);
             const chartsNeedingTags = @json($chartsNeedingTags);
             const chartsAngledTags = @json($chartsAngledTags);
-            const horizontalChartKeys = ['single-age', 'education', 'occupation'];
+            const horizontalChartKeys = @json($horizontalChartKeys);
             const chartInstances = {};
             const chartsWithValueLabels = Object.keys(primaryCharts || {});
             const totalLabelTargets = ['Total', 'Jumlah Penduduk', 'Wajib KTP', 'Kartu Keluarga'];

@@ -45,6 +45,49 @@
             'religion' => 'Agama',
             'wajib-ktp' => 'Wajib KTP',
         ];
+        $axisDescriptions = [
+            'gender' => [
+                'horizontal' => 'Kategori jenis kelamin (Laki-laki dan Perempuan)',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'age' => [
+                'horizontal' => 'Kelompok umur (rentang 5 tahunan)',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'single-age' => [
+                'horizontal' => 'Umur tunggal (setiap tahun usia)',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'education' => [
+                'horizontal' => 'Jenjang pendidikan terakhir yang ditamatkan',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'occupation' => [
+                'horizontal' => 'Jenis pekerjaan penduduk',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'marital' => [
+                'horizontal' => 'Kategori status perkawinan',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'kk' => [
+                'horizontal' => 'Status penerbitan kartu keluarga',
+                'vertical' => 'Jumlah kartu keluarga',
+            ],
+            'household' => [
+                'horizontal' => 'Jenis kepala keluarga',
+                'vertical' => 'Jumlah kepala keluarga',
+            ],
+            'religion' => [
+                'horizontal' => 'Agama yang dianut penduduk',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'wajib-ktp' => [
+                'horizontal' => 'Kategori wajib KTP-el',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+        ];
+        $horizontalChartKeys = ['single-age', 'education', 'occupation'];
         $categoryLabel = $tabs[$category] ?? 'Perbandingan Data';
         
         // Build labels untuk primary dan compare
@@ -158,6 +201,10 @@
                             <div class="relative min-h-[600px] md:min-h-[400px] w-full flex-1" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                 <canvas id="chart-primary-{{ $category }}" data-chart-key="primary-{{ $category }}" class="w-full h-full"></canvas>
                             </div>
+                            @include('public.partials.chart-axis-labels', [
+                                'axis' => $axisDescriptions[$category] ?? [],
+                                'flipAxes' => in_array($category, $horizontalChartKeys),
+                            ])
                             <div class="flex flex-wrap gap-4 justify-center items-center mt-6 pt-4 border-t border-slate-200" id="legend-primary-{{ $category }}"></div>
                         @endif
                     </div>
@@ -182,6 +229,10 @@
                             <div class="relative min-h-[600px] md:min-h-[400px] w-full flex-1" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                 <canvas id="chart-compare-{{ $category }}" data-chart-key="compare-{{ $category }}" class="w-full h-full"></canvas>
                             </div>
+                            @include('public.partials.chart-axis-labels', [
+                                'axis' => $axisDescriptions[$category] ?? [],
+                                'flipAxes' => in_array($category, $horizontalChartKeys),
+                            ])
                             <div class="flex flex-wrap gap-4 justify-center items-center mt-6 pt-4 border-t border-slate-200" id="legend-compare-{{ $category }}"></div>
                         @endif
                     </div>
@@ -199,6 +250,7 @@
             const compareCharts = @json($compareCharts);
             const chartsNeedingTags = @json($chartsNeedingTags);
             const chartsAngledTags = @json($chartsAngledTags);
+            const horizontalChartKeys = @json($horizontalChartKeys);
             const chartInstances = {};
             const chartsWithValueLabels = Object.keys(primaryCharts || {});
             const totalLabelTargets = ['Total', 'Jumlah Penduduk', 'Wajib KTP', 'Kartu Keluarga'];
@@ -212,7 +264,7 @@
                 afterDraw(chart, args, pluginOptions) {
                     const chartKey = chart.canvas.dataset.chartKey;
                     const key = chartKey.replace('primary-', '').replace('compare-', '');
-                    if (!chartsNeedingTags.includes(key)) return;
+                    if (!chartsNeedingTags.includes(key) || horizontalChartKeys.includes(key)) return;
                     
                     const labels = pluginOptions?.labels ?? chart.config.data.labels;
                     if (!labels || !labels.length) return;

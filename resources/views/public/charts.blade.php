@@ -148,6 +148,51 @@
             'religion' => 'Agama',
             'wajib-ktp' => 'Wajib KTP',
         ];
+
+        $axisDescriptions = [
+            'gender' => [
+                'horizontal' => 'Kategori jenis kelamin (Laki-laki dan Perempuan)',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'age' => [
+                'horizontal' => 'Kelompok umur (rentang 5 tahunan)',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'single-age' => [
+                'horizontal' => 'Umur tunggal (setiap tahun usia)',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'education' => [
+                'horizontal' => 'Jenjang pendidikan terakhir yang ditamatkan',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'occupation' => [
+                'horizontal' => 'Jenis pekerjaan penduduk',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'marital' => [
+                'horizontal' => 'Kategori status perkawinan',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'kk' => [
+                'horizontal' => 'Status penerbitan kartu keluarga',
+                'vertical' => 'Jumlah kartu keluarga',
+            ],
+            'household' => [
+                'horizontal' => 'Jenis kepala keluarga',
+                'vertical' => 'Jumlah kepala keluarga',
+            ],
+            'religion' => [
+                'horizontal' => 'Agama yang dianut penduduk',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+            'wajib-ktp' => [
+                'horizontal' => 'Kategori wajib KTP-el',
+                'vertical' => 'Jumlah penduduk (jiwa)',
+            ],
+        ];
+
+        $horizontalChartKeys = ['single-age', 'education', 'occupation'];
     @endphp
 
     {{-- Kartu filter untuk memilih wilayah dan periode data agregat yang ditampilkan --}}
@@ -305,6 +350,10 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-gender" data-chart-key="gender" class="w-full h-full"></canvas>
                                 </div>
+                                @include('public.partials.chart-axis-labels', [
+                                    'axis' => $axisDescriptions['gender'] ?? [],
+                                    'flipAxes' => in_array('gender', $horizontalChartKeys),
+                                ])
                                 <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-gender"></div>
                             </div>
                         </div>
@@ -346,6 +395,10 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-age" data-chart-key="age" class="w-full h-full"></canvas>
                                 </div>
+                                @include('public.partials.chart-axis-labels', [
+                                    'axis' => $axisDescriptions['age'] ?? [],
+                                    'flipAxes' => in_array('age', $horizontalChartKeys),
+                                ])
                                 <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-age"></div>
                             </div>
                         </div>
@@ -391,6 +444,10 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-single-age" data-chart-key="single-age" class="w-full h-full"></canvas>
                                 </div>
+                                @include('public.partials.chart-axis-labels', [
+                                    'axis' => $axisDescriptions['single-age'] ?? [],
+                                    'flipAxes' => in_array('single-age', $horizontalChartKeys),
+                                ])
                                 <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-single-age"></div>
                             </div>
                         </div>
@@ -433,6 +490,10 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-education" data-chart-key="education" class="w-full h-full"></canvas>
                                 </div>
+                                @include('public.partials.chart-axis-labels', [
+                                    'axis' => $axisDescriptions['education'] ?? [],
+                                    'flipAxes' => in_array('education', $horizontalChartKeys),
+                                ])
                                 <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-education"></div>
                             </div>
                         </div>
@@ -478,6 +539,10 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-occupation" data-chart-key="occupation" class="w-full h-full"></canvas>
                                 </div>
+                                @include('public.partials.chart-axis-labels', [
+                                    'axis' => $axisDescriptions['occupation'] ?? [],
+                                    'flipAxes' => in_array('occupation', $horizontalChartKeys),
+                                ])
                                 <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-occupation"></div>
                             </div>
                         </div>
@@ -519,6 +584,10 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-marital" data-chart-key="marital" class="w-full h-full"></canvas>
                                 </div>
+                                @include('public.partials.chart-axis-labels', [
+                                    'axis' => $axisDescriptions['marital'] ?? [],
+                                    'flipAxes' => in_array('marital', $horizontalChartKeys),
+                                ])
                                 <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-marital"></div>
                             </div>
                         </div>
@@ -560,6 +629,10 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-kk" data-chart-key="kk" class="w-full h-full"></canvas>
                                 </div>
+                                @include('public.partials.chart-axis-labels', [
+                                    'axis' => $axisDescriptions['kk'] ?? [],
+                                    'flipAxes' => in_array('kk', $horizontalChartKeys),
+                                ])
                                 <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-kk"></div>
                             </div>
                         </div>
@@ -601,6 +674,10 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-household" data-chart-key="household" class="w-full h-full"></canvas>
                                 </div>
+                                @include('public.partials.chart-axis-labels', [
+                                    'axis' => $axisDescriptions['household'] ?? [],
+                                    'flipAxes' => in_array('household', $horizontalChartKeys),
+                                ])
                                 <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-household"></div>
                             </div>
                         </div>
@@ -642,6 +719,10 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-religion" data-chart-key="religion" class="w-full h-full"></canvas>
                                 </div>
+                                @include('public.partials.chart-axis-labels', [
+                                    'axis' => $axisDescriptions['religion'] ?? [],
+                                    'flipAxes' => in_array('religion', $horizontalChartKeys),
+                                ])
                                 <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-religion"></div>
                             </div>
                         </div>
@@ -683,6 +764,10 @@
                                 <div class="relative chart-container w-full" style="height: {{ $chartHeight }}; min-height: {{ $chartHeight }};">
                                     <canvas id="chart-wajib-ktp" data-chart-key="wajib-ktp" class="w-full h-full"></canvas>
                                 </div>
+                                @include('public.partials.chart-axis-labels', [
+                                    'axis' => $axisDescriptions['wajib-ktp'] ?? [],
+                                    'flipAxes' => in_array('wajib-ktp', $horizontalChartKeys),
+                                ])
                                 <div class="chart-legend mt-4 pt-4 border-t border-gray-200" id="legend-wajib-ktp"></div>
                             </div>
                         </div>
@@ -703,7 +788,7 @@
             const chartInstances = {};
             const chartsWithValueLabels = Object.keys(chartConfigs || {});
             const totalLabelTargets = ['Total', 'Jumlah Penduduk', 'Wajib KTP', 'Kartu Keluarga'];
-            const horizontalChartKeys = ['single-age', 'education', 'occupation'];
+            const horizontalChartKeys = @json($horizontalChartKeys);
             const formatNumber = (value) => new Intl.NumberFormat('id-ID').format(value);
 
             // Chart.js custom plugin untuk category tags
@@ -711,7 +796,7 @@
                 id: 'categoryTagPlugin',
                 afterDraw(chart, args, pluginOptions) {
                     const key = chart.canvas.dataset.chartKey;
-                    if (!chartsNeedingTags.includes(key)) {
+                    if (!chartsNeedingTags.includes(key) || horizontalChartKeys.includes(key)) {
                         return;
                     }
                     const labels = pluginOptions?.labels ?? chart.config.data.labels;

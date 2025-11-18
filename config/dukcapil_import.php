@@ -420,6 +420,16 @@ return [
       'calc_total' => 'all_mf',
     ],
 
+    'sheet6' => [
+      'table' => 'pop_wajib_ktp',
+      'keys'  => ['year','semester','district_id','village_id'],
+      'cols'  => [
+        'year','semester','district_code','district_name','village_code','village_name',
+        'male','female','total'
+      ],
+      'calc_total' => ['male','female'],
+    ],
+
     'sheet7' => [
       'table' => 'pop_religion',
       'keys'  => ['year','semester','district_id','village_id'],
@@ -434,6 +444,18 @@ return [
         'hindu_m','hindu_f','buddha_m','buddha_f','konghucu_m','konghucu_f',
         'aliran_kepercayaan_m','aliran_kepercayaan_f'
       ],
+    ],
+
+    'sheet9' => [
+      'table' => 'pop_kk',
+      'keys'  => ['year','semester','district_id','village_id'],
+      'cols'  => [
+        'year','semester','district_code','district_name','village_code','village_name',
+        'male','female','total',
+        'male_printed','female_printed','total_printed',
+        'male_not_printed','female_not_printed','total_not_printed'
+      ],
+      'calc_total' => ['male','female'],
     ],
 
     'sheet10' => [
@@ -453,16 +475,5 @@ return [
       ],
     ],
 
-    'sheet11' => [
-      'table' => 'pop_kk',
-      'keys'  => ['year','semester','district_id','village_id'],
-      'cols'  => [
-        'year','semester','district_code','district_name','village_code','village_name',
-        'male','female','total',
-        'male_printed','female_printed','total_printed',
-        'male_not_printed','female_not_printed','total_not_printed'
-      ],
-      'calc_total' => ['male','female'],
-    ],
   ],
 ];
