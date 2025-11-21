@@ -1,5 +1,0 @@
----
-deployment:
-  tasks:
-    - export DEPLOYPATH=/home/magt2428/dukcapil-madiun/
-    - /bin/cp -R resources $DEPLOYPATH
